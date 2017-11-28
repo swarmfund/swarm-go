@@ -3,9 +3,9 @@ package horizon
 import (
 	"net/http"
 
-	"gitlab.com/tokend/go/doorman/data"
-	"gitlab.com/tokend/go/doorman/types"
-	"gitlab.com/tokend/go/signcontrol"
+	"gitlab.com/swarmfund/go/doorman/data"
+	"gitlab.com/swarmfund/go/doorman/types"
+	"gitlab.com/swarmfund/go/signcontrol"
 )
 
 type Doorman struct {

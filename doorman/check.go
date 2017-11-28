@@ -3,8 +3,8 @@ package doorman
 import (
 	"net/http"
 
-	"gitlab.com/tokend/go/doorman/types"
-	"gitlab.com/tokend/go/signcontrol"
+	"gitlab.com/swarmfund/go/doorman/types"
+	"gitlab.com/swarmfund/go/signcontrol"
 )
 
 // Check ensures request passes at least one constraint

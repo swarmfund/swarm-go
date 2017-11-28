@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"gitlab.com/tokend/go/crc16"
+	"gitlab.com/swarmfund/go/crc16"
 	"github.com/pkg/errors"
 )
 

@@ -1,8 +1,8 @@
 package doorman
 
 import (
-	"gitlab.com/tokend/go/doorman/data"
-	"gitlab.com/tokend/go/doorman/horizon"
+	"gitlab.com/swarmfund/go/doorman/data"
+	"gitlab.com/swarmfund/go/doorman/horizon"
 )
 
 func NewDoormanHorizon(skipSignatureCheck bool, accountQ data.AccountQ) Doorman {
