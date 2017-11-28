@@ -1,0 +1,3 @@
+[submodule "xdr/raw"]
+	path = xdr/raw
+	url = git@gitlab.com:swarmfund/xdr.git
