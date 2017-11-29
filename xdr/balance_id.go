@@ -3,7 +3,7 @@ package xdr
 import (
 	"fmt"
 
-	"gitlab.com/tokend/go/strkey"
+	"gitlab.com/swarmfund/go/strkey"
 )
 
 func (bid *BalanceId) AsString() string {

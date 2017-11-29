@@ -1,7 +1,7 @@
 package xdr_test
 
 import (
-	. "gitlab.com/tokend/go/xdr"
+	. "gitlab.com/swarmfund/go/xdr"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
