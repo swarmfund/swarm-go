@@ -193,7 +193,7 @@ type AccountTypeLimitsEntry struct {
 //    	ASSET_MANAGER = 16, // allowed to create assets/asset pairs and update policies, set fees
 //    	ASSET_RATE_MANAGER = 32, // allowed to set physical asset price
 //    	BALANCE_MANAGER = 64, // allowed to create balances, spend assets from balances
-//    	EMISSION_MANAGER = 128, // allowed to make emission requests, review emission, upload preemission
+//    	ISSUANCE_MANAGER = 128, // allowed to make preissuance request, review issuance
 //    	INVOICE_MANAGER = 256, // allowed to create payment requests to other accounts
 //    	PAYMENT_OPERATOR = 512, // allowed to review payment requests
 //    	LIMITS_MANAGER = 1024, // allowed to change limits
@@ -212,7 +212,7 @@ const (
 	SignerTypeAssetManager              SignerType = 16
 	SignerTypeAssetRateManager          SignerType = 32
 	SignerTypeBalanceManager            SignerType = 64
-	SignerTypeEmissionManager           SignerType = 128
+	SignerTypeIssuanceManager           SignerType = 128
 	SignerTypeInvoiceManager            SignerType = 256
 	SignerTypePaymentOperator           SignerType = 512
 	SignerTypeLimitsManager             SignerType = 1024
@@ -229,7 +229,7 @@ var SignerTypeAll = []SignerType{
 	SignerTypeAssetManager,
 	SignerTypeAssetRateManager,
 	SignerTypeBalanceManager,
-	SignerTypeEmissionManager,
+	SignerTypeIssuanceManager,
 	SignerTypeInvoiceManager,
 	SignerTypePaymentOperator,
 	SignerTypeLimitsManager,
@@ -246,7 +246,7 @@ var signerTypeMap = map[int32]string{
 	16:   "SignerTypeAssetManager",
 	32:   "SignerTypeAssetRateManager",
 	64:   "SignerTypeBalanceManager",
-	128:  "SignerTypeEmissionManager",
+	128:  "SignerTypeIssuanceManager",
 	256:  "SignerTypeInvoiceManager",
 	512:  "SignerTypePaymentOperator",
 	1024: "SignerTypeLimitsManager",
@@ -263,7 +263,7 @@ var signerTypeShortMap = map[int32]string{
 	16:   "asset_manager",
 	32:   "asset_rate_manager",
 	64:   "balance_manager",
-	128:  "emission_manager",
+	128:  "issuance_manager",
 	256:  "invoice_manager",
 	512:  "payment_operator",
 	1024: "limits_manager",
@@ -280,7 +280,7 @@ var signerTypeRevMap = map[string]int32{
 	"SignerTypeAssetManager":              16,
 	"SignerTypeAssetRateManager":          32,
 	"SignerTypeBalanceManager":            64,
-	"SignerTypeEmissionManager":           128,
+	"SignerTypeIssuanceManager":           128,
 	"SignerTypeInvoiceManager":            256,
 	"SignerTypePaymentOperator":           512,
 	"SignerTypeLimitsManager":             1024,
@@ -2206,7 +2206,7 @@ func NewReviewableRequestEntryExt(v LedgerVersion, value interface{}) (result Re
 // ReviewableRequestEntry is an XDR Struct defines as:
 //
 //   struct ReviewableRequestEntry {
-//    	uint64 ID;
+//    	uint64 requestID;
 //    	Hash hash; // hash of the request body
 //    	AccountID requestor;
 //    	string256 rejectReason;
@@ -2234,7 +2234,7 @@ func NewReviewableRequestEntryExt(v LedgerVersion, value interface{}) (result Re
 //    };
 //
 type ReviewableRequestEntry struct {
-	Id           Uint64                     `json:"ID,omitempty"`
+	RequestId    Uint64                     `json:"requestID,omitempty"`
 	Hash         Hash                       `json:"hash,omitempty"`
 	Requestor    AccountId                  `json:"requestor,omitempty"`
 	RejectReason String256                  `json:"rejectReason,omitempty"`
@@ -4424,7 +4424,7 @@ func NewLedgerKeyReviewableRequestExt(v LedgerVersion, value interface{}) (resul
 // LedgerKeyReviewableRequest is an XDR NestedStruct defines as:
 //
 //   struct {
-//            uint64 ID;
+//            uint64 requestID;
 //    		union switch (LedgerVersion v)
 //    		{
 //    		case EMPTY_VERSION:
@@ -4434,8 +4434,8 @@ func NewLedgerKeyReviewableRequestExt(v LedgerVersion, value interface{}) (resul
 //        }
 //
 type LedgerKeyReviewableRequest struct {
-	Id  Uint64                        `json:"ID,omitempty"`
-	Ext LedgerKeyReviewableRequestExt `json:"ext,omitempty"`
+	RequestId Uint64                        `json:"requestID,omitempty"`
+	Ext       LedgerKeyReviewableRequestExt `json:"ext,omitempty"`
 }
 
 // LedgerKey is an XDR Union defines as:
@@ -4579,7 +4579,7 @@ type LedgerKeyReviewableRequest struct {
 //        } invoice;
 //    case REVIEWABLE_REQUEST:
 //        struct {
-//            uint64 ID;
+//            uint64 requestID;
 //    		union switch (LedgerVersion v)
 //    		{
 //    		case EMPTY_VERSION:
