@@ -11,9 +11,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 
-	"gitlab.com/tokend/go/hash"
-	"gitlab.com/tokend/go/keypair"
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/swarmfund/go/hash"
+	"gitlab.com/swarmfund/go/keypair"
+	"gitlab.com/swarmfund/go/xdr"
 )
 
 

@@ -32,17 +32,11 @@ func MustParse(v string) int64 {
 // that represents a decimal number with 7 digits of significance in the
 // fractional portion of the number.
 func Parse(v string) (int64, error) {
-	var f, o, r big.Rat
-
-	_, ok := f.SetString(v)
-	if !ok {
-		return 0, fmt.Errorf("cannot parse amount: %s", v)
+	is, err := stringToIntString(v)
+	if err != nil {
+		return 0, err
 	}
 
-	o.SetInt64(One)
-	r.Mul(&f, &o)
-
-	is := r.FloatString(0)
 	i, err := strconv.ParseInt(is, 10, 64)
 	if err != nil {
 		return 0, err
@@ -55,6 +49,49 @@ func String(v int64) string {
 	var f, o, r big.Rat
 
 	f.SetInt64(v)
+	o.SetInt64(One)
+	r.Quo(&f, &o)
+
+	return r.FloatString(4)
+}
+
+func stringToIntString(v string) (string, error) {
+	var f, o, r big.Rat
+
+	_, ok := f.SetString(v)
+	if !ok {
+		return "", fmt.Errorf("cannot parse amount: %s", v)
+	}
+
+	o.SetInt64(One)
+	r.Mul(&f, &o)
+
+	is := r.FloatString(0)
+	return is, nil
+}
+
+// Parse parses the provided as a stellar "amount", i.e. A 64-bit unsigned integer
+// that represents a decimal number with 7 digits of significance in the
+// fractional portion of the number.
+func ParseU(v string) (uint64, error) {
+	is, err := stringToIntString(v)
+	if err != nil {
+		return 0, err
+	}
+
+	i, err := strconv.ParseUint(is, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return i, nil
+}
+
+func StringU(v uint64) string {
+	var f, o, r big.Rat
+
+	var fInt big.Int
+	fInt.SetUint64(v)
+	f.SetInt(&fInt)
 	o.SetInt64(One)
 	r.Quo(&f, &o)
 

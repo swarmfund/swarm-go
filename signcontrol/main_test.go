@@ -11,7 +11,7 @@ import (
 
 	"crypto/sha256"
 
-	"gitlab.com/tokend/go/keypair"
+	"gitlab.com/swarmfund/go/keypair"
 	"github.com/stretchr/testify/require"
 )
 

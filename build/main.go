@@ -11,9 +11,9 @@ package build
 import (
 	"math"
 
-	"gitlab.com/tokend/go/amount"
-	"gitlab.com/tokend/go/network"
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/swarmfund/go/amount"
+	"gitlab.com/swarmfund/go/network"
+	"gitlab.com/swarmfund/go/xdr"
 )
 
 const (
