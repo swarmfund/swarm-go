@@ -1,7 +1,7 @@
 package build
 
 import (
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/swarmfund/go/xdr"
 )
 
 // OperationMutator is a interface that wraps the MutateOperation operation.

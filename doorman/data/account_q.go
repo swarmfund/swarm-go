@@ -1,6 +1,6 @@
 package data
 
-import "gitlab.com/tokend/go/resources"
+import "gitlab.com/swarmfund/go/resources"
 
 // AccountQ data access interface for getting account details
 type AccountQ interface {

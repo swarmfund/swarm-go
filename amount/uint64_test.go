@@ -1,23 +1,24 @@
 package amount_test
 
 import (
-	"testing"
-
 	"gitlab.com/swarmfund/go/amount"
+	"math"
+	"testing"
 )
 
-var testsData = []struct {
+var testsDataU = []struct {
 	S string
-	I int64
+	I uint64
 }{
 	{"100.0000", 1000000},
 	{"100.0001", 1000001},
 	{"123.0001", 1230001},
+	{"1844674407370955.1615", math.MaxUint64},
 }
 
-func TestParse(t *testing.T) {
-	for _, v := range testsData {
-		o, err := amount.Parse(v.S)
+func TestUint64Parse(t *testing.T) {
+	for _, v := range testsDataU {
+		o, err := amount.ParseU(v.S)
 		if err != nil {
 			t.Errorf("Couldn't parse %s: %v+", v.S, err)
 			continue
@@ -29,9 +30,9 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestString(t *testing.T) {
-	for _, v := range testsData {
-		o := amount.String(v.I)
+func TestUString(t *testing.T) {
+	for _, v := range testsDataU {
+		o := amount.StringU(v.I)
 
 		if o != v.S {
 			t.Errorf("%d stringified to %s, not %s", v.I, o, v.S)

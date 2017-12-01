@@ -1,6 +1,6 @@
 package doorman
 
-import "gitlab.com/tokend/go/doorman/types"
+import "gitlab.com/swarmfund/go/doorman/types"
 
 type Doorman interface {
 	MasterSigner(address string) types.SignerConstraint
