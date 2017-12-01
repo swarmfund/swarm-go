@@ -6462,6 +6462,7 @@ func NewCreateIssuanceRequestSuccessExt(v LedgerVersion, value interface{}) (res
 //
 //   struct CreateIssuanceRequestSuccess {
 //    	uint64 requestID;
+//    	AccountID receiver;
 //    	bool fulfilled;
 //    	union switch (LedgerVersion v)
 //    	{
@@ -6473,6 +6474,7 @@ func NewCreateIssuanceRequestSuccessExt(v LedgerVersion, value interface{}) (res
 //
 type CreateIssuanceRequestSuccess struct {
 	RequestId Uint64                          `json:"requestID,omitempty"`
+	Receiver  AccountId                       `json:"receiver,omitempty"`
 	Fulfilled bool                            `json:"fulfilled,omitempty"`
 	Ext       CreateIssuanceRequestSuccessExt `json:"ext,omitempty"`
 }
@@ -8471,34 +8473,34 @@ func (u ManageAssetResult) GetSuccess() (result ManageAssetSuccess, ok bool) {
 //   enum ManageBalanceAction
 //    {
 //        CREATE = 0,
-//        DELETE = 1
+//        DELETE_BALANCE = 1
 //    };
 //
 type ManageBalanceAction int32
 
 const (
-	ManageBalanceActionCreate ManageBalanceAction = 0
-	ManageBalanceActionDelete ManageBalanceAction = 1
+	ManageBalanceActionCreate        ManageBalanceAction = 0
+	ManageBalanceActionDeleteBalance ManageBalanceAction = 1
 )
 
 var ManageBalanceActionAll = []ManageBalanceAction{
 	ManageBalanceActionCreate,
-	ManageBalanceActionDelete,
+	ManageBalanceActionDeleteBalance,
 }
 
 var manageBalanceActionMap = map[int32]string{
 	0: "ManageBalanceActionCreate",
-	1: "ManageBalanceActionDelete",
+	1: "ManageBalanceActionDeleteBalance",
 }
 
 var manageBalanceActionShortMap = map[int32]string{
 	0: "create",
-	1: "delete",
+	1: "delete_balance",
 }
 
 var manageBalanceActionRevMap = map[string]int32{
-	"ManageBalanceActionCreate": 0,
-	"ManageBalanceActionDelete": 1,
+	"ManageBalanceActionCreate":        0,
+	"ManageBalanceActionDeleteBalance": 1,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
