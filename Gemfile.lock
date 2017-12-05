@@ -1,8 +1,8 @@
 GIT
   remote: https://gitlab.com/distributed_lab/xdrgen.git
-  revision: 6dc93375eada5bd56f8241796c449634b7975637
+  revision: be6546f4258162d03418130c2dcc79384031f630
   specs:
-    xdrgen (0.0.4)
+    xdrgen (0.0.5)
       activesupport (~> 5)
       memoist (~> 0.11.0)
       slop (~> 3.4)
