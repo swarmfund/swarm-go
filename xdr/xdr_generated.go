@@ -1,5 +1,6 @@
 // Package xdr is generated from:
 //
+//  xdr/raw/Stellar-SCP.x
 //  xdr/raw/Stellar-ledger-entries-account-limits.x
 //  xdr/raw/Stellar-ledger-entries-account-type-limits.x
 //  xdr/raw/Stellar-ledger-entries-account.x
@@ -36,7 +37,6 @@
 //  xdr/raw/Stellar-overlay.x
 //  xdr/raw/Stellar-reviewable-request-asset.x
 //  xdr/raw/Stellar-reviewable-request-issuance.x
-//  xdr/raw/Stellar-SCP.x
 //  xdr/raw/Stellar-transaction.x
 //  xdr/raw/Stellar-types.x
 //
@@ -61,6 +61,478 @@ func Unmarshal(r io.Reader, v interface{}) (int, error) {
 func Marshal(w io.Writer, v interface{}) (int, error) {
 	// delegate to xdr package's Marshal
 	return xdr.Marshal(w, v)
+}
+
+// Value is an XDR Typedef defines as:
+//
+//   typedef opaque Value<>;
+//
+type Value []byte
+
+// ScpBallot is an XDR Struct defines as:
+//
+//   struct SCPBallot
+//    {
+//        uint32 counter; // n
+//        Value value;    // x
+//    };
+//
+type ScpBallot struct {
+	Counter Uint32 `json:"counter,omitempty"`
+	Value   Value  `json:"value,omitempty"`
+}
+
+// ScpStatementType is an XDR Enum defines as:
+//
+//   enum SCPStatementType
+//    {
+//        PREPARE = 0,
+//        CONFIRM = 1,
+//        EXTERNALIZE = 2,
+//        NOMINATE = 3
+//    };
+//
+type ScpStatementType int32
+
+const (
+	ScpStatementTypePrepare     ScpStatementType = 0
+	ScpStatementTypeConfirm     ScpStatementType = 1
+	ScpStatementTypeExternalize ScpStatementType = 2
+	ScpStatementTypeNominate    ScpStatementType = 3
+)
+
+var ScpStatementTypeAll = []ScpStatementType{
+	ScpStatementTypePrepare,
+	ScpStatementTypeConfirm,
+	ScpStatementTypeExternalize,
+	ScpStatementTypeNominate,
+}
+
+var scpStatementTypeMap = map[int32]string{
+	0: "ScpStatementTypePrepare",
+	1: "ScpStatementTypeConfirm",
+	2: "ScpStatementTypeExternalize",
+	3: "ScpStatementTypeNominate",
+}
+
+var scpStatementTypeShortMap = map[int32]string{
+	0: "prepare",
+	1: "confirm",
+	2: "externalize",
+	3: "nominate",
+}
+
+var scpStatementTypeRevMap = map[string]int32{
+	"ScpStatementTypePrepare":     0,
+	"ScpStatementTypeConfirm":     1,
+	"ScpStatementTypeExternalize": 2,
+	"ScpStatementTypeNominate":    3,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for ScpStatementType
+func (e ScpStatementType) ValidEnum(v int32) bool {
+	_, ok := scpStatementTypeMap[v]
+	return ok
+}
+func (e ScpStatementType) isFlag() bool {
+	for i := len(ScpStatementTypeAll) - 1; i >= 0; i-- {
+		expected := ScpStatementType(2) << uint64(len(ScpStatementTypeAll)-1) >> uint64(len(ScpStatementTypeAll)-i)
+		if expected != ScpStatementTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e ScpStatementType) String() string {
+	name, _ := scpStatementTypeMap[int32(e)]
+	return name
+}
+
+func (e ScpStatementType) ShortString() string {
+	name, _ := scpStatementTypeShortMap[int32(e)]
+	return name
+}
+
+func (e ScpStatementType) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ScpStatementTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *ScpStatementType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = ScpStatementType(t.Value)
+	return nil
+}
+
+// ScpNomination is an XDR Struct defines as:
+//
+//   struct SCPNomination
+//    {
+//        Hash quorumSetHash; // D
+//        Value votes<>;      // X
+//        Value accepted<>;   // Y
+//    };
+//
+type ScpNomination struct {
+	QuorumSetHash Hash    `json:"quorumSetHash,omitempty"`
+	Votes         []Value `json:"votes,omitempty"`
+	Accepted      []Value `json:"accepted,omitempty"`
+}
+
+// ScpStatementPrepare is an XDR NestedStruct defines as:
+//
+//   struct
+//            {
+//                Hash quorumSetHash;       // D
+//                SCPBallot ballot;         // b
+//                SCPBallot* prepared;      // p
+//                SCPBallot* preparedPrime; // p'
+//                uint32 nC;                // c.n
+//                uint32 nH;                // h.n
+//            }
+//
+type ScpStatementPrepare struct {
+	QuorumSetHash Hash       `json:"quorumSetHash,omitempty"`
+	Ballot        ScpBallot  `json:"ballot,omitempty"`
+	Prepared      *ScpBallot `json:"prepared,omitempty"`
+	PreparedPrime *ScpBallot `json:"preparedPrime,omitempty"`
+	NC            Uint32     `json:"nC,omitempty"`
+	NH            Uint32     `json:"nH,omitempty"`
+}
+
+// ScpStatementConfirm is an XDR NestedStruct defines as:
+//
+//   struct
+//            {
+//                SCPBallot ballot;   // b
+//                uint32 nPrepared;   // p.n
+//                uint32 nCommit;     // c.n
+//                uint32 nH;          // h.n
+//                Hash quorumSetHash; // D
+//            }
+//
+type ScpStatementConfirm struct {
+	Ballot        ScpBallot `json:"ballot,omitempty"`
+	NPrepared     Uint32    `json:"nPrepared,omitempty"`
+	NCommit       Uint32    `json:"nCommit,omitempty"`
+	NH            Uint32    `json:"nH,omitempty"`
+	QuorumSetHash Hash      `json:"quorumSetHash,omitempty"`
+}
+
+// ScpStatementExternalize is an XDR NestedStruct defines as:
+//
+//   struct
+//            {
+//                SCPBallot commit;         // c
+//                uint32 nH;                // h.n
+//                Hash commitQuorumSetHash; // D used before EXTERNALIZE
+//            }
+//
+type ScpStatementExternalize struct {
+	Commit              ScpBallot `json:"commit,omitempty"`
+	NH                  Uint32    `json:"nH,omitempty"`
+	CommitQuorumSetHash Hash      `json:"commitQuorumSetHash,omitempty"`
+}
+
+// ScpStatementPledges is an XDR NestedUnion defines as:
+//
+//   union switch (SCPStatementType type)
+//        {
+//        case PREPARE:
+//            struct
+//            {
+//                Hash quorumSetHash;       // D
+//                SCPBallot ballot;         // b
+//                SCPBallot* prepared;      // p
+//                SCPBallot* preparedPrime; // p'
+//                uint32 nC;                // c.n
+//                uint32 nH;                // h.n
+//            } prepare;
+//        case CONFIRM:
+//            struct
+//            {
+//                SCPBallot ballot;   // b
+//                uint32 nPrepared;   // p.n
+//                uint32 nCommit;     // c.n
+//                uint32 nH;          // h.n
+//                Hash quorumSetHash; // D
+//            } confirm;
+//        case EXTERNALIZE:
+//            struct
+//            {
+//                SCPBallot commit;         // c
+//                uint32 nH;                // h.n
+//                Hash commitQuorumSetHash; // D used before EXTERNALIZE
+//            } externalize;
+//        case NOMINATE:
+//            SCPNomination nominate;
+//        }
+//
+type ScpStatementPledges struct {
+	Type        ScpStatementType         `json:"type,omitempty"`
+	Prepare     *ScpStatementPrepare     `json:"prepare,omitempty"`
+	Confirm     *ScpStatementConfirm     `json:"confirm,omitempty"`
+	Externalize *ScpStatementExternalize `json:"externalize,omitempty"`
+	Nominate    *ScpNomination           `json:"nominate,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ScpStatementPledges) SwitchFieldName() string {
+	return "Type"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ScpStatementPledges
+func (u ScpStatementPledges) ArmForSwitch(sw int32) (string, bool) {
+	switch ScpStatementType(sw) {
+	case ScpStatementTypePrepare:
+		return "Prepare", true
+	case ScpStatementTypeConfirm:
+		return "Confirm", true
+	case ScpStatementTypeExternalize:
+		return "Externalize", true
+	case ScpStatementTypeNominate:
+		return "Nominate", true
+	}
+	return "-", false
+}
+
+// NewScpStatementPledges creates a new  ScpStatementPledges.
+func NewScpStatementPledges(aType ScpStatementType, value interface{}) (result ScpStatementPledges, err error) {
+	result.Type = aType
+	switch ScpStatementType(aType) {
+	case ScpStatementTypePrepare:
+		tv, ok := value.(ScpStatementPrepare)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ScpStatementPrepare")
+			return
+		}
+		result.Prepare = &tv
+	case ScpStatementTypeConfirm:
+		tv, ok := value.(ScpStatementConfirm)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ScpStatementConfirm")
+			return
+		}
+		result.Confirm = &tv
+	case ScpStatementTypeExternalize:
+		tv, ok := value.(ScpStatementExternalize)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ScpStatementExternalize")
+			return
+		}
+		result.Externalize = &tv
+	case ScpStatementTypeNominate:
+		tv, ok := value.(ScpNomination)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ScpNomination")
+			return
+		}
+		result.Nominate = &tv
+	}
+	return
+}
+
+// MustPrepare retrieves the Prepare value from the union,
+// panicing if the value is not set.
+func (u ScpStatementPledges) MustPrepare() ScpStatementPrepare {
+	val, ok := u.GetPrepare()
+
+	if !ok {
+		panic("arm Prepare is not set")
+	}
+
+	return val
+}
+
+// GetPrepare retrieves the Prepare value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ScpStatementPledges) GetPrepare() (result ScpStatementPrepare, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "Prepare" {
+		result = *u.Prepare
+		ok = true
+	}
+
+	return
+}
+
+// MustConfirm retrieves the Confirm value from the union,
+// panicing if the value is not set.
+func (u ScpStatementPledges) MustConfirm() ScpStatementConfirm {
+	val, ok := u.GetConfirm()
+
+	if !ok {
+		panic("arm Confirm is not set")
+	}
+
+	return val
+}
+
+// GetConfirm retrieves the Confirm value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ScpStatementPledges) GetConfirm() (result ScpStatementConfirm, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "Confirm" {
+		result = *u.Confirm
+		ok = true
+	}
+
+	return
+}
+
+// MustExternalize retrieves the Externalize value from the union,
+// panicing if the value is not set.
+func (u ScpStatementPledges) MustExternalize() ScpStatementExternalize {
+	val, ok := u.GetExternalize()
+
+	if !ok {
+		panic("arm Externalize is not set")
+	}
+
+	return val
+}
+
+// GetExternalize retrieves the Externalize value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ScpStatementPledges) GetExternalize() (result ScpStatementExternalize, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "Externalize" {
+		result = *u.Externalize
+		ok = true
+	}
+
+	return
+}
+
+// MustNominate retrieves the Nominate value from the union,
+// panicing if the value is not set.
+func (u ScpStatementPledges) MustNominate() ScpNomination {
+	val, ok := u.GetNominate()
+
+	if !ok {
+		panic("arm Nominate is not set")
+	}
+
+	return val
+}
+
+// GetNominate retrieves the Nominate value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ScpStatementPledges) GetNominate() (result ScpNomination, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "Nominate" {
+		result = *u.Nominate
+		ok = true
+	}
+
+	return
+}
+
+// ScpStatement is an XDR Struct defines as:
+//
+//   struct SCPStatement
+//    {
+//        NodeID nodeID;    // v
+//        uint64 slotIndex; // i
+//
+//        union switch (SCPStatementType type)
+//        {
+//        case PREPARE:
+//            struct
+//            {
+//                Hash quorumSetHash;       // D
+//                SCPBallot ballot;         // b
+//                SCPBallot* prepared;      // p
+//                SCPBallot* preparedPrime; // p'
+//                uint32 nC;                // c.n
+//                uint32 nH;                // h.n
+//            } prepare;
+//        case CONFIRM:
+//            struct
+//            {
+//                SCPBallot ballot;   // b
+//                uint32 nPrepared;   // p.n
+//                uint32 nCommit;     // c.n
+//                uint32 nH;          // h.n
+//                Hash quorumSetHash; // D
+//            } confirm;
+//        case EXTERNALIZE:
+//            struct
+//            {
+//                SCPBallot commit;         // c
+//                uint32 nH;                // h.n
+//                Hash commitQuorumSetHash; // D used before EXTERNALIZE
+//            } externalize;
+//        case NOMINATE:
+//            SCPNomination nominate;
+//        }
+//        pledges;
+//    };
+//
+type ScpStatement struct {
+	NodeId    NodeId              `json:"nodeID,omitempty"`
+	SlotIndex Uint64              `json:"slotIndex,omitempty"`
+	Pledges   ScpStatementPledges `json:"pledges,omitempty"`
+}
+
+// ScpEnvelope is an XDR Struct defines as:
+//
+//   struct SCPEnvelope
+//    {
+//        SCPStatement statement;
+//        Signature signature;
+//    };
+//
+type ScpEnvelope struct {
+	Statement ScpStatement `json:"statement,omitempty"`
+	Signature Signature    `json:"signature,omitempty"`
+}
+
+// ScpQuorumSet is an XDR Struct defines as:
+//
+//   struct SCPQuorumSet
+//    {
+//        uint32 threshold;
+//        PublicKey validators<>;
+//        SCPQuorumSet innerSets<>;
+//    };
+//
+type ScpQuorumSet struct {
+	Threshold  Uint32         `json:"threshold,omitempty"`
+	Validators []PublicKey    `json:"validators,omitempty"`
+	InnerSets  []ScpQuorumSet `json:"innerSets,omitempty"`
 }
 
 // AccountLimitsEntryExt is an XDR NestedUnion defines as:
@@ -295,6 +767,15 @@ func (e SignerType) ValidEnum(v int32) bool {
 	_, ok := signerTypeMap[v]
 	return ok
 }
+func (e SignerType) isFlag() bool {
+	for i := len(SignerTypeAll) - 1; i >= 0; i-- {
+		expected := SignerType(2) << uint64(len(SignerTypeAll)-1) >> uint64(len(SignerTypeAll)-i)
+		if expected != SignerTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e SignerType) String() string {
@@ -308,22 +789,36 @@ func (e SignerType) ShortString() string {
 }
 
 func (e SignerType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range SignerTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *SignerType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *SignerType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := signerTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = SignerType(value)
+	*e = SignerType(t.Value)
 	return nil
 }
 
@@ -559,6 +1054,15 @@ func (e AccountPolicies) ValidEnum(v int32) bool {
 	_, ok := accountPoliciesMap[v]
 	return ok
 }
+func (e AccountPolicies) isFlag() bool {
+	for i := len(AccountPoliciesAll) - 1; i >= 0; i-- {
+		expected := AccountPolicies(2) << uint64(len(AccountPoliciesAll)-1) >> uint64(len(AccountPoliciesAll)-i)
+		if expected != AccountPoliciesAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e AccountPolicies) String() string {
@@ -572,22 +1076,36 @@ func (e AccountPolicies) ShortString() string {
 }
 
 func (e AccountPolicies) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range AccountPoliciesAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *AccountPolicies) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *AccountPolicies) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := accountPoliciesRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = AccountPolicies(value)
+	*e = AccountPolicies(t.Value)
 	return nil
 }
 
@@ -656,6 +1174,15 @@ func (e AccountType) ValidEnum(v int32) bool {
 	_, ok := accountTypeMap[v]
 	return ok
 }
+func (e AccountType) isFlag() bool {
+	for i := len(AccountTypeAll) - 1; i >= 0; i-- {
+		expected := AccountType(2) << uint64(len(AccountTypeAll)-1) >> uint64(len(AccountTypeAll)-i)
+		if expected != AccountTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e AccountType) String() string {
@@ -669,22 +1196,36 @@ func (e AccountType) ShortString() string {
 }
 
 func (e AccountType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range AccountTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *AccountType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *AccountType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := accountTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = AccountType(value)
+	*e = AccountType(t.Value)
 	return nil
 }
 
@@ -735,6 +1276,15 @@ func (e BlockReasons) ValidEnum(v int32) bool {
 	_, ok := blockReasonsMap[v]
 	return ok
 }
+func (e BlockReasons) isFlag() bool {
+	for i := len(BlockReasonsAll) - 1; i >= 0; i-- {
+		expected := BlockReasons(2) << uint64(len(BlockReasonsAll)-1) >> uint64(len(BlockReasonsAll)-i)
+		if expected != BlockReasonsAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e BlockReasons) String() string {
@@ -748,22 +1298,36 @@ func (e BlockReasons) ShortString() string {
 }
 
 func (e BlockReasons) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range BlockReasonsAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *BlockReasons) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *BlockReasons) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := blockReasonsRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = BlockReasons(value)
+	*e = BlockReasons(t.Value)
 	return nil
 }
 
@@ -895,6 +1459,15 @@ func (e AssetPairPolicy) ValidEnum(v int32) bool {
 	_, ok := assetPairPolicyMap[v]
 	return ok
 }
+func (e AssetPairPolicy) isFlag() bool {
+	for i := len(AssetPairPolicyAll) - 1; i >= 0; i-- {
+		expected := AssetPairPolicy(2) << uint64(len(AssetPairPolicyAll)-1) >> uint64(len(AssetPairPolicyAll)-i)
+		if expected != AssetPairPolicyAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e AssetPairPolicy) String() string {
@@ -908,22 +1481,36 @@ func (e AssetPairPolicy) ShortString() string {
 }
 
 func (e AssetPairPolicy) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range AssetPairPolicyAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *AssetPairPolicy) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *AssetPairPolicy) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := assetPairPolicyRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = AssetPairPolicy(value)
+	*e = AssetPairPolicy(t.Value)
 	return nil
 }
 
@@ -1036,6 +1623,15 @@ func (e AssetPolicy) ValidEnum(v int32) bool {
 	_, ok := assetPolicyMap[v]
 	return ok
 }
+func (e AssetPolicy) isFlag() bool {
+	for i := len(AssetPolicyAll) - 1; i >= 0; i-- {
+		expected := AssetPolicy(2) << uint64(len(AssetPolicyAll)-1) >> uint64(len(AssetPolicyAll)-i)
+		if expected != AssetPolicyAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e AssetPolicy) String() string {
@@ -1049,22 +1645,36 @@ func (e AssetPolicy) ShortString() string {
 }
 
 func (e AssetPolicy) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range AssetPolicyAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *AssetPolicy) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *AssetPolicy) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := assetPolicyRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = AssetPolicy(value)
+	*e = AssetPolicy(t.Value)
 	return nil
 }
 
@@ -1269,6 +1879,15 @@ func (e FeeType) ValidEnum(v int32) bool {
 	_, ok := feeTypeMap[v]
 	return ok
 }
+func (e FeeType) isFlag() bool {
+	for i := len(FeeTypeAll) - 1; i >= 0; i-- {
+		expected := FeeType(2) << uint64(len(FeeTypeAll)-1) >> uint64(len(FeeTypeAll)-i)
+		if expected != FeeTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e FeeType) String() string {
@@ -1282,22 +1901,36 @@ func (e FeeType) ShortString() string {
 }
 
 func (e FeeType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range FeeTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *FeeType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *FeeType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := feeTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = FeeType(value)
+	*e = FeeType(t.Value)
 	return nil
 }
 
@@ -1342,6 +1975,15 @@ func (e EmissionFeeType) ValidEnum(v int32) bool {
 	_, ok := emissionFeeTypeMap[v]
 	return ok
 }
+func (e EmissionFeeType) isFlag() bool {
+	for i := len(EmissionFeeTypeAll) - 1; i >= 0; i-- {
+		expected := EmissionFeeType(2) << uint64(len(EmissionFeeTypeAll)-1) >> uint64(len(EmissionFeeTypeAll)-i)
+		if expected != EmissionFeeTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e EmissionFeeType) String() string {
@@ -1355,22 +1997,36 @@ func (e EmissionFeeType) ShortString() string {
 }
 
 func (e EmissionFeeType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range EmissionFeeTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *EmissionFeeType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *EmissionFeeType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := emissionFeeTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = EmissionFeeType(value)
+	*e = EmissionFeeType(t.Value)
 	return nil
 }
 
@@ -1495,6 +2151,15 @@ func (e InvoiceState) ValidEnum(v int32) bool {
 	_, ok := invoiceStateMap[v]
 	return ok
 }
+func (e InvoiceState) isFlag() bool {
+	for i := len(InvoiceStateAll) - 1; i >= 0; i-- {
+		expected := InvoiceState(2) << uint64(len(InvoiceStateAll)-1) >> uint64(len(InvoiceStateAll)-i)
+		if expected != InvoiceStateAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e InvoiceState) String() string {
@@ -1508,22 +2173,36 @@ func (e InvoiceState) ShortString() string {
 }
 
 func (e InvoiceState) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range InvoiceStateAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *InvoiceState) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *InvoiceState) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := invoiceStateRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = InvoiceState(value)
+	*e = InvoiceState(t.Value)
 	return nil
 }
 
@@ -1734,6 +2413,15 @@ func (e RequestType) ValidEnum(v int32) bool {
 	_, ok := requestTypeMap[v]
 	return ok
 }
+func (e RequestType) isFlag() bool {
+	for i := len(RequestTypeAll) - 1; i >= 0; i-- {
+		expected := RequestType(2) << uint64(len(RequestTypeAll)-1) >> uint64(len(RequestTypeAll)-i)
+		if expected != RequestTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e RequestType) String() string {
@@ -1747,22 +2435,36 @@ func (e RequestType) ShortString() string {
 }
 
 func (e RequestType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range RequestTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *RequestType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *RequestType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := requestTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = RequestType(value)
+	*e = RequestType(t.Value)
 	return nil
 }
 
@@ -1954,6 +2656,15 @@ func (e ReviewableRequestType) ValidEnum(v int32) bool {
 	_, ok := reviewableRequestTypeMap[v]
 	return ok
 }
+func (e ReviewableRequestType) isFlag() bool {
+	for i := len(ReviewableRequestTypeAll) - 1; i >= 0; i-- {
+		expected := ReviewableRequestType(2) << uint64(len(ReviewableRequestTypeAll)-1) >> uint64(len(ReviewableRequestTypeAll)-i)
+		if expected != ReviewableRequestTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ReviewableRequestType) String() string {
@@ -1967,22 +2678,36 @@ func (e ReviewableRequestType) ShortString() string {
 }
 
 func (e ReviewableRequestType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ReviewableRequestTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ReviewableRequestType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ReviewableRequestType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := reviewableRequestTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ReviewableRequestType(value)
+	*e = ReviewableRequestType(t.Value)
 	return nil
 }
 
@@ -2367,6 +3092,15 @@ func (e ThresholdIndexes) ValidEnum(v int32) bool {
 	_, ok := thresholdIndexesMap[v]
 	return ok
 }
+func (e ThresholdIndexes) isFlag() bool {
+	for i := len(ThresholdIndexesAll) - 1; i >= 0; i-- {
+		expected := ThresholdIndexes(2) << uint64(len(ThresholdIndexesAll)-1) >> uint64(len(ThresholdIndexesAll)-i)
+		if expected != ThresholdIndexesAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ThresholdIndexes) String() string {
@@ -2380,22 +3114,36 @@ func (e ThresholdIndexes) ShortString() string {
 }
 
 func (e ThresholdIndexes) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ThresholdIndexesAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ThresholdIndexes) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ThresholdIndexes) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := thresholdIndexesRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ThresholdIndexes(value)
+	*e = ThresholdIndexes(t.Value)
 	return nil
 }
 
@@ -2512,6 +3260,15 @@ func (e LedgerEntryType) ValidEnum(v int32) bool {
 	_, ok := ledgerEntryTypeMap[v]
 	return ok
 }
+func (e LedgerEntryType) isFlag() bool {
+	for i := len(LedgerEntryTypeAll) - 1; i >= 0; i-- {
+		expected := LedgerEntryType(2) << uint64(len(LedgerEntryTypeAll)-1) >> uint64(len(LedgerEntryTypeAll)-i)
+		if expected != LedgerEntryTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e LedgerEntryType) String() string {
@@ -2525,22 +3282,36 @@ func (e LedgerEntryType) ShortString() string {
 }
 
 func (e LedgerEntryType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range LedgerEntryTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *LedgerEntryType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *LedgerEntryType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := ledgerEntryTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = LedgerEntryType(value)
+	*e = LedgerEntryType(t.Value)
 	return nil
 }
 
@@ -3233,6 +4004,15 @@ func (e EnvelopeType) ValidEnum(v int32) bool {
 	_, ok := envelopeTypeMap[v]
 	return ok
 }
+func (e EnvelopeType) isFlag() bool {
+	for i := len(EnvelopeTypeAll) - 1; i >= 0; i-- {
+		expected := EnvelopeType(2) << uint64(len(EnvelopeTypeAll)-1) >> uint64(len(EnvelopeTypeAll)-i)
+		if expected != EnvelopeTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e EnvelopeType) String() string {
@@ -3246,22 +4026,36 @@ func (e EnvelopeType) ShortString() string {
 }
 
 func (e EnvelopeType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range EnvelopeTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *EnvelopeType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *EnvelopeType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := envelopeTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = EnvelopeType(value)
+	*e = EnvelopeType(t.Value)
 	return nil
 }
 
@@ -3484,6 +4278,15 @@ func (e LedgerUpgradeType) ValidEnum(v int32) bool {
 	_, ok := ledgerUpgradeTypeMap[v]
 	return ok
 }
+func (e LedgerUpgradeType) isFlag() bool {
+	for i := len(LedgerUpgradeTypeAll) - 1; i >= 0; i-- {
+		expected := LedgerUpgradeType(2) << uint64(len(LedgerUpgradeTypeAll)-1) >> uint64(len(LedgerUpgradeTypeAll)-i)
+		if expected != LedgerUpgradeTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e LedgerUpgradeType) String() string {
@@ -3497,22 +4300,36 @@ func (e LedgerUpgradeType) ShortString() string {
 }
 
 func (e LedgerUpgradeType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range LedgerUpgradeTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *LedgerUpgradeType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *LedgerUpgradeType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := ledgerUpgradeTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = LedgerUpgradeType(value)
+	*e = LedgerUpgradeType(t.Value)
 	return nil
 }
 
@@ -5146,6 +5963,15 @@ func (e BucketEntryType) ValidEnum(v int32) bool {
 	_, ok := bucketEntryTypeMap[v]
 	return ok
 }
+func (e BucketEntryType) isFlag() bool {
+	for i := len(BucketEntryTypeAll) - 1; i >= 0; i-- {
+		expected := BucketEntryType(2) << uint64(len(BucketEntryTypeAll)-1) >> uint64(len(BucketEntryTypeAll)-i)
+		if expected != BucketEntryTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e BucketEntryType) String() string {
@@ -5159,22 +5985,36 @@ func (e BucketEntryType) ShortString() string {
 }
 
 func (e BucketEntryType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range BucketEntryTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *BucketEntryType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *BucketEntryType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := bucketEntryTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = BucketEntryType(value)
+	*e = BucketEntryType(t.Value)
 	return nil
 }
 
@@ -5650,6 +6490,15 @@ func (e LedgerEntryChangeType) ValidEnum(v int32) bool {
 	_, ok := ledgerEntryChangeTypeMap[v]
 	return ok
 }
+func (e LedgerEntryChangeType) isFlag() bool {
+	for i := len(LedgerEntryChangeTypeAll) - 1; i >= 0; i-- {
+		expected := LedgerEntryChangeType(2) << uint64(len(LedgerEntryChangeTypeAll)-1) >> uint64(len(LedgerEntryChangeTypeAll)-i)
+		if expected != LedgerEntryChangeTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e LedgerEntryChangeType) String() string {
@@ -5663,22 +6512,36 @@ func (e LedgerEntryChangeType) ShortString() string {
 }
 
 func (e LedgerEntryChangeType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range LedgerEntryChangeTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *LedgerEntryChangeType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *LedgerEntryChangeType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := ledgerEntryChangeTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = LedgerEntryChangeType(value)
+	*e = LedgerEntryChangeType(t.Value)
 	return nil
 }
 
@@ -6086,6 +6949,15 @@ func (e CreateAccountResultCode) ValidEnum(v int32) bool {
 	_, ok := createAccountResultCodeMap[v]
 	return ok
 }
+func (e CreateAccountResultCode) isFlag() bool {
+	for i := len(CreateAccountResultCodeAll) - 1; i >= 0; i-- {
+		expected := CreateAccountResultCode(2) << uint64(len(CreateAccountResultCodeAll)-1) >> uint64(len(CreateAccountResultCodeAll)-i)
+		if expected != CreateAccountResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e CreateAccountResultCode) String() string {
@@ -6099,22 +6971,36 @@ func (e CreateAccountResultCode) ShortString() string {
 }
 
 func (e CreateAccountResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range CreateAccountResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *CreateAccountResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *CreateAccountResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := createAccountResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = CreateAccountResultCode(value)
+	*e = CreateAccountResultCode(t.Value)
 	return nil
 }
 
@@ -6388,6 +7274,15 @@ func (e CreateIssuanceRequestResultCode) ValidEnum(v int32) bool {
 	_, ok := createIssuanceRequestResultCodeMap[v]
 	return ok
 }
+func (e CreateIssuanceRequestResultCode) isFlag() bool {
+	for i := len(CreateIssuanceRequestResultCodeAll) - 1; i >= 0; i-- {
+		expected := CreateIssuanceRequestResultCode(2) << uint64(len(CreateIssuanceRequestResultCodeAll)-1) >> uint64(len(CreateIssuanceRequestResultCodeAll)-i)
+		if expected != CreateIssuanceRequestResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e CreateIssuanceRequestResultCode) String() string {
@@ -6401,22 +7296,36 @@ func (e CreateIssuanceRequestResultCode) ShortString() string {
 }
 
 func (e CreateIssuanceRequestResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range CreateIssuanceRequestResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *CreateIssuanceRequestResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *CreateIssuanceRequestResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := createIssuanceRequestResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = CreateIssuanceRequestResultCode(value)
+	*e = CreateIssuanceRequestResultCode(t.Value)
 	return nil
 }
 
@@ -6690,6 +7599,15 @@ func (e CreatePreIssuanceRequestResultCode) ValidEnum(v int32) bool {
 	_, ok := createPreIssuanceRequestResultCodeMap[v]
 	return ok
 }
+func (e CreatePreIssuanceRequestResultCode) isFlag() bool {
+	for i := len(CreatePreIssuanceRequestResultCodeAll) - 1; i >= 0; i-- {
+		expected := CreatePreIssuanceRequestResultCode(2) << uint64(len(CreatePreIssuanceRequestResultCodeAll)-1) >> uint64(len(CreatePreIssuanceRequestResultCodeAll)-i)
+		if expected != CreatePreIssuanceRequestResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e CreatePreIssuanceRequestResultCode) String() string {
@@ -6703,22 +7621,36 @@ func (e CreatePreIssuanceRequestResultCode) ShortString() string {
 }
 
 func (e CreatePreIssuanceRequestResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range CreatePreIssuanceRequestResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *CreatePreIssuanceRequestResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *CreatePreIssuanceRequestResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := createPreIssuanceRequestResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = CreatePreIssuanceRequestResultCode(value)
+	*e = CreatePreIssuanceRequestResultCode(t.Value)
 	return nil
 }
 
@@ -7036,6 +7968,15 @@ func (e DirectDebitResultCode) ValidEnum(v int32) bool {
 	_, ok := directDebitResultCodeMap[v]
 	return ok
 }
+func (e DirectDebitResultCode) isFlag() bool {
+	for i := len(DirectDebitResultCodeAll) - 1; i >= 0; i-- {
+		expected := DirectDebitResultCode(2) << uint64(len(DirectDebitResultCodeAll)-1) >> uint64(len(DirectDebitResultCodeAll)-i)
+		if expected != DirectDebitResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e DirectDebitResultCode) String() string {
@@ -7049,22 +7990,36 @@ func (e DirectDebitResultCode) ShortString() string {
 }
 
 func (e DirectDebitResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range DirectDebitResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *DirectDebitResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *DirectDebitResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := directDebitResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = DirectDebitResultCode(value)
+	*e = DirectDebitResultCode(t.Value)
 	return nil
 }
 
@@ -7323,6 +8278,15 @@ func (e ManageAccountResultCode) ValidEnum(v int32) bool {
 	_, ok := manageAccountResultCodeMap[v]
 	return ok
 }
+func (e ManageAccountResultCode) isFlag() bool {
+	for i := len(ManageAccountResultCodeAll) - 1; i >= 0; i-- {
+		expected := ManageAccountResultCode(2) << uint64(len(ManageAccountResultCodeAll)-1) >> uint64(len(ManageAccountResultCodeAll)-i)
+		if expected != ManageAccountResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageAccountResultCode) String() string {
@@ -7336,22 +8300,36 @@ func (e ManageAccountResultCode) ShortString() string {
 }
 
 func (e ManageAccountResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageAccountResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageAccountResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageAccountResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageAccountResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageAccountResultCode(value)
+	*e = ManageAccountResultCode(t.Value)
 	return nil
 }
 
@@ -7532,6 +8510,15 @@ func (e ManageAssetPairAction) ValidEnum(v int32) bool {
 	_, ok := manageAssetPairActionMap[v]
 	return ok
 }
+func (e ManageAssetPairAction) isFlag() bool {
+	for i := len(ManageAssetPairActionAll) - 1; i >= 0; i-- {
+		expected := ManageAssetPairAction(2) << uint64(len(ManageAssetPairActionAll)-1) >> uint64(len(ManageAssetPairActionAll)-i)
+		if expected != ManageAssetPairActionAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageAssetPairAction) String() string {
@@ -7545,22 +8532,36 @@ func (e ManageAssetPairAction) ShortString() string {
 }
 
 func (e ManageAssetPairAction) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageAssetPairActionAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageAssetPairAction) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageAssetPairAction) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageAssetPairActionRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageAssetPairAction(value)
+	*e = ManageAssetPairAction(t.Value)
 	return nil
 }
 
@@ -7717,6 +8718,15 @@ func (e ManageAssetPairResultCode) ValidEnum(v int32) bool {
 	_, ok := manageAssetPairResultCodeMap[v]
 	return ok
 }
+func (e ManageAssetPairResultCode) isFlag() bool {
+	for i := len(ManageAssetPairResultCodeAll) - 1; i >= 0; i-- {
+		expected := ManageAssetPairResultCode(2) << uint64(len(ManageAssetPairResultCodeAll)-1) >> uint64(len(ManageAssetPairResultCodeAll)-i)
+		if expected != ManageAssetPairResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageAssetPairResultCode) String() string {
@@ -7730,22 +8740,36 @@ func (e ManageAssetPairResultCode) ShortString() string {
 }
 
 func (e ManageAssetPairResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageAssetPairResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageAssetPairResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageAssetPairResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageAssetPairResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageAssetPairResultCode(value)
+	*e = ManageAssetPairResultCode(t.Value)
 	return nil
 }
 
@@ -7927,6 +8951,15 @@ func (e ManageAssetAction) ValidEnum(v int32) bool {
 	_, ok := manageAssetActionMap[v]
 	return ok
 }
+func (e ManageAssetAction) isFlag() bool {
+	for i := len(ManageAssetActionAll) - 1; i >= 0; i-- {
+		expected := ManageAssetAction(2) << uint64(len(ManageAssetActionAll)-1) >> uint64(len(ManageAssetActionAll)-i)
+		if expected != ManageAssetActionAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageAssetAction) String() string {
@@ -7940,22 +8973,36 @@ func (e ManageAssetAction) ShortString() string {
 }
 
 func (e ManageAssetAction) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageAssetActionAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageAssetAction) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageAssetAction) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageAssetActionRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageAssetAction(value)
+	*e = ManageAssetAction(t.Value)
 	return nil
 }
 
@@ -8305,6 +9352,15 @@ func (e ManageAssetResultCode) ValidEnum(v int32) bool {
 	_, ok := manageAssetResultCodeMap[v]
 	return ok
 }
+func (e ManageAssetResultCode) isFlag() bool {
+	for i := len(ManageAssetResultCodeAll) - 1; i >= 0; i-- {
+		expected := ManageAssetResultCode(2) << uint64(len(ManageAssetResultCodeAll)-1) >> uint64(len(ManageAssetResultCodeAll)-i)
+		if expected != ManageAssetResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageAssetResultCode) String() string {
@@ -8318,22 +9374,36 @@ func (e ManageAssetResultCode) ShortString() string {
 }
 
 func (e ManageAssetResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageAssetResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageAssetResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageAssetResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageAssetResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageAssetResultCode(value)
+	*e = ManageAssetResultCode(t.Value)
 	return nil
 }
 
@@ -8509,6 +9579,15 @@ func (e ManageBalanceAction) ValidEnum(v int32) bool {
 	_, ok := manageBalanceActionMap[v]
 	return ok
 }
+func (e ManageBalanceAction) isFlag() bool {
+	for i := len(ManageBalanceActionAll) - 1; i >= 0; i-- {
+		expected := ManageBalanceAction(2) << uint64(len(ManageBalanceActionAll)-1) >> uint64(len(ManageBalanceActionAll)-i)
+		if expected != ManageBalanceActionAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageBalanceAction) String() string {
@@ -8522,22 +9601,36 @@ func (e ManageBalanceAction) ShortString() string {
 }
 
 func (e ManageBalanceAction) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageBalanceActionAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageBalanceAction) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageBalanceAction) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageBalanceActionRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageBalanceAction(value)
+	*e = ManageBalanceAction(t.Value)
 	return nil
 }
 
@@ -8677,6 +9770,15 @@ func (e ManageBalanceResultCode) ValidEnum(v int32) bool {
 	_, ok := manageBalanceResultCodeMap[v]
 	return ok
 }
+func (e ManageBalanceResultCode) isFlag() bool {
+	for i := len(ManageBalanceResultCodeAll) - 1; i >= 0; i-- {
+		expected := ManageBalanceResultCode(2) << uint64(len(ManageBalanceResultCodeAll)-1) >> uint64(len(ManageBalanceResultCodeAll)-i)
+		if expected != ManageBalanceResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageBalanceResultCode) String() string {
@@ -8690,22 +9792,36 @@ func (e ManageBalanceResultCode) ShortString() string {
 }
 
 func (e ManageBalanceResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageBalanceResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageBalanceResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageBalanceResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageBalanceResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageBalanceResultCode(value)
+	*e = ManageBalanceResultCode(t.Value)
 	return nil
 }
 
@@ -8995,6 +10111,15 @@ func (e ManageForfeitRequestResultCode) ValidEnum(v int32) bool {
 	_, ok := manageForfeitRequestResultCodeMap[v]
 	return ok
 }
+func (e ManageForfeitRequestResultCode) isFlag() bool {
+	for i := len(ManageForfeitRequestResultCodeAll) - 1; i >= 0; i-- {
+		expected := ManageForfeitRequestResultCode(2) << uint64(len(ManageForfeitRequestResultCodeAll)-1) >> uint64(len(ManageForfeitRequestResultCodeAll)-i)
+		if expected != ManageForfeitRequestResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageForfeitRequestResultCode) String() string {
@@ -9008,22 +10133,36 @@ func (e ManageForfeitRequestResultCode) ShortString() string {
 }
 
 func (e ManageForfeitRequestResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageForfeitRequestResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageForfeitRequestResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageForfeitRequestResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageForfeitRequestResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageForfeitRequestResultCode(value)
+	*e = ManageForfeitRequestResultCode(t.Value)
 	return nil
 }
 
@@ -9309,6 +10448,15 @@ func (e ManageInvoiceResultCode) ValidEnum(v int32) bool {
 	_, ok := manageInvoiceResultCodeMap[v]
 	return ok
 }
+func (e ManageInvoiceResultCode) isFlag() bool {
+	for i := len(ManageInvoiceResultCodeAll) - 1; i >= 0; i-- {
+		expected := ManageInvoiceResultCode(2) << uint64(len(ManageInvoiceResultCodeAll)-1) >> uint64(len(ManageInvoiceResultCodeAll)-i)
+		if expected != ManageInvoiceResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageInvoiceResultCode) String() string {
@@ -9322,22 +10470,36 @@ func (e ManageInvoiceResultCode) ShortString() string {
 }
 
 func (e ManageInvoiceResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageInvoiceResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageInvoiceResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageInvoiceResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageInvoiceResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageInvoiceResultCode(value)
+	*e = ManageInvoiceResultCode(t.Value)
 	return nil
 }
 
@@ -9658,6 +10820,15 @@ func (e ManageOfferResultCode) ValidEnum(v int32) bool {
 	_, ok := manageOfferResultCodeMap[v]
 	return ok
 }
+func (e ManageOfferResultCode) isFlag() bool {
+	for i := len(ManageOfferResultCodeAll) - 1; i >= 0; i-- {
+		expected := ManageOfferResultCode(2) << uint64(len(ManageOfferResultCodeAll)-1) >> uint64(len(ManageOfferResultCodeAll)-i)
+		if expected != ManageOfferResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageOfferResultCode) String() string {
@@ -9671,22 +10842,36 @@ func (e ManageOfferResultCode) ShortString() string {
 }
 
 func (e ManageOfferResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageOfferResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageOfferResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageOfferResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageOfferResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageOfferResultCode(value)
+	*e = ManageOfferResultCode(t.Value)
 	return nil
 }
 
@@ -9737,6 +10922,15 @@ func (e ManageOfferEffect) ValidEnum(v int32) bool {
 	_, ok := manageOfferEffectMap[v]
 	return ok
 }
+func (e ManageOfferEffect) isFlag() bool {
+	for i := len(ManageOfferEffectAll) - 1; i >= 0; i-- {
+		expected := ManageOfferEffect(2) << uint64(len(ManageOfferEffectAll)-1) >> uint64(len(ManageOfferEffectAll)-i)
+		if expected != ManageOfferEffectAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageOfferEffect) String() string {
@@ -9750,22 +10944,36 @@ func (e ManageOfferEffect) ShortString() string {
 }
 
 func (e ManageOfferEffect) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageOfferEffectAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageOfferEffect) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageOfferEffect) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageOfferEffectRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageOfferEffect(value)
+	*e = ManageOfferEffect(t.Value)
 	return nil
 }
 
@@ -10666,6 +11874,15 @@ func (e PaymentResultCode) ValidEnum(v int32) bool {
 	_, ok := paymentResultCodeMap[v]
 	return ok
 }
+func (e PaymentResultCode) isFlag() bool {
+	for i := len(PaymentResultCodeAll) - 1; i >= 0; i-- {
+		expected := PaymentResultCode(2) << uint64(len(PaymentResultCodeAll)-1) >> uint64(len(PaymentResultCodeAll)-i)
+		if expected != PaymentResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e PaymentResultCode) String() string {
@@ -10679,22 +11896,36 @@ func (e PaymentResultCode) ShortString() string {
 }
 
 func (e PaymentResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range PaymentResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *PaymentResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *PaymentResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := paymentResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = PaymentResultCode(value)
+	*e = PaymentResultCode(t.Value)
 	return nil
 }
 
@@ -10950,6 +12181,15 @@ func (e RecoverResultCode) ValidEnum(v int32) bool {
 	_, ok := recoverResultCodeMap[v]
 	return ok
 }
+func (e RecoverResultCode) isFlag() bool {
+	for i := len(RecoverResultCodeAll) - 1; i >= 0; i-- {
+		expected := RecoverResultCode(2) << uint64(len(RecoverResultCodeAll)-1) >> uint64(len(RecoverResultCodeAll)-i)
+		if expected != RecoverResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e RecoverResultCode) String() string {
@@ -10963,22 +12203,36 @@ func (e RecoverResultCode) ShortString() string {
 }
 
 func (e RecoverResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range RecoverResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *RecoverResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *RecoverResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := recoverResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = RecoverResultCode(value)
+	*e = RecoverResultCode(t.Value)
 	return nil
 }
 
@@ -11230,6 +12484,15 @@ func (e ReviewPaymentRequestResultCode) ValidEnum(v int32) bool {
 	_, ok := reviewPaymentRequestResultCodeMap[v]
 	return ok
 }
+func (e ReviewPaymentRequestResultCode) isFlag() bool {
+	for i := len(ReviewPaymentRequestResultCodeAll) - 1; i >= 0; i-- {
+		expected := ReviewPaymentRequestResultCode(2) << uint64(len(ReviewPaymentRequestResultCodeAll)-1) >> uint64(len(ReviewPaymentRequestResultCodeAll)-i)
+		if expected != ReviewPaymentRequestResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ReviewPaymentRequestResultCode) String() string {
@@ -11243,22 +12506,36 @@ func (e ReviewPaymentRequestResultCode) ShortString() string {
 }
 
 func (e ReviewPaymentRequestResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ReviewPaymentRequestResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ReviewPaymentRequestResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ReviewPaymentRequestResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := reviewPaymentRequestResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ReviewPaymentRequestResultCode(value)
+	*e = ReviewPaymentRequestResultCode(t.Value)
 	return nil
 }
 
@@ -11309,6 +12586,15 @@ func (e PaymentState) ValidEnum(v int32) bool {
 	_, ok := paymentStateMap[v]
 	return ok
 }
+func (e PaymentState) isFlag() bool {
+	for i := len(PaymentStateAll) - 1; i >= 0; i-- {
+		expected := PaymentState(2) << uint64(len(PaymentStateAll)-1) >> uint64(len(PaymentStateAll)-i)
+		if expected != PaymentStateAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e PaymentState) String() string {
@@ -11322,22 +12608,36 @@ func (e PaymentState) ShortString() string {
 }
 
 func (e PaymentState) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range PaymentStateAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *PaymentState) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *PaymentState) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := paymentStateRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = PaymentState(value)
+	*e = PaymentState(t.Value)
 	return nil
 }
 
@@ -11520,6 +12820,15 @@ func (e ReviewRequestOpAction) ValidEnum(v int32) bool {
 	_, ok := reviewRequestOpActionMap[v]
 	return ok
 }
+func (e ReviewRequestOpAction) isFlag() bool {
+	for i := len(ReviewRequestOpActionAll) - 1; i >= 0; i-- {
+		expected := ReviewRequestOpAction(2) << uint64(len(ReviewRequestOpActionAll)-1) >> uint64(len(ReviewRequestOpActionAll)-i)
+		if expected != ReviewRequestOpActionAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ReviewRequestOpAction) String() string {
@@ -11533,22 +12842,36 @@ func (e ReviewRequestOpAction) ShortString() string {
 }
 
 func (e ReviewRequestOpAction) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ReviewRequestOpActionAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ReviewRequestOpAction) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ReviewRequestOpAction) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := reviewRequestOpActionRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ReviewRequestOpAction(value)
+	*e = ReviewRequestOpAction(t.Value)
 	return nil
 }
 
@@ -11726,6 +13049,15 @@ func (e ReviewRequestResultCode) ValidEnum(v int32) bool {
 	_, ok := reviewRequestResultCodeMap[v]
 	return ok
 }
+func (e ReviewRequestResultCode) isFlag() bool {
+	for i := len(ReviewRequestResultCodeAll) - 1; i >= 0; i-- {
+		expected := ReviewRequestResultCode(2) << uint64(len(ReviewRequestResultCodeAll)-1) >> uint64(len(ReviewRequestResultCodeAll)-i)
+		if expected != ReviewRequestResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ReviewRequestResultCode) String() string {
@@ -11739,22 +13071,36 @@ func (e ReviewRequestResultCode) ShortString() string {
 }
 
 func (e ReviewRequestResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ReviewRequestResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ReviewRequestResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ReviewRequestResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := reviewRequestResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ReviewRequestResultCode(value)
+	*e = ReviewRequestResultCode(t.Value)
 	return nil
 }
 
@@ -12045,6 +13391,15 @@ func (e SetFeesResultCode) ValidEnum(v int32) bool {
 	_, ok := setFeesResultCodeMap[v]
 	return ok
 }
+func (e SetFeesResultCode) isFlag() bool {
+	for i := len(SetFeesResultCodeAll) - 1; i >= 0; i-- {
+		expected := SetFeesResultCode(2) << uint64(len(SetFeesResultCodeAll)-1) >> uint64(len(SetFeesResultCodeAll)-i)
+		if expected != SetFeesResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e SetFeesResultCode) String() string {
@@ -12058,22 +13413,36 @@ func (e SetFeesResultCode) ShortString() string {
 }
 
 func (e SetFeesResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range SetFeesResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *SetFeesResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *SetFeesResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := setFeesResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = SetFeesResultCode(value)
+	*e = SetFeesResultCode(t.Value)
 	return nil
 }
 
@@ -12318,6 +13687,15 @@ func (e SetLimitsResultCode) ValidEnum(v int32) bool {
 	_, ok := setLimitsResultCodeMap[v]
 	return ok
 }
+func (e SetLimitsResultCode) isFlag() bool {
+	for i := len(SetLimitsResultCodeAll) - 1; i >= 0; i-- {
+		expected := SetLimitsResultCode(2) << uint64(len(SetLimitsResultCodeAll)-1) >> uint64(len(SetLimitsResultCodeAll)-i)
+		if expected != SetLimitsResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e SetLimitsResultCode) String() string {
@@ -12331,22 +13709,36 @@ func (e SetLimitsResultCode) ShortString() string {
 }
 
 func (e SetLimitsResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range SetLimitsResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *SetLimitsResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *SetLimitsResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := setLimitsResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = SetLimitsResultCode(value)
+	*e = SetLimitsResultCode(t.Value)
 	return nil
 }
 
@@ -12527,6 +13919,15 @@ func (e ManageTrustAction) ValidEnum(v int32) bool {
 	_, ok := manageTrustActionMap[v]
 	return ok
 }
+func (e ManageTrustAction) isFlag() bool {
+	for i := len(ManageTrustActionAll) - 1; i >= 0; i-- {
+		expected := ManageTrustAction(2) << uint64(len(ManageTrustActionAll)-1) >> uint64(len(ManageTrustActionAll)-i)
+		if expected != ManageTrustActionAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ManageTrustAction) String() string {
@@ -12540,22 +13941,36 @@ func (e ManageTrustAction) ShortString() string {
 }
 
 func (e ManageTrustAction) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageTrustActionAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ManageTrustAction) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ManageTrustAction) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := manageTrustActionRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ManageTrustAction(value)
+	*e = ManageTrustAction(t.Value)
 	return nil
 }
 
@@ -12769,6 +14184,15 @@ func (e SetOptionsResultCode) ValidEnum(v int32) bool {
 	_, ok := setOptionsResultCodeMap[v]
 	return ok
 }
+func (e SetOptionsResultCode) isFlag() bool {
+	for i := len(SetOptionsResultCodeAll) - 1; i >= 0; i-- {
+		expected := SetOptionsResultCode(2) << uint64(len(SetOptionsResultCodeAll)-1) >> uint64(len(SetOptionsResultCodeAll)-i)
+		if expected != SetOptionsResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e SetOptionsResultCode) String() string {
@@ -12782,22 +14206,36 @@ func (e SetOptionsResultCode) ShortString() string {
 }
 
 func (e SetOptionsResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range SetOptionsResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *SetOptionsResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *SetOptionsResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := setOptionsResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = SetOptionsResultCode(value)
+	*e = SetOptionsResultCode(t.Value)
 	return nil
 }
 
@@ -12996,6 +14434,15 @@ func (e ErrorCode) ValidEnum(v int32) bool {
 	_, ok := errorCodeMap[v]
 	return ok
 }
+func (e ErrorCode) isFlag() bool {
+	for i := len(ErrorCodeAll) - 1; i >= 0; i-- {
+		expected := ErrorCode(2) << uint64(len(ErrorCodeAll)-1) >> uint64(len(ErrorCodeAll)-i)
+		if expected != ErrorCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e ErrorCode) String() string {
@@ -13009,22 +14456,36 @@ func (e ErrorCode) ShortString() string {
 }
 
 func (e ErrorCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ErrorCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *ErrorCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *ErrorCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := errorCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ErrorCode(value)
+	*e = ErrorCode(t.Value)
 	return nil
 }
 
@@ -13137,6 +14598,15 @@ func (e IpAddrType) ValidEnum(v int32) bool {
 	_, ok := ipAddrTypeMap[v]
 	return ok
 }
+func (e IpAddrType) isFlag() bool {
+	for i := len(IpAddrTypeAll) - 1; i >= 0; i-- {
+		expected := IpAddrType(2) << uint64(len(IpAddrTypeAll)-1) >> uint64(len(IpAddrTypeAll)-i)
+		if expected != IpAddrTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e IpAddrType) String() string {
@@ -13150,22 +14620,36 @@ func (e IpAddrType) ShortString() string {
 }
 
 func (e IpAddrType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range IpAddrTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *IpAddrType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *IpAddrType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := ipAddrTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = IpAddrType(value)
+	*e = IpAddrType(t.Value)
 	return nil
 }
 
@@ -13411,6 +14895,15 @@ func (e MessageType) ValidEnum(v int32) bool {
 	_, ok := messageTypeMap[v]
 	return ok
 }
+func (e MessageType) isFlag() bool {
+	for i := len(MessageTypeAll) - 1; i >= 0; i-- {
+		expected := MessageType(2) << uint64(len(MessageTypeAll)-1) >> uint64(len(MessageTypeAll)-i)
+		if expected != MessageTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e MessageType) String() string {
@@ -13424,22 +14917,36 @@ func (e MessageType) ShortString() string {
 }
 
 func (e MessageType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range MessageTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *MessageType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *MessageType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := messageTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = MessageType(value)
+	*e = MessageType(t.Value)
 	return nil
 }
 
@@ -14288,455 +15795,6 @@ type IssuanceRequest struct {
 	Ext      IssuanceRequestExt `json:"ext,omitempty"`
 }
 
-// Value is an XDR Typedef defines as:
-//
-//   typedef opaque Value<>;
-//
-type Value []byte
-
-// ScpBallot is an XDR Struct defines as:
-//
-//   struct SCPBallot
-//    {
-//        uint32 counter; // n
-//        Value value;    // x
-//    };
-//
-type ScpBallot struct {
-	Counter Uint32 `json:"counter,omitempty"`
-	Value   Value  `json:"value,omitempty"`
-}
-
-// ScpStatementType is an XDR Enum defines as:
-//
-//   enum SCPStatementType
-//    {
-//        PREPARE = 0,
-//        CONFIRM = 1,
-//        EXTERNALIZE = 2,
-//        NOMINATE = 3
-//    };
-//
-type ScpStatementType int32
-
-const (
-	ScpStatementTypePrepare     ScpStatementType = 0
-	ScpStatementTypeConfirm     ScpStatementType = 1
-	ScpStatementTypeExternalize ScpStatementType = 2
-	ScpStatementTypeNominate    ScpStatementType = 3
-)
-
-var ScpStatementTypeAll = []ScpStatementType{
-	ScpStatementTypePrepare,
-	ScpStatementTypeConfirm,
-	ScpStatementTypeExternalize,
-	ScpStatementTypeNominate,
-}
-
-var scpStatementTypeMap = map[int32]string{
-	0: "ScpStatementTypePrepare",
-	1: "ScpStatementTypeConfirm",
-	2: "ScpStatementTypeExternalize",
-	3: "ScpStatementTypeNominate",
-}
-
-var scpStatementTypeShortMap = map[int32]string{
-	0: "prepare",
-	1: "confirm",
-	2: "externalize",
-	3: "nominate",
-}
-
-var scpStatementTypeRevMap = map[string]int32{
-	"ScpStatementTypePrepare":     0,
-	"ScpStatementTypeConfirm":     1,
-	"ScpStatementTypeExternalize": 2,
-	"ScpStatementTypeNominate":    3,
-}
-
-// ValidEnum validates a proposed value for this enum.  Implements
-// the Enum interface for ScpStatementType
-func (e ScpStatementType) ValidEnum(v int32) bool {
-	_, ok := scpStatementTypeMap[v]
-	return ok
-}
-
-// String returns the name of `e`
-func (e ScpStatementType) String() string {
-	name, _ := scpStatementTypeMap[int32(e)]
-	return name
-}
-
-func (e ScpStatementType) ShortString() string {
-	name, _ := scpStatementTypeShortMap[int32(e)]
-	return name
-}
-
-func (e ScpStatementType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
-}
-
-func (e *ScpStatementType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
-		return err
-	}
-
-	value, ok := scpStatementTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = ScpStatementType(value)
-	return nil
-}
-
-// ScpNomination is an XDR Struct defines as:
-//
-//   struct SCPNomination
-//    {
-//        Hash quorumSetHash; // D
-//        Value votes<>;      // X
-//        Value accepted<>;   // Y
-//    };
-//
-type ScpNomination struct {
-	QuorumSetHash Hash    `json:"quorumSetHash,omitempty"`
-	Votes         []Value `json:"votes,omitempty"`
-	Accepted      []Value `json:"accepted,omitempty"`
-}
-
-// ScpStatementPrepare is an XDR NestedStruct defines as:
-//
-//   struct
-//            {
-//                Hash quorumSetHash;       // D
-//                SCPBallot ballot;         // b
-//                SCPBallot* prepared;      // p
-//                SCPBallot* preparedPrime; // p'
-//                uint32 nC;                // c.n
-//                uint32 nH;                // h.n
-//            }
-//
-type ScpStatementPrepare struct {
-	QuorumSetHash Hash       `json:"quorumSetHash,omitempty"`
-	Ballot        ScpBallot  `json:"ballot,omitempty"`
-	Prepared      *ScpBallot `json:"prepared,omitempty"`
-	PreparedPrime *ScpBallot `json:"preparedPrime,omitempty"`
-	NC            Uint32     `json:"nC,omitempty"`
-	NH            Uint32     `json:"nH,omitempty"`
-}
-
-// ScpStatementConfirm is an XDR NestedStruct defines as:
-//
-//   struct
-//            {
-//                SCPBallot ballot;   // b
-//                uint32 nPrepared;   // p.n
-//                uint32 nCommit;     // c.n
-//                uint32 nH;          // h.n
-//                Hash quorumSetHash; // D
-//            }
-//
-type ScpStatementConfirm struct {
-	Ballot        ScpBallot `json:"ballot,omitempty"`
-	NPrepared     Uint32    `json:"nPrepared,omitempty"`
-	NCommit       Uint32    `json:"nCommit,omitempty"`
-	NH            Uint32    `json:"nH,omitempty"`
-	QuorumSetHash Hash      `json:"quorumSetHash,omitempty"`
-}
-
-// ScpStatementExternalize is an XDR NestedStruct defines as:
-//
-//   struct
-//            {
-//                SCPBallot commit;         // c
-//                uint32 nH;                // h.n
-//                Hash commitQuorumSetHash; // D used before EXTERNALIZE
-//            }
-//
-type ScpStatementExternalize struct {
-	Commit              ScpBallot `json:"commit,omitempty"`
-	NH                  Uint32    `json:"nH,omitempty"`
-	CommitQuorumSetHash Hash      `json:"commitQuorumSetHash,omitempty"`
-}
-
-// ScpStatementPledges is an XDR NestedUnion defines as:
-//
-//   union switch (SCPStatementType type)
-//        {
-//        case PREPARE:
-//            struct
-//            {
-//                Hash quorumSetHash;       // D
-//                SCPBallot ballot;         // b
-//                SCPBallot* prepared;      // p
-//                SCPBallot* preparedPrime; // p'
-//                uint32 nC;                // c.n
-//                uint32 nH;                // h.n
-//            } prepare;
-//        case CONFIRM:
-//            struct
-//            {
-//                SCPBallot ballot;   // b
-//                uint32 nPrepared;   // p.n
-//                uint32 nCommit;     // c.n
-//                uint32 nH;          // h.n
-//                Hash quorumSetHash; // D
-//            } confirm;
-//        case EXTERNALIZE:
-//            struct
-//            {
-//                SCPBallot commit;         // c
-//                uint32 nH;                // h.n
-//                Hash commitQuorumSetHash; // D used before EXTERNALIZE
-//            } externalize;
-//        case NOMINATE:
-//            SCPNomination nominate;
-//        }
-//
-type ScpStatementPledges struct {
-	Type        ScpStatementType         `json:"type,omitempty"`
-	Prepare     *ScpStatementPrepare     `json:"prepare,omitempty"`
-	Confirm     *ScpStatementConfirm     `json:"confirm,omitempty"`
-	Externalize *ScpStatementExternalize `json:"externalize,omitempty"`
-	Nominate    *ScpNomination           `json:"nominate,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u ScpStatementPledges) SwitchFieldName() string {
-	return "Type"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of ScpStatementPledges
-func (u ScpStatementPledges) ArmForSwitch(sw int32) (string, bool) {
-	switch ScpStatementType(sw) {
-	case ScpStatementTypePrepare:
-		return "Prepare", true
-	case ScpStatementTypeConfirm:
-		return "Confirm", true
-	case ScpStatementTypeExternalize:
-		return "Externalize", true
-	case ScpStatementTypeNominate:
-		return "Nominate", true
-	}
-	return "-", false
-}
-
-// NewScpStatementPledges creates a new  ScpStatementPledges.
-func NewScpStatementPledges(aType ScpStatementType, value interface{}) (result ScpStatementPledges, err error) {
-	result.Type = aType
-	switch ScpStatementType(aType) {
-	case ScpStatementTypePrepare:
-		tv, ok := value.(ScpStatementPrepare)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be ScpStatementPrepare")
-			return
-		}
-		result.Prepare = &tv
-	case ScpStatementTypeConfirm:
-		tv, ok := value.(ScpStatementConfirm)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be ScpStatementConfirm")
-			return
-		}
-		result.Confirm = &tv
-	case ScpStatementTypeExternalize:
-		tv, ok := value.(ScpStatementExternalize)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be ScpStatementExternalize")
-			return
-		}
-		result.Externalize = &tv
-	case ScpStatementTypeNominate:
-		tv, ok := value.(ScpNomination)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be ScpNomination")
-			return
-		}
-		result.Nominate = &tv
-	}
-	return
-}
-
-// MustPrepare retrieves the Prepare value from the union,
-// panicing if the value is not set.
-func (u ScpStatementPledges) MustPrepare() ScpStatementPrepare {
-	val, ok := u.GetPrepare()
-
-	if !ok {
-		panic("arm Prepare is not set")
-	}
-
-	return val
-}
-
-// GetPrepare retrieves the Prepare value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u ScpStatementPledges) GetPrepare() (result ScpStatementPrepare, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Type))
-
-	if armName == "Prepare" {
-		result = *u.Prepare
-		ok = true
-	}
-
-	return
-}
-
-// MustConfirm retrieves the Confirm value from the union,
-// panicing if the value is not set.
-func (u ScpStatementPledges) MustConfirm() ScpStatementConfirm {
-	val, ok := u.GetConfirm()
-
-	if !ok {
-		panic("arm Confirm is not set")
-	}
-
-	return val
-}
-
-// GetConfirm retrieves the Confirm value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u ScpStatementPledges) GetConfirm() (result ScpStatementConfirm, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Type))
-
-	if armName == "Confirm" {
-		result = *u.Confirm
-		ok = true
-	}
-
-	return
-}
-
-// MustExternalize retrieves the Externalize value from the union,
-// panicing if the value is not set.
-func (u ScpStatementPledges) MustExternalize() ScpStatementExternalize {
-	val, ok := u.GetExternalize()
-
-	if !ok {
-		panic("arm Externalize is not set")
-	}
-
-	return val
-}
-
-// GetExternalize retrieves the Externalize value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u ScpStatementPledges) GetExternalize() (result ScpStatementExternalize, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Type))
-
-	if armName == "Externalize" {
-		result = *u.Externalize
-		ok = true
-	}
-
-	return
-}
-
-// MustNominate retrieves the Nominate value from the union,
-// panicing if the value is not set.
-func (u ScpStatementPledges) MustNominate() ScpNomination {
-	val, ok := u.GetNominate()
-
-	if !ok {
-		panic("arm Nominate is not set")
-	}
-
-	return val
-}
-
-// GetNominate retrieves the Nominate value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u ScpStatementPledges) GetNominate() (result ScpNomination, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Type))
-
-	if armName == "Nominate" {
-		result = *u.Nominate
-		ok = true
-	}
-
-	return
-}
-
-// ScpStatement is an XDR Struct defines as:
-//
-//   struct SCPStatement
-//    {
-//        NodeID nodeID;    // v
-//        uint64 slotIndex; // i
-//
-//        union switch (SCPStatementType type)
-//        {
-//        case PREPARE:
-//            struct
-//            {
-//                Hash quorumSetHash;       // D
-//                SCPBallot ballot;         // b
-//                SCPBallot* prepared;      // p
-//                SCPBallot* preparedPrime; // p'
-//                uint32 nC;                // c.n
-//                uint32 nH;                // h.n
-//            } prepare;
-//        case CONFIRM:
-//            struct
-//            {
-//                SCPBallot ballot;   // b
-//                uint32 nPrepared;   // p.n
-//                uint32 nCommit;     // c.n
-//                uint32 nH;          // h.n
-//                Hash quorumSetHash; // D
-//            } confirm;
-//        case EXTERNALIZE:
-//            struct
-//            {
-//                SCPBallot commit;         // c
-//                uint32 nH;                // h.n
-//                Hash commitQuorumSetHash; // D used before EXTERNALIZE
-//            } externalize;
-//        case NOMINATE:
-//            SCPNomination nominate;
-//        }
-//        pledges;
-//    };
-//
-type ScpStatement struct {
-	NodeId    NodeId              `json:"nodeID,omitempty"`
-	SlotIndex Uint64              `json:"slotIndex,omitempty"`
-	Pledges   ScpStatementPledges `json:"pledges,omitempty"`
-}
-
-// ScpEnvelope is an XDR Struct defines as:
-//
-//   struct SCPEnvelope
-//    {
-//        SCPStatement statement;
-//        Signature signature;
-//    };
-//
-type ScpEnvelope struct {
-	Statement ScpStatement `json:"statement,omitempty"`
-	Signature Signature    `json:"signature,omitempty"`
-}
-
-// ScpQuorumSet is an XDR Struct defines as:
-//
-//   struct SCPQuorumSet
-//    {
-//        uint32 threshold;
-//        PublicKey validators<>;
-//        SCPQuorumSet innerSets<>;
-//    };
-//
-type ScpQuorumSet struct {
-	Threshold  Uint32         `json:"threshold,omitempty"`
-	Validators []PublicKey    `json:"validators,omitempty"`
-	InnerSets  []ScpQuorumSet `json:"innerSets,omitempty"`
-}
-
 // OperationBody is an XDR NestedUnion defines as:
 //
 //   union switch (OperationType type)
@@ -15550,6 +16608,15 @@ func (e MemoType) ValidEnum(v int32) bool {
 	_, ok := memoTypeMap[v]
 	return ok
 }
+func (e MemoType) isFlag() bool {
+	for i := len(MemoTypeAll) - 1; i >= 0; i-- {
+		expected := MemoType(2) << uint64(len(MemoTypeAll)-1) >> uint64(len(MemoTypeAll)-i)
+		if expected != MemoTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e MemoType) String() string {
@@ -15563,22 +16630,36 @@ func (e MemoType) ShortString() string {
 }
 
 func (e MemoType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range MemoTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *MemoType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *MemoType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := memoTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = MemoType(value)
+	*e = MemoType(t.Value)
 	return nil
 }
 
@@ -15950,6 +17031,15 @@ func (e OperationResultCode) ValidEnum(v int32) bool {
 	_, ok := operationResultCodeMap[v]
 	return ok
 }
+func (e OperationResultCode) isFlag() bool {
+	for i := len(OperationResultCodeAll) - 1; i >= 0; i-- {
+		expected := OperationResultCode(2) << uint64(len(OperationResultCodeAll)-1) >> uint64(len(OperationResultCodeAll)-i)
+		if expected != OperationResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e OperationResultCode) String() string {
@@ -15963,22 +17053,36 @@ func (e OperationResultCode) ShortString() string {
 }
 
 func (e OperationResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range OperationResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *OperationResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := operationResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = OperationResultCode(value)
+	*e = OperationResultCode(t.Value)
 	return nil
 }
 
@@ -16891,6 +17995,15 @@ func (e TransactionResultCode) ValidEnum(v int32) bool {
 	_, ok := transactionResultCodeMap[v]
 	return ok
 }
+func (e TransactionResultCode) isFlag() bool {
+	for i := len(TransactionResultCodeAll) - 1; i >= 0; i-- {
+		expected := TransactionResultCode(2) << uint64(len(TransactionResultCodeAll)-1) >> uint64(len(TransactionResultCodeAll)-i)
+		if expected != TransactionResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e TransactionResultCode) String() string {
@@ -16904,22 +18017,36 @@ func (e TransactionResultCode) ShortString() string {
 }
 
 func (e TransactionResultCode) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range TransactionResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *TransactionResultCode) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *TransactionResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := transactionResultCodeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = TransactionResultCode(value)
+	*e = TransactionResultCode(t.Value)
 	return nil
 }
 
@@ -17147,6 +18274,15 @@ func (e CryptoKeyType) ValidEnum(v int32) bool {
 	_, ok := cryptoKeyTypeMap[v]
 	return ok
 }
+func (e CryptoKeyType) isFlag() bool {
+	for i := len(CryptoKeyTypeAll) - 1; i >= 0; i-- {
+		expected := CryptoKeyType(2) << uint64(len(CryptoKeyTypeAll)-1) >> uint64(len(CryptoKeyTypeAll)-i)
+		if expected != CryptoKeyTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e CryptoKeyType) String() string {
@@ -17160,22 +18296,36 @@ func (e CryptoKeyType) ShortString() string {
 }
 
 func (e CryptoKeyType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range CryptoKeyTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *CryptoKeyType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *CryptoKeyType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := cryptoKeyTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = CryptoKeyType(value)
+	*e = CryptoKeyType(t.Value)
 	return nil
 }
 
@@ -17214,6 +18364,15 @@ func (e PublicKeyType) ValidEnum(v int32) bool {
 	_, ok := publicKeyTypeMap[v]
 	return ok
 }
+func (e PublicKeyType) isFlag() bool {
+	for i := len(PublicKeyTypeAll) - 1; i >= 0; i-- {
+		expected := PublicKeyType(2) << uint64(len(PublicKeyTypeAll)-1) >> uint64(len(PublicKeyTypeAll)-i)
+		if expected != PublicKeyTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e PublicKeyType) String() string {
@@ -17227,22 +18386,36 @@ func (e PublicKeyType) ShortString() string {
 }
 
 func (e PublicKeyType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range PublicKeyTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *PublicKeyType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *PublicKeyType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := publicKeyTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = PublicKeyType(value)
+	*e = PublicKeyType(t.Value)
 	return nil
 }
 
@@ -17373,6 +18546,15 @@ func (e LedgerVersion) ValidEnum(v int32) bool {
 	_, ok := ledgerVersionMap[v]
 	return ok
 }
+func (e LedgerVersion) isFlag() bool {
+	for i := len(LedgerVersionAll) - 1; i >= 0; i-- {
+		expected := LedgerVersion(2) << uint64(len(LedgerVersionAll)-1) >> uint64(len(LedgerVersionAll)-i)
+		if expected != LedgerVersionAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e LedgerVersion) String() string {
@@ -17386,22 +18568,36 @@ func (e LedgerVersion) ShortString() string {
 }
 
 func (e LedgerVersion) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range LedgerVersionAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *LedgerVersion) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *LedgerVersion) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := ledgerVersionRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = LedgerVersion(value)
+	*e = LedgerVersion(t.Value)
 	return nil
 }
 
@@ -17777,6 +18973,15 @@ func (e OperationType) ValidEnum(v int32) bool {
 	_, ok := operationTypeMap[v]
 	return ok
 }
+func (e OperationType) isFlag() bool {
+	for i := len(OperationTypeAll) - 1; i >= 0; i-- {
+		expected := OperationType(2) << uint64(len(OperationTypeAll)-1) >> uint64(len(OperationTypeAll)-i)
+		if expected != OperationTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
 
 // String returns the name of `e`
 func (e OperationType) String() string {
@@ -17790,22 +18995,36 @@ func (e OperationType) ShortString() string {
 }
 
 func (e OperationType) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + e.String() + "\""), nil
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range OperationTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
 }
 
-func (e *OperationType) UnmarshalJSON(d []byte) error {
-	var raw string
-	err := json.Unmarshal(d, &raw)
-	if err != nil {
+func (e *OperationType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
 		return err
 	}
-
-	value, ok := operationTypeRevMap[raw]
-	if !ok {
-		return fmt.Errorf("unexpected json value: %s", raw)
-	}
-
-	*e = OperationType(value)
+	*e = OperationType(t.Value)
 	return nil
 }
 
