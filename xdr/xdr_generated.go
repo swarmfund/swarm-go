@@ -166,7 +166,7 @@ func (e ScpStatementType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -798,7 +798,7 @@ func (e SignerType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -1085,7 +1085,7 @@ func (e AccountPolicies) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -1205,7 +1205,7 @@ func (e AccountType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -1307,7 +1307,7 @@ func (e BlockReasons) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -1490,7 +1490,7 @@ func (e AssetPairPolicy) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -1654,7 +1654,7 @@ func (e AssetPolicy) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -1910,7 +1910,7 @@ func (e FeeType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -2006,7 +2006,7 @@ func (e EmissionFeeType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -2182,7 +2182,7 @@ func (e InvoiceState) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -2444,7 +2444,7 @@ func (e RequestType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -2687,7 +2687,7 @@ func (e ReviewableRequestType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -3123,7 +3123,7 @@ func (e ThresholdIndexes) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -3291,7 +3291,7 @@ func (e LedgerEntryType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -4035,7 +4035,7 @@ func (e EnvelopeType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -4309,7 +4309,7 @@ func (e LedgerUpgradeType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -5994,7 +5994,7 @@ func (e BucketEntryType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -6521,7 +6521,7 @@ func (e LedgerEntryChangeType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -6980,7 +6980,7 @@ func (e CreateAccountResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -7305,7 +7305,7 @@ func (e CreateIssuanceRequestResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -7630,7 +7630,7 @@ func (e CreatePreIssuanceRequestResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -7999,7 +7999,7 @@ func (e DirectDebitResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -8309,7 +8309,7 @@ func (e ManageAccountResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -8541,7 +8541,7 @@ func (e ManageAssetPairAction) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -8749,7 +8749,7 @@ func (e ManageAssetPairResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -8982,7 +8982,7 @@ func (e ManageAssetAction) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -9383,7 +9383,7 @@ func (e ManageAssetResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -9610,7 +9610,7 @@ func (e ManageBalanceAction) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -9801,7 +9801,7 @@ func (e ManageBalanceResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -10142,7 +10142,7 @@ func (e ManageForfeitRequestResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -10479,7 +10479,7 @@ func (e ManageInvoiceResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -10851,7 +10851,7 @@ func (e ManageOfferResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -10953,7 +10953,7 @@ func (e ManageOfferEffect) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -11905,7 +11905,7 @@ func (e PaymentResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -12212,7 +12212,7 @@ func (e RecoverResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -12515,7 +12515,7 @@ func (e ReviewPaymentRequestResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -12617,7 +12617,7 @@ func (e PaymentState) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -12851,7 +12851,7 @@ func (e ReviewRequestOpAction) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -13080,7 +13080,7 @@ func (e ReviewRequestResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -13422,7 +13422,7 @@ func (e SetFeesResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -13718,7 +13718,7 @@ func (e SetLimitsResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -13950,7 +13950,7 @@ func (e ManageTrustAction) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -14215,7 +14215,7 @@ func (e SetOptionsResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -14465,7 +14465,7 @@ func (e ErrorCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -14629,7 +14629,7 @@ func (e IpAddrType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -14926,7 +14926,7 @@ func (e MessageType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -16639,7 +16639,7 @@ func (e MemoType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -17062,7 +17062,7 @@ func (e OperationResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -18026,7 +18026,7 @@ func (e TransactionResultCode) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -18305,7 +18305,7 @@ func (e CryptoKeyType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -18395,7 +18395,7 @@ func (e PublicKeyType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -18577,7 +18577,7 @@ func (e LedgerVersion) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}
@@ -19004,7 +19004,7 @@ func (e OperationType) MarshalJSON() ([]byte, error) {
 			if (value & e) == value {
 				result.Flags = append(result.Flags, flagValue{
 					Value: int32(value),
-					Name:  e.ShortString(),
+					Name:  value.ShortString(),
 				})
 			}
 		}

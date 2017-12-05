@@ -10,7 +10,7 @@ import (
 )
 
 func TestFlag(t *testing.T) {
-	expected := `{"int":6,"flags":[{"name":"","value":2},{"name":"","value":4}]}`
+	expected := `{"int":6,"flags":[{"name":"kyc_update","value":2},{"name":"suspicious_behavior","value":4}]}`
 	value := xdr.BlockReasonsKycUpdate ^ xdr.BlockReasonsSuspiciousBehavior
 
 	t.Run("marshal", func(t *testing.T) {
