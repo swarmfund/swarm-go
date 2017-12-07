@@ -7,6 +7,7 @@
 //  xdr/raw/Stellar-ledger-entries-asset-pair.x
 //  xdr/raw/Stellar-ledger-entries-asset.x
 //  xdr/raw/Stellar-ledger-entries-balance.x
+//  xdr/raw/Stellar-ledger-entries-external-system-id.x
 //  xdr/raw/Stellar-ledger-entries-fee.x
 //  xdr/raw/Stellar-ledger-entries-invoice.x
 //  xdr/raw/Stellar-ledger-entries-offer.x
@@ -1820,6 +1821,164 @@ type BalanceEntry struct {
 	Ext       BalanceEntryExt `json:"ext,omitempty"`
 }
 
+// ExternalSystemType is an XDR Enum defines as:
+//
+//   enum ExternalSystemType
+//    {
+//    	BITCOIN = 1,
+//    	ETHEREUM = 2
+//    };
+//
+type ExternalSystemType int32
+
+const (
+	ExternalSystemTypeBitcoin  ExternalSystemType = 1
+	ExternalSystemTypeEthereum ExternalSystemType = 2
+)
+
+var ExternalSystemTypeAll = []ExternalSystemType{
+	ExternalSystemTypeBitcoin,
+	ExternalSystemTypeEthereum,
+}
+
+var externalSystemTypeMap = map[int32]string{
+	1: "ExternalSystemTypeBitcoin",
+	2: "ExternalSystemTypeEthereum",
+}
+
+var externalSystemTypeShortMap = map[int32]string{
+	1: "bitcoin",
+	2: "ethereum",
+}
+
+var externalSystemTypeRevMap = map[string]int32{
+	"ExternalSystemTypeBitcoin":  1,
+	"ExternalSystemTypeEthereum": 2,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for ExternalSystemType
+func (e ExternalSystemType) ValidEnum(v int32) bool {
+	_, ok := externalSystemTypeMap[v]
+	return ok
+}
+func (e ExternalSystemType) isFlag() bool {
+	for i := len(ExternalSystemTypeAll) - 1; i >= 0; i-- {
+		expected := ExternalSystemType(2) << uint64(len(ExternalSystemTypeAll)-1) >> uint64(len(ExternalSystemTypeAll)-i)
+		if expected != ExternalSystemTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e ExternalSystemType) String() string {
+	name, _ := externalSystemTypeMap[int32(e)]
+	return name
+}
+
+func (e ExternalSystemType) ShortString() string {
+	name, _ := externalSystemTypeShortMap[int32(e)]
+	return name
+}
+
+func (e ExternalSystemType) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ExternalSystemTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *ExternalSystemType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = ExternalSystemType(t.Value)
+	return nil
+}
+
+// ExternalSystemAccountIdExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type ExternalSystemAccountIdExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ExternalSystemAccountIdExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ExternalSystemAccountIdExt
+func (u ExternalSystemAccountIdExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewExternalSystemAccountIdExt creates a new  ExternalSystemAccountIdExt.
+func NewExternalSystemAccountIdExt(v LedgerVersion, value interface{}) (result ExternalSystemAccountIdExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// ExternalSystemAccountId is an XDR Struct defines as:
+//
+//   struct ExternalSystemAccountID
+//    {
+//        AccountID accountID;
+//        ExternalSystemType externalSystemType;
+//    	longstring data;
+//
+//    	 // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type ExternalSystemAccountId struct {
+	AccountId          AccountId                  `json:"accountID,omitempty"`
+	ExternalSystemType ExternalSystemType         `json:"externalSystemType,omitempty"`
+	Data               Longstring                 `json:"data,omitempty"`
+	Ext                ExternalSystemAccountIdExt `json:"ext,omitempty"`
+}
+
 // FeeType is an XDR Enum defines as:
 //
 //   enum FeeType
@@ -3164,26 +3323,28 @@ func (e *ThresholdIndexes) UnmarshalJSON(data []byte) error {
 //    	ASSET_PAIR = 12,
 //    	OFFER_ENTRY = 13,
 //        INVOICE = 14,
-//    	REVIEWABLE_REQUEST = 15
+//    	REVIEWABLE_REQUEST = 15,
+//    	EXTERNAL_SYSTEM_ACCOUNT_ID = 16
 //    };
 //
 type LedgerEntryType int32
 
 const (
-	LedgerEntryTypeAccount           LedgerEntryType = 0
-	LedgerEntryTypeFee               LedgerEntryType = 2
-	LedgerEntryTypeBalance           LedgerEntryType = 4
-	LedgerEntryTypePaymentRequest    LedgerEntryType = 5
-	LedgerEntryTypeAsset             LedgerEntryType = 6
-	LedgerEntryTypeReferenceEntry    LedgerEntryType = 7
-	LedgerEntryTypeAccountTypeLimits LedgerEntryType = 8
-	LedgerEntryTypeStatistics        LedgerEntryType = 9
-	LedgerEntryTypeTrust             LedgerEntryType = 10
-	LedgerEntryTypeAccountLimits     LedgerEntryType = 11
-	LedgerEntryTypeAssetPair         LedgerEntryType = 12
-	LedgerEntryTypeOfferEntry        LedgerEntryType = 13
-	LedgerEntryTypeInvoice           LedgerEntryType = 14
-	LedgerEntryTypeReviewableRequest LedgerEntryType = 15
+	LedgerEntryTypeAccount                 LedgerEntryType = 0
+	LedgerEntryTypeFee                     LedgerEntryType = 2
+	LedgerEntryTypeBalance                 LedgerEntryType = 4
+	LedgerEntryTypePaymentRequest          LedgerEntryType = 5
+	LedgerEntryTypeAsset                   LedgerEntryType = 6
+	LedgerEntryTypeReferenceEntry          LedgerEntryType = 7
+	LedgerEntryTypeAccountTypeLimits       LedgerEntryType = 8
+	LedgerEntryTypeStatistics              LedgerEntryType = 9
+	LedgerEntryTypeTrust                   LedgerEntryType = 10
+	LedgerEntryTypeAccountLimits           LedgerEntryType = 11
+	LedgerEntryTypeAssetPair               LedgerEntryType = 12
+	LedgerEntryTypeOfferEntry              LedgerEntryType = 13
+	LedgerEntryTypeInvoice                 LedgerEntryType = 14
+	LedgerEntryTypeReviewableRequest       LedgerEntryType = 15
+	LedgerEntryTypeExternalSystemAccountId LedgerEntryType = 16
 )
 
 var LedgerEntryTypeAll = []LedgerEntryType{
@@ -3201,6 +3362,7 @@ var LedgerEntryTypeAll = []LedgerEntryType{
 	LedgerEntryTypeOfferEntry,
 	LedgerEntryTypeInvoice,
 	LedgerEntryTypeReviewableRequest,
+	LedgerEntryTypeExternalSystemAccountId,
 }
 
 var ledgerEntryTypeMap = map[int32]string{
@@ -3218,6 +3380,7 @@ var ledgerEntryTypeMap = map[int32]string{
 	13: "LedgerEntryTypeOfferEntry",
 	14: "LedgerEntryTypeInvoice",
 	15: "LedgerEntryTypeReviewableRequest",
+	16: "LedgerEntryTypeExternalSystemAccountId",
 }
 
 var ledgerEntryTypeShortMap = map[int32]string{
@@ -3235,23 +3398,25 @@ var ledgerEntryTypeShortMap = map[int32]string{
 	13: "offer_entry",
 	14: "invoice",
 	15: "reviewable_request",
+	16: "external_system_account_id",
 }
 
 var ledgerEntryTypeRevMap = map[string]int32{
-	"LedgerEntryTypeAccount":           0,
-	"LedgerEntryTypeFee":               2,
-	"LedgerEntryTypeBalance":           4,
-	"LedgerEntryTypePaymentRequest":    5,
-	"LedgerEntryTypeAsset":             6,
-	"LedgerEntryTypeReferenceEntry":    7,
-	"LedgerEntryTypeAccountTypeLimits": 8,
-	"LedgerEntryTypeStatistics":        9,
-	"LedgerEntryTypeTrust":             10,
-	"LedgerEntryTypeAccountLimits":     11,
-	"LedgerEntryTypeAssetPair":         12,
-	"LedgerEntryTypeOfferEntry":        13,
-	"LedgerEntryTypeInvoice":           14,
-	"LedgerEntryTypeReviewableRequest": 15,
+	"LedgerEntryTypeAccount":                 0,
+	"LedgerEntryTypeFee":                     2,
+	"LedgerEntryTypeBalance":                 4,
+	"LedgerEntryTypePaymentRequest":          5,
+	"LedgerEntryTypeAsset":                   6,
+	"LedgerEntryTypeReferenceEntry":          7,
+	"LedgerEntryTypeAccountTypeLimits":       8,
+	"LedgerEntryTypeStatistics":              9,
+	"LedgerEntryTypeTrust":                   10,
+	"LedgerEntryTypeAccountLimits":           11,
+	"LedgerEntryTypeAssetPair":               12,
+	"LedgerEntryTypeOfferEntry":              13,
+	"LedgerEntryTypeInvoice":                 14,
+	"LedgerEntryTypeReviewableRequest":       15,
+	"LedgerEntryTypeExternalSystemAccountId": 16,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -3347,24 +3512,27 @@ func (e *LedgerEntryType) UnmarshalJSON(data []byte) error {
 //            InvoiceEntry invoice;
 //    	case REVIEWABLE_REQUEST:
 //    		ReviewableRequestEntry reviewableRequest;
+//    	case EXTERNAL_SYSTEM_ACCOUNT_ID:
+//    		ExternalSystemAccountID externalSystemAccountID;
 //        }
 //
 type LedgerEntryData struct {
-	Type              LedgerEntryType         `json:"type,omitempty"`
-	Account           *AccountEntry           `json:"account,omitempty"`
-	FeeState          *FeeEntry               `json:"feeState,omitempty"`
-	Balance           *BalanceEntry           `json:"balance,omitempty"`
-	PaymentRequest    *PaymentRequestEntry    `json:"paymentRequest,omitempty"`
-	Asset             *AssetEntry             `json:"asset,omitempty"`
-	Reference         *ReferenceEntry         `json:"reference,omitempty"`
-	AccountTypeLimits *AccountTypeLimitsEntry `json:"accountTypeLimits,omitempty"`
-	Stats             *StatisticsEntry        `json:"stats,omitempty"`
-	Trust             *TrustEntry             `json:"trust,omitempty"`
-	AccountLimits     *AccountLimitsEntry     `json:"accountLimits,omitempty"`
-	AssetPair         *AssetPairEntry         `json:"assetPair,omitempty"`
-	Offer             *OfferEntry             `json:"offer,omitempty"`
-	Invoice           *InvoiceEntry           `json:"invoice,omitempty"`
-	ReviewableRequest *ReviewableRequestEntry `json:"reviewableRequest,omitempty"`
+	Type                    LedgerEntryType          `json:"type,omitempty"`
+	Account                 *AccountEntry            `json:"account,omitempty"`
+	FeeState                *FeeEntry                `json:"feeState,omitempty"`
+	Balance                 *BalanceEntry            `json:"balance,omitempty"`
+	PaymentRequest          *PaymentRequestEntry     `json:"paymentRequest,omitempty"`
+	Asset                   *AssetEntry              `json:"asset,omitempty"`
+	Reference               *ReferenceEntry          `json:"reference,omitempty"`
+	AccountTypeLimits       *AccountTypeLimitsEntry  `json:"accountTypeLimits,omitempty"`
+	Stats                   *StatisticsEntry         `json:"stats,omitempty"`
+	Trust                   *TrustEntry              `json:"trust,omitempty"`
+	AccountLimits           *AccountLimitsEntry      `json:"accountLimits,omitempty"`
+	AssetPair               *AssetPairEntry          `json:"assetPair,omitempty"`
+	Offer                   *OfferEntry              `json:"offer,omitempty"`
+	Invoice                 *InvoiceEntry            `json:"invoice,omitempty"`
+	ReviewableRequest       *ReviewableRequestEntry  `json:"reviewableRequest,omitempty"`
+	ExternalSystemAccountId *ExternalSystemAccountId `json:"externalSystemAccountID,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -3405,6 +3573,8 @@ func (u LedgerEntryData) ArmForSwitch(sw int32) (string, bool) {
 		return "Invoice", true
 	case LedgerEntryTypeReviewableRequest:
 		return "ReviewableRequest", true
+	case LedgerEntryTypeExternalSystemAccountId:
+		return "ExternalSystemAccountId", true
 	}
 	return "-", false
 }
@@ -3511,6 +3681,13 @@ func NewLedgerEntryData(aType LedgerEntryType, value interface{}) (result Ledger
 			return
 		}
 		result.ReviewableRequest = &tv
+	case LedgerEntryTypeExternalSystemAccountId:
+		tv, ok := value.(ExternalSystemAccountId)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ExternalSystemAccountId")
+			return
+		}
+		result.ExternalSystemAccountId = &tv
 	}
 	return
 }
@@ -3865,6 +4042,31 @@ func (u LedgerEntryData) GetReviewableRequest() (result ReviewableRequestEntry, 
 	return
 }
 
+// MustExternalSystemAccountId retrieves the ExternalSystemAccountId value from the union,
+// panicing if the value is not set.
+func (u LedgerEntryData) MustExternalSystemAccountId() ExternalSystemAccountId {
+	val, ok := u.GetExternalSystemAccountId()
+
+	if !ok {
+		panic("arm ExternalSystemAccountId is not set")
+	}
+
+	return val
+}
+
+// GetExternalSystemAccountId retrieves the ExternalSystemAccountId value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u LedgerEntryData) GetExternalSystemAccountId() (result ExternalSystemAccountId, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "ExternalSystemAccountId" {
+		result = *u.ExternalSystemAccountId
+		ok = true
+	}
+
+	return
+}
+
 // LedgerEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -3939,6 +4141,8 @@ func NewLedgerEntryExt(v LedgerVersion, value interface{}) (result LedgerEntryEx
 //            InvoiceEntry invoice;
 //    	case REVIEWABLE_REQUEST:
 //    		ReviewableRequestEntry reviewableRequest;
+//    	case EXTERNAL_SYSTEM_ACCOUNT_ID:
+//    		ExternalSystemAccountID externalSystemAccountID;
 //        }
 //        data;
 //
@@ -4059,6 +4263,101 @@ func (e *EnvelopeType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ExternalSystemIdGeneratorType is an XDR Enum defines as:
+//
+//   enum ExternalSystemIDGeneratorType {
+//    	BITCOIN_BASIC = 1,
+//    	ETHEREUM_BASIC = 2
+//    };
+//
+type ExternalSystemIdGeneratorType int32
+
+const (
+	ExternalSystemIdGeneratorTypeBitcoinBasic  ExternalSystemIdGeneratorType = 1
+	ExternalSystemIdGeneratorTypeEthereumBasic ExternalSystemIdGeneratorType = 2
+)
+
+var ExternalSystemIdGeneratorTypeAll = []ExternalSystemIdGeneratorType{
+	ExternalSystemIdGeneratorTypeBitcoinBasic,
+	ExternalSystemIdGeneratorTypeEthereumBasic,
+}
+
+var externalSystemIdGeneratorTypeMap = map[int32]string{
+	1: "ExternalSystemIdGeneratorTypeBitcoinBasic",
+	2: "ExternalSystemIdGeneratorTypeEthereumBasic",
+}
+
+var externalSystemIdGeneratorTypeShortMap = map[int32]string{
+	1: "bitcoin_basic",
+	2: "ethereum_basic",
+}
+
+var externalSystemIdGeneratorTypeRevMap = map[string]int32{
+	"ExternalSystemIdGeneratorTypeBitcoinBasic":  1,
+	"ExternalSystemIdGeneratorTypeEthereumBasic": 2,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for ExternalSystemIdGeneratorType
+func (e ExternalSystemIdGeneratorType) ValidEnum(v int32) bool {
+	_, ok := externalSystemIdGeneratorTypeMap[v]
+	return ok
+}
+func (e ExternalSystemIdGeneratorType) isFlag() bool {
+	for i := len(ExternalSystemIdGeneratorTypeAll) - 1; i >= 0; i-- {
+		expected := ExternalSystemIdGeneratorType(2) << uint64(len(ExternalSystemIdGeneratorTypeAll)-1) >> uint64(len(ExternalSystemIdGeneratorTypeAll)-i)
+		if expected != ExternalSystemIdGeneratorTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e ExternalSystemIdGeneratorType) String() string {
+	name, _ := externalSystemIdGeneratorTypeMap[int32(e)]
+	return name
+}
+
+func (e ExternalSystemIdGeneratorType) ShortString() string {
+	name, _ := externalSystemIdGeneratorTypeShortMap[int32(e)]
+	return name
+}
+
+func (e ExternalSystemIdGeneratorType) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ExternalSystemIdGeneratorTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *ExternalSystemIdGeneratorType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = ExternalSystemIdGeneratorType(t.Value)
+	return nil
+}
+
 // UpgradeType is an XDR Typedef defines as:
 //
 //   typedef opaque UpgradeType<128>;
@@ -4133,6 +4432,18 @@ type StellarValue struct {
 	Ext       StellarValueExt `json:"ext,omitempty"`
 }
 
+// IdGenerator is an XDR Struct defines as:
+//
+//   struct IdGenerator {
+//    	LedgerEntryType entryType; // type of the entry, for which ids will be generated
+//    	uint64 idPool; // last used entry specific ID, used for generating entry of specified type
+//    };
+//
+type IdGenerator struct {
+	EntryType LedgerEntryType `json:"entryType,omitempty"`
+	IdPool    Uint64          `json:"idPool,omitempty"`
+}
+
 // LedgerHeaderExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -4183,14 +4494,14 @@ func NewLedgerHeaderExt(v LedgerVersion, value interface{}) (result LedgerHeader
 //
 //        uint32 ledgerSeq; // sequence number of this ledger
 //
-//        uint64 idPool; // last used global ID, used for generating objects
+//        IdGenerator idGenerators<>; // generators of ids
 //
 //        uint32 baseFee;     // base fee per operation in stroops
 //        uint32 baseReserve; // account base reserve in stroops
 //
 //        uint32 maxTxSetSize; // maximum size a transaction set can be
 //
-//        PublicKey issuanceKeys<>;
+//        ExternalSystemIDGeneratorType externalSystemIDGenerators<>;
 //        int64 txExpirationPeriod;
 //
 //        Hash skipList[4]; // hashes of ledgers in the past. allows you to jump back
@@ -4209,20 +4520,20 @@ func NewLedgerHeaderExt(v LedgerVersion, value interface{}) (result LedgerHeader
 //    };
 //
 type LedgerHeader struct {
-	LedgerVersion      Uint32          `json:"ledgerVersion,omitempty"`
-	PreviousLedgerHash Hash            `json:"previousLedgerHash,omitempty"`
-	ScpValue           StellarValue    `json:"scpValue,omitempty"`
-	TxSetResultHash    Hash            `json:"txSetResultHash,omitempty"`
-	BucketListHash     Hash            `json:"bucketListHash,omitempty"`
-	LedgerSeq          Uint32          `json:"ledgerSeq,omitempty"`
-	IdPool             Uint64          `json:"idPool,omitempty"`
-	BaseFee            Uint32          `json:"baseFee,omitempty"`
-	BaseReserve        Uint32          `json:"baseReserve,omitempty"`
-	MaxTxSetSize       Uint32          `json:"maxTxSetSize,omitempty"`
-	IssuanceKeys       []PublicKey     `json:"issuanceKeys,omitempty"`
-	TxExpirationPeriod Int64           `json:"txExpirationPeriod,omitempty"`
-	SkipList           [4]Hash         `json:"skipList,omitempty"`
-	Ext                LedgerHeaderExt `json:"ext,omitempty"`
+	LedgerVersion              Uint32                          `json:"ledgerVersion,omitempty"`
+	PreviousLedgerHash         Hash                            `json:"previousLedgerHash,omitempty"`
+	ScpValue                   StellarValue                    `json:"scpValue,omitempty"`
+	TxSetResultHash            Hash                            `json:"txSetResultHash,omitempty"`
+	BucketListHash             Hash                            `json:"bucketListHash,omitempty"`
+	LedgerSeq                  Uint32                          `json:"ledgerSeq,omitempty"`
+	IdGenerators               []IdGenerator                   `json:"idGenerators,omitempty"`
+	BaseFee                    Uint32                          `json:"baseFee,omitempty"`
+	BaseReserve                Uint32                          `json:"baseReserve,omitempty"`
+	MaxTxSetSize               Uint32                          `json:"maxTxSetSize,omitempty"`
+	ExternalSystemIdGenerators []ExternalSystemIdGeneratorType `json:"externalSystemIDGenerators,omitempty"`
+	TxExpirationPeriod         Int64                           `json:"txExpirationPeriod,omitempty"`
+	SkipList                   [4]Hash                         `json:"skipList,omitempty"`
+	Ext                        LedgerHeaderExt                 `json:"ext,omitempty"`
 }
 
 // LedgerUpgradeType is an XDR Enum defines as:
@@ -4231,45 +4542,45 @@ type LedgerHeader struct {
 //    {
 //        VERSION = 1,
 //        MAX_TX_SET_SIZE = 2,
-//        ISSUANCE_KEYS = 3,
-//        TX_EXPIRATION_PERIOD = 4
+//        TX_EXPIRATION_PERIOD = 3,
+//    	EXTERNAL_SYSTEM_ID_GENERATOR = 4
 //    };
 //
 type LedgerUpgradeType int32
 
 const (
-	LedgerUpgradeTypeVersion            LedgerUpgradeType = 1
-	LedgerUpgradeTypeMaxTxSetSize       LedgerUpgradeType = 2
-	LedgerUpgradeTypeIssuanceKeys       LedgerUpgradeType = 3
-	LedgerUpgradeTypeTxExpirationPeriod LedgerUpgradeType = 4
+	LedgerUpgradeTypeVersion                   LedgerUpgradeType = 1
+	LedgerUpgradeTypeMaxTxSetSize              LedgerUpgradeType = 2
+	LedgerUpgradeTypeTxExpirationPeriod        LedgerUpgradeType = 3
+	LedgerUpgradeTypeExternalSystemIdGenerator LedgerUpgradeType = 4
 )
 
 var LedgerUpgradeTypeAll = []LedgerUpgradeType{
 	LedgerUpgradeTypeVersion,
 	LedgerUpgradeTypeMaxTxSetSize,
-	LedgerUpgradeTypeIssuanceKeys,
 	LedgerUpgradeTypeTxExpirationPeriod,
+	LedgerUpgradeTypeExternalSystemIdGenerator,
 }
 
 var ledgerUpgradeTypeMap = map[int32]string{
 	1: "LedgerUpgradeTypeVersion",
 	2: "LedgerUpgradeTypeMaxTxSetSize",
-	3: "LedgerUpgradeTypeIssuanceKeys",
-	4: "LedgerUpgradeTypeTxExpirationPeriod",
+	3: "LedgerUpgradeTypeTxExpirationPeriod",
+	4: "LedgerUpgradeTypeExternalSystemIdGenerator",
 }
 
 var ledgerUpgradeTypeShortMap = map[int32]string{
 	1: "version",
 	2: "max_tx_set_size",
-	3: "issuance_keys",
-	4: "tx_expiration_period",
+	3: "tx_expiration_period",
+	4: "external_system_id_generator",
 }
 
 var ledgerUpgradeTypeRevMap = map[string]int32{
-	"LedgerUpgradeTypeVersion":            1,
-	"LedgerUpgradeTypeMaxTxSetSize":       2,
-	"LedgerUpgradeTypeIssuanceKeys":       3,
-	"LedgerUpgradeTypeTxExpirationPeriod": 4,
+	"LedgerUpgradeTypeVersion":                   1,
+	"LedgerUpgradeTypeMaxTxSetSize":              2,
+	"LedgerUpgradeTypeTxExpirationPeriod":        3,
+	"LedgerUpgradeTypeExternalSystemIdGenerator": 4,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -4341,18 +4652,18 @@ func (e *LedgerUpgradeType) UnmarshalJSON(data []byte) error {
 //        uint32 newLedgerVersion; // update ledgerVersion
 //    case MAX_TX_SET_SIZE:
 //        uint32 newMaxTxSetSize; // update maxTxSetSize
-//    case ISSUANCE_KEYS:
-//        PublicKey newIssuanceKeys<>;
+//    case EXTERNAL_SYSTEM_ID_GENERATOR:
+//        ExternalSystemIDGeneratorType newExternalSystemIDGenerators<>;
 //    case TX_EXPIRATION_PERIOD:
 //        int64 newTxExpirationPeriod;
 //    };
 //
 type LedgerUpgrade struct {
-	Type                  LedgerUpgradeType `json:"type,omitempty"`
-	NewLedgerVersion      *Uint32           `json:"newLedgerVersion,omitempty"`
-	NewMaxTxSetSize       *Uint32           `json:"newMaxTxSetSize,omitempty"`
-	NewIssuanceKeys       *[]PublicKey      `json:"newIssuanceKeys,omitempty"`
-	NewTxExpirationPeriod *Int64            `json:"newTxExpirationPeriod,omitempty"`
+	Type                          LedgerUpgradeType                `json:"type,omitempty"`
+	NewLedgerVersion              *Uint32                          `json:"newLedgerVersion,omitempty"`
+	NewMaxTxSetSize               *Uint32                          `json:"newMaxTxSetSize,omitempty"`
+	NewExternalSystemIdGenerators *[]ExternalSystemIdGeneratorType `json:"newExternalSystemIDGenerators,omitempty"`
+	NewTxExpirationPeriod         *Int64                           `json:"newTxExpirationPeriod,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -4369,8 +4680,8 @@ func (u LedgerUpgrade) ArmForSwitch(sw int32) (string, bool) {
 		return "NewLedgerVersion", true
 	case LedgerUpgradeTypeMaxTxSetSize:
 		return "NewMaxTxSetSize", true
-	case LedgerUpgradeTypeIssuanceKeys:
-		return "NewIssuanceKeys", true
+	case LedgerUpgradeTypeExternalSystemIdGenerator:
+		return "NewExternalSystemIdGenerators", true
 	case LedgerUpgradeTypeTxExpirationPeriod:
 		return "NewTxExpirationPeriod", true
 	}
@@ -4395,13 +4706,13 @@ func NewLedgerUpgrade(aType LedgerUpgradeType, value interface{}) (result Ledger
 			return
 		}
 		result.NewMaxTxSetSize = &tv
-	case LedgerUpgradeTypeIssuanceKeys:
-		tv, ok := value.([]PublicKey)
+	case LedgerUpgradeTypeExternalSystemIdGenerator:
+		tv, ok := value.([]ExternalSystemIdGeneratorType)
 		if !ok {
-			err = fmt.Errorf("invalid value, must be []PublicKey")
+			err = fmt.Errorf("invalid value, must be []ExternalSystemIdGeneratorType")
 			return
 		}
-		result.NewIssuanceKeys = &tv
+		result.NewExternalSystemIdGenerators = &tv
 	case LedgerUpgradeTypeTxExpirationPeriod:
 		tv, ok := value.(Int64)
 		if !ok {
@@ -4463,25 +4774,25 @@ func (u LedgerUpgrade) GetNewMaxTxSetSize() (result Uint32, ok bool) {
 	return
 }
 
-// MustNewIssuanceKeys retrieves the NewIssuanceKeys value from the union,
+// MustNewExternalSystemIdGenerators retrieves the NewExternalSystemIdGenerators value from the union,
 // panicing if the value is not set.
-func (u LedgerUpgrade) MustNewIssuanceKeys() []PublicKey {
-	val, ok := u.GetNewIssuanceKeys()
+func (u LedgerUpgrade) MustNewExternalSystemIdGenerators() []ExternalSystemIdGeneratorType {
+	val, ok := u.GetNewExternalSystemIdGenerators()
 
 	if !ok {
-		panic("arm NewIssuanceKeys is not set")
+		panic("arm NewExternalSystemIdGenerators is not set")
 	}
 
 	return val
 }
 
-// GetNewIssuanceKeys retrieves the NewIssuanceKeys value from the union,
+// GetNewExternalSystemIdGenerators retrieves the NewExternalSystemIdGenerators value from the union,
 // returning ok if the union's switch indicated the value is valid.
-func (u LedgerUpgrade) GetNewIssuanceKeys() (result []PublicKey, ok bool) {
+func (u LedgerUpgrade) GetNewExternalSystemIdGenerators() (result []ExternalSystemIdGeneratorType, ok bool) {
 	armName, _ := u.ArmForSwitch(int32(u.Type))
 
-	if armName == "NewIssuanceKeys" {
-		result = *u.NewIssuanceKeys
+	if armName == "NewExternalSystemIdGenerators" {
+		result = *u.NewExternalSystemIdGenerators
 		ok = true
 	}
 
@@ -5255,6 +5566,63 @@ type LedgerKeyReviewableRequest struct {
 	Ext       LedgerKeyReviewableRequestExt `json:"ext,omitempty"`
 }
 
+// LedgerKeyExternalSystemAccountIdExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//
+type LedgerKeyExternalSystemAccountIdExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u LedgerKeyExternalSystemAccountIdExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of LedgerKeyExternalSystemAccountIdExt
+func (u LedgerKeyExternalSystemAccountIdExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewLedgerKeyExternalSystemAccountIdExt creates a new  LedgerKeyExternalSystemAccountIdExt.
+func NewLedgerKeyExternalSystemAccountIdExt(v LedgerVersion, value interface{}) (result LedgerKeyExternalSystemAccountIdExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// LedgerKeyExternalSystemAccountId is an XDR NestedStruct defines as:
+//
+//   struct {
+//    		AccountID accountID;
+//    		ExternalSystemType externalSystemType;
+//    		union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//    		ext;
+//    	}
+//
+type LedgerKeyExternalSystemAccountId struct {
+	AccountId          AccountId                           `json:"accountID,omitempty"`
+	ExternalSystemType ExternalSystemType                  `json:"externalSystemType,omitempty"`
+	Ext                LedgerKeyExternalSystemAccountIdExt `json:"ext,omitempty"`
+}
+
 // LedgerKey is an XDR Union defines as:
 //
 //   union LedgerKey switch (LedgerEntryType type)
@@ -5404,24 +5772,36 @@ type LedgerKeyReviewableRequest struct {
 //    		}
 //    		ext;
 //        } reviewableRequest;
+//    case EXTERNAL_SYSTEM_ACCOUNT_ID:
+//    	struct {
+//    		AccountID accountID;
+//    		ExternalSystemType externalSystemType;
+//    		union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//    		ext;
+//    	} externalSystemAccountID;
 //    };
 //
 type LedgerKey struct {
-	Type              LedgerEntryType             `json:"type,omitempty"`
-	Account           *LedgerKeyAccount           `json:"account,omitempty"`
-	FeeState          *LedgerKeyFeeState          `json:"feeState,omitempty"`
-	Balance           *LedgerKeyBalance           `json:"balance,omitempty"`
-	PaymentRequest    *LedgerKeyPaymentRequest    `json:"paymentRequest,omitempty"`
-	Asset             *LedgerKeyAsset             `json:"asset,omitempty"`
-	Reference         *LedgerKeyReference         `json:"reference,omitempty"`
-	AccountTypeLimits *LedgerKeyAccountTypeLimits `json:"accountTypeLimits,omitempty"`
-	Stats             *LedgerKeyStats             `json:"stats,omitempty"`
-	Trust             *LedgerKeyTrust             `json:"trust,omitempty"`
-	AccountLimits     *LedgerKeyAccountLimits     `json:"accountLimits,omitempty"`
-	AssetPair         *LedgerKeyAssetPair         `json:"assetPair,omitempty"`
-	Offer             *LedgerKeyOffer             `json:"offer,omitempty"`
-	Invoice           *LedgerKeyInvoice           `json:"invoice,omitempty"`
-	ReviewableRequest *LedgerKeyReviewableRequest `json:"reviewableRequest,omitempty"`
+	Type                    LedgerEntryType                   `json:"type,omitempty"`
+	Account                 *LedgerKeyAccount                 `json:"account,omitempty"`
+	FeeState                *LedgerKeyFeeState                `json:"feeState,omitempty"`
+	Balance                 *LedgerKeyBalance                 `json:"balance,omitempty"`
+	PaymentRequest          *LedgerKeyPaymentRequest          `json:"paymentRequest,omitempty"`
+	Asset                   *LedgerKeyAsset                   `json:"asset,omitempty"`
+	Reference               *LedgerKeyReference               `json:"reference,omitempty"`
+	AccountTypeLimits       *LedgerKeyAccountTypeLimits       `json:"accountTypeLimits,omitempty"`
+	Stats                   *LedgerKeyStats                   `json:"stats,omitempty"`
+	Trust                   *LedgerKeyTrust                   `json:"trust,omitempty"`
+	AccountLimits           *LedgerKeyAccountLimits           `json:"accountLimits,omitempty"`
+	AssetPair               *LedgerKeyAssetPair               `json:"assetPair,omitempty"`
+	Offer                   *LedgerKeyOffer                   `json:"offer,omitempty"`
+	Invoice                 *LedgerKeyInvoice                 `json:"invoice,omitempty"`
+	ReviewableRequest       *LedgerKeyReviewableRequest       `json:"reviewableRequest,omitempty"`
+	ExternalSystemAccountId *LedgerKeyExternalSystemAccountId `json:"externalSystemAccountID,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -5462,6 +5842,8 @@ func (u LedgerKey) ArmForSwitch(sw int32) (string, bool) {
 		return "Invoice", true
 	case LedgerEntryTypeReviewableRequest:
 		return "ReviewableRequest", true
+	case LedgerEntryTypeExternalSystemAccountId:
+		return "ExternalSystemAccountId", true
 	}
 	return "-", false
 }
@@ -5568,6 +5950,13 @@ func NewLedgerKey(aType LedgerEntryType, value interface{}) (result LedgerKey, e
 			return
 		}
 		result.ReviewableRequest = &tv
+	case LedgerEntryTypeExternalSystemAccountId:
+		tv, ok := value.(LedgerKeyExternalSystemAccountId)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be LedgerKeyExternalSystemAccountId")
+			return
+		}
+		result.ExternalSystemAccountId = &tv
 	}
 	return
 }
@@ -5916,6 +6305,31 @@ func (u LedgerKey) GetReviewableRequest() (result LedgerKeyReviewableRequest, ok
 
 	if armName == "ReviewableRequest" {
 		result = *u.ReviewableRequest
+		ok = true
+	}
+
+	return
+}
+
+// MustExternalSystemAccountId retrieves the ExternalSystemAccountId value from the union,
+// panicing if the value is not set.
+func (u LedgerKey) MustExternalSystemAccountId() LedgerKeyExternalSystemAccountId {
+	val, ok := u.GetExternalSystemAccountId()
+
+	if !ok {
+		panic("arm ExternalSystemAccountId is not set")
+	}
+
+	return val
+}
+
+// GetExternalSystemAccountId retrieves the ExternalSystemAccountId value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u LedgerKey) GetExternalSystemAccountId() (result LedgerKeyExternalSystemAccountId, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "ExternalSystemAccountId" {
+		result = *u.ExternalSystemAccountId
 		ok = true
 	}
 
@@ -7046,6 +7460,7 @@ func NewCreateAccountSuccessExt(v LedgerVersion, value interface{}) (result Crea
 //
 //   struct CreateAccountSuccess
 //    {
+//    	ExternalSystemAccountID externalSystemIDs<>;
 //    	int64 referrerFee;
 //    	 // reserved for future use
 //        union switch (LedgerVersion v)
@@ -7057,8 +7472,9 @@ func NewCreateAccountSuccessExt(v LedgerVersion, value interface{}) (result Crea
 //    };
 //
 type CreateAccountSuccess struct {
-	ReferrerFee Int64                   `json:"referrerFee,omitempty"`
-	Ext         CreateAccountSuccessExt `json:"ext,omitempty"`
+	ExternalSystemIDs []ExternalSystemAccountId `json:"externalSystemIDs,omitempty"`
+	ReferrerFee       Int64                     `json:"referrerFee,omitempty"`
+	Ext               CreateAccountSuccessExt   `json:"ext,omitempty"`
 }
 
 // CreateAccountResult is an XDR Union defines as:
