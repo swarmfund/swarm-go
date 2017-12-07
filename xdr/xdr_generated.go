@@ -8239,7 +8239,8 @@ type ManageAssetOp struct {
 //    	INVALID_CODE = -5,                // asset code is invalid (empty or contains space)
 //    	INVALID_NAME = -6,                // asset name is invalid (empty)
 //    	INVALID_POLICIES = -7,            // asset policies (has flag which does not belong to AssetPolicies enum)
-//    	ASSET_NOT_FOUND = -8
+//    	ASSET_NOT_FOUND = -8,             // asset does not exists
+//    	REQUEST_ALREADY_EXISTS = -9       // request for creation of unique entry already exists
 //    };
 //
 type ManageAssetResultCode int32
@@ -8253,6 +8254,7 @@ const (
 	ManageAssetResultCodeInvalidName              ManageAssetResultCode = -6
 	ManageAssetResultCodeInvalidPolicies          ManageAssetResultCode = -7
 	ManageAssetResultCodeAssetNotFound            ManageAssetResultCode = -8
+	ManageAssetResultCodeRequestAlreadyExists     ManageAssetResultCode = -9
 )
 
 var ManageAssetResultCodeAll = []ManageAssetResultCode{
@@ -8264,6 +8266,7 @@ var ManageAssetResultCodeAll = []ManageAssetResultCode{
 	ManageAssetResultCodeInvalidName,
 	ManageAssetResultCodeInvalidPolicies,
 	ManageAssetResultCodeAssetNotFound,
+	ManageAssetResultCodeRequestAlreadyExists,
 }
 
 var manageAssetResultCodeMap = map[int32]string{
@@ -8275,6 +8278,7 @@ var manageAssetResultCodeMap = map[int32]string{
 	-6: "ManageAssetResultCodeInvalidName",
 	-7: "ManageAssetResultCodeInvalidPolicies",
 	-8: "ManageAssetResultCodeAssetNotFound",
+	-9: "ManageAssetResultCodeRequestAlreadyExists",
 }
 
 var manageAssetResultCodeShortMap = map[int32]string{
@@ -8286,6 +8290,7 @@ var manageAssetResultCodeShortMap = map[int32]string{
 	-6: "invalid_name",
 	-7: "invalid_policies",
 	-8: "asset_not_found",
+	-9: "request_already_exists",
 }
 
 var manageAssetResultCodeRevMap = map[string]int32{
@@ -8297,6 +8302,7 @@ var manageAssetResultCodeRevMap = map[string]int32{
 	"ManageAssetResultCodeInvalidName":              -6,
 	"ManageAssetResultCodeInvalidPolicies":          -7,
 	"ManageAssetResultCodeAssetNotFound":            -8,
+	"ManageAssetResultCodeRequestAlreadyExists":     -9,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
