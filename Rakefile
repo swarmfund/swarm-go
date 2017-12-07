@@ -12,7 +12,7 @@ namespace :xdr do
     require 'fileutils'
     FileUtils.rm_f("xdr/xdr_generated.go")
 
-    paths = Pathname.glob("xdr/raw/*.x")
+    paths = Pathname.glob("xdr/raw/*.x").sort
     compilation = Xdrgen::Compilation.new(
       paths,
       output_dir: "xdr",

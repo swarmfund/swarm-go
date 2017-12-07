@@ -16,7 +16,11 @@ import (
 	"gitlab.com/swarmfund/go/xdr"
 )
 
+type ctxKey int
 
+const (
+	SkipValidation ctxKey = iota
+)
 
 const (
 	SignatureHeader     = "x-authsignature"
@@ -55,8 +59,13 @@ func SignRequest(request *http.Request, kp keypair.KP) error {
 func CheckSignature(request *http.Request) (string, error) {
 	// TODO cache results to request.Context()
 	// check if signature is valid
-	signature := request.Header.Get(SignatureHeader)
 	signer := request.Header.Get(PublicKeyHeader)
+
+	if request.Context().Value(SkipValidation) != nil {
+		return signer, nil
+	}
+
+	signature := request.Header.Get(SignatureHeader)
 	rawValidUntil := request.Header.Get(ValidUntilHeader)
 
 	if signature == "" || signer == "" || rawValidUntil == "" {
