@@ -1743,6 +1743,7 @@ func NewAssetEntryExt(v LedgerVersion, value interface{}) (result AssetEntryExt,
 //    	uint64 availableForIssueance;
 //    	uint64 issued;
 //        uint32 policies;
+//        longstring logoID;
 //
 //        // reserved for future use
 //        union switch (LedgerVersion v)
@@ -1764,6 +1765,7 @@ type AssetEntry struct {
 	AvailableForIssueance Uint64        `json:"availableForIssueance,omitempty"`
 	Issued                Uint64        `json:"issued,omitempty"`
 	Policies              Uint32        `json:"policies,omitempty"`
+	LogoId                Longstring    `json:"logoID,omitempty"`
 	Ext                   AssetEntryExt `json:"ext,omitempty"`
 }
 
@@ -16029,6 +16031,7 @@ func NewAssetCreationRequestExt(v LedgerVersion, value interface{}) (result Asse
 //    	string256 externalResourceLink;
 //    	uint64 maxIssuanceAmount;
 //        uint32 policies;
+//        longstring logoID;
 //
 //    	// reserved for future use
 //        union switch (LedgerVersion v)
@@ -16047,6 +16050,7 @@ type AssetCreationRequest struct {
 	ExternalResourceLink String256               `json:"externalResourceLink,omitempty"`
 	MaxIssuanceAmount    Uint64                  `json:"maxIssuanceAmount,omitempty"`
 	Policies             Uint32                  `json:"policies,omitempty"`
+	LogoId               Longstring              `json:"logoID,omitempty"`
 	Ext                  AssetCreationRequestExt `json:"ext,omitempty"`
 }
 
@@ -16095,6 +16099,7 @@ func NewAssetUpdateRequestExt(v LedgerVersion, value interface{}) (result AssetU
 //    	longstring description;
 //    	string256 externalResourceLink;
 //    	uint32 policies;
+//        longstring logoID;
 //
 //    	// reserved for future use
 //        union switch (LedgerVersion v)
@@ -16110,6 +16115,7 @@ type AssetUpdateRequest struct {
 	Description          Longstring            `json:"description,omitempty"`
 	ExternalResourceLink String256             `json:"externalResourceLink,omitempty"`
 	Policies             Uint32                `json:"policies,omitempty"`
+	LogoId               Longstring            `json:"logoID,omitempty"`
 	Ext                  AssetUpdateRequestExt `json:"ext,omitempty"`
 }
 
