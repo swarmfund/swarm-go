@@ -1593,29 +1593,41 @@ type AssetPairEntry struct {
 //
 //   enum AssetPolicy
 //    {
-//    	TRANSFERABLE = 1
+//    	TRANSFERABLE = 1,
+//    	BASE_ASSET = 2,
+//    	STATS_QUOTE_ASSET = 4
 //    };
 //
 type AssetPolicy int32
 
 const (
-	AssetPolicyTransferable AssetPolicy = 1
+	AssetPolicyTransferable    AssetPolicy = 1
+	AssetPolicyBaseAsset       AssetPolicy = 2
+	AssetPolicyStatsQuoteAsset AssetPolicy = 4
 )
 
 var AssetPolicyAll = []AssetPolicy{
 	AssetPolicyTransferable,
+	AssetPolicyBaseAsset,
+	AssetPolicyStatsQuoteAsset,
 }
 
 var assetPolicyMap = map[int32]string{
 	1: "AssetPolicyTransferable",
+	2: "AssetPolicyBaseAsset",
+	4: "AssetPolicyStatsQuoteAsset",
 }
 
 var assetPolicyShortMap = map[int32]string{
 	1: "transferable",
+	2: "base_asset",
+	4: "stats_quote_asset",
 }
 
 var assetPolicyRevMap = map[string]int32{
-	"AssetPolicyTransferable": 1,
+	"AssetPolicyTransferable":    1,
+	"AssetPolicyBaseAsset":       2,
+	"AssetPolicyStatsQuoteAsset": 4,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -9703,7 +9715,8 @@ type ManageAssetOp struct {
 //    	INVALID_NAME = -6,                // asset name is invalid (empty)
 //    	INVALID_POLICIES = -7,            // asset policies (has flag which does not belong to AssetPolicies enum)
 //    	ASSET_NOT_FOUND = -8,             // asset does not exists
-//    	REQUEST_ALREADY_EXISTS = -9       // request for creation of unique entry already exists
+//    	REQUEST_ALREADY_EXISTS = -9,      // request for creation of unique entry already exists
+//    	STATS_ASSET_ALREADY_EXISTS = -10
 //    };
 //
 type ManageAssetResultCode int32
@@ -9718,6 +9731,7 @@ const (
 	ManageAssetResultCodeInvalidPolicies          ManageAssetResultCode = -7
 	ManageAssetResultCodeAssetNotFound            ManageAssetResultCode = -8
 	ManageAssetResultCodeRequestAlreadyExists     ManageAssetResultCode = -9
+	ManageAssetResultCodeStatsAssetAlreadyExists  ManageAssetResultCode = -10
 )
 
 var ManageAssetResultCodeAll = []ManageAssetResultCode{
@@ -9730,30 +9744,33 @@ var ManageAssetResultCodeAll = []ManageAssetResultCode{
 	ManageAssetResultCodeInvalidPolicies,
 	ManageAssetResultCodeAssetNotFound,
 	ManageAssetResultCodeRequestAlreadyExists,
+	ManageAssetResultCodeStatsAssetAlreadyExists,
 }
 
 var manageAssetResultCodeMap = map[int32]string{
-	0:  "ManageAssetResultCodeSuccess",
-	-1: "ManageAssetResultCodeRequestNotFound",
-	-3: "ManageAssetResultCodeAssetAlreadyExists",
-	-4: "ManageAssetResultCodeInvalidMaxIssuanceAmount",
-	-5: "ManageAssetResultCodeInvalidCode",
-	-6: "ManageAssetResultCodeInvalidName",
-	-7: "ManageAssetResultCodeInvalidPolicies",
-	-8: "ManageAssetResultCodeAssetNotFound",
-	-9: "ManageAssetResultCodeRequestAlreadyExists",
+	0:   "ManageAssetResultCodeSuccess",
+	-1:  "ManageAssetResultCodeRequestNotFound",
+	-3:  "ManageAssetResultCodeAssetAlreadyExists",
+	-4:  "ManageAssetResultCodeInvalidMaxIssuanceAmount",
+	-5:  "ManageAssetResultCodeInvalidCode",
+	-6:  "ManageAssetResultCodeInvalidName",
+	-7:  "ManageAssetResultCodeInvalidPolicies",
+	-8:  "ManageAssetResultCodeAssetNotFound",
+	-9:  "ManageAssetResultCodeRequestAlreadyExists",
+	-10: "ManageAssetResultCodeStatsAssetAlreadyExists",
 }
 
 var manageAssetResultCodeShortMap = map[int32]string{
-	0:  "success",
-	-1: "request_not_found",
-	-3: "asset_already_exists",
-	-4: "invalid_max_issuance_amount",
-	-5: "invalid_code",
-	-6: "invalid_name",
-	-7: "invalid_policies",
-	-8: "asset_not_found",
-	-9: "request_already_exists",
+	0:   "success",
+	-1:  "request_not_found",
+	-3:  "asset_already_exists",
+	-4:  "invalid_max_issuance_amount",
+	-5:  "invalid_code",
+	-6:  "invalid_name",
+	-7:  "invalid_policies",
+	-8:  "asset_not_found",
+	-9:  "request_already_exists",
+	-10: "stats_asset_already_exists",
 }
 
 var manageAssetResultCodeRevMap = map[string]int32{
@@ -9766,6 +9783,7 @@ var manageAssetResultCodeRevMap = map[string]int32{
 	"ManageAssetResultCodeInvalidPolicies":          -7,
 	"ManageAssetResultCodeAssetNotFound":            -8,
 	"ManageAssetResultCodeRequestAlreadyExists":     -9,
+	"ManageAssetResultCodeStatsAssetAlreadyExists":  -10,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -9872,6 +9890,7 @@ func NewManageAssetSuccessExt(v LedgerVersion, value interface{}) (result Manage
 //   struct ManageAssetSuccess
 //    {
 //    	uint64 requestID;
+//    	bool fulfilled;
 //        // reserved for future use
 //        union switch (LedgerVersion v)
 //        {
@@ -9883,6 +9902,7 @@ func NewManageAssetSuccessExt(v LedgerVersion, value interface{}) (result Manage
 //
 type ManageAssetSuccess struct {
 	RequestId Uint64                `json:"requestID,omitempty"`
+	Fulfilled bool                  `json:"fulfilled,omitempty"`
 	Ext       ManageAssetSuccessExt `json:"ext,omitempty"`
 }
 
