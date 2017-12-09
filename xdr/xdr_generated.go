@@ -1388,7 +1388,7 @@ func NewAccountEntryExt(v LedgerVersion, value interface{}) (result AccountEntry
 //
 //        // Referral marketing
 //        AccountID* referrer;     // parent account
-//        int64 shareForReferrer; // share of fee to pay parent
+//
 //    	int32 policies;
 //
 //        // reserved for future use
@@ -1401,16 +1401,15 @@ func NewAccountEntryExt(v LedgerVersion, value interface{}) (result AccountEntry
 //    };
 //
 type AccountEntry struct {
-	AccountId        AccountId       `json:"accountID,omitempty"`
-	Thresholds       Thresholds      `json:"thresholds,omitempty"`
-	Signers          []Signer        `json:"signers,omitempty"`
-	Limits           *Limits         `json:"limits,omitempty"`
-	BlockReasons     Uint32          `json:"blockReasons,omitempty"`
-	AccountType      AccountType     `json:"accountType,omitempty"`
-	Referrer         *AccountId      `json:"referrer,omitempty"`
-	ShareForReferrer Int64           `json:"shareForReferrer,omitempty"`
-	Policies         Int32           `json:"policies,omitempty"`
-	Ext              AccountEntryExt `json:"ext,omitempty"`
+	AccountId    AccountId       `json:"accountID,omitempty"`
+	Thresholds   Thresholds      `json:"thresholds,omitempty"`
+	Signers      []Signer        `json:"signers,omitempty"`
+	Limits       *Limits         `json:"limits,omitempty"`
+	BlockReasons Uint32          `json:"blockReasons,omitempty"`
+	AccountType  AccountType     `json:"accountType,omitempty"`
+	Referrer     *AccountId      `json:"referrer,omitempty"`
+	Policies     Int32           `json:"policies,omitempty"`
+	Ext          AccountEntryExt `json:"ext,omitempty"`
 }
 
 // AssetPairPolicy is an XDR Enum defines as:
@@ -1743,6 +1742,7 @@ func NewAssetEntryExt(v LedgerVersion, value interface{}) (result AssetEntryExt,
 //    	uint64 availableForIssueance;
 //    	uint64 issued;
 //        uint32 policies;
+//        longstring logoID;
 //
 //        // reserved for future use
 //        union switch (LedgerVersion v)
@@ -1764,6 +1764,7 @@ type AssetEntry struct {
 	AvailableForIssueance Uint64        `json:"availableForIssueance,omitempty"`
 	Issued                Uint64        `json:"issued,omitempty"`
 	Policies              Uint32        `json:"policies,omitempty"`
+	LogoId                Longstring    `json:"logoID,omitempty"`
 	Ext                   AssetEntryExt `json:"ext,omitempty"`
 }
 
@@ -1996,25 +1997,22 @@ type ExternalSystemAccountId struct {
 //   enum FeeType
 //    {
 //        PAYMENT_FEE = 0,
-//        REFERRAL_FEE = 1,
-//    	OFFER_FEE = 2,
-//        FORFEIT_FEE = 3,
-//        EMISSION_FEE = 4
+//    	OFFER_FEE = 1,
+//        FORFEIT_FEE = 2,
+//        EMISSION_FEE = 3
 //    };
 //
 type FeeType int32
 
 const (
 	FeeTypePaymentFee  FeeType = 0
-	FeeTypeReferralFee FeeType = 1
-	FeeTypeOfferFee    FeeType = 2
-	FeeTypeForfeitFee  FeeType = 3
-	FeeTypeEmissionFee FeeType = 4
+	FeeTypeOfferFee    FeeType = 1
+	FeeTypeForfeitFee  FeeType = 2
+	FeeTypeEmissionFee FeeType = 3
 )
 
 var FeeTypeAll = []FeeType{
 	FeeTypePaymentFee,
-	FeeTypeReferralFee,
 	FeeTypeOfferFee,
 	FeeTypeForfeitFee,
 	FeeTypeEmissionFee,
@@ -2022,26 +2020,23 @@ var FeeTypeAll = []FeeType{
 
 var feeTypeMap = map[int32]string{
 	0: "FeeTypePaymentFee",
-	1: "FeeTypeReferralFee",
-	2: "FeeTypeOfferFee",
-	3: "FeeTypeForfeitFee",
-	4: "FeeTypeEmissionFee",
+	1: "FeeTypeOfferFee",
+	2: "FeeTypeForfeitFee",
+	3: "FeeTypeEmissionFee",
 }
 
 var feeTypeShortMap = map[int32]string{
 	0: "payment_fee",
-	1: "referral_fee",
-	2: "offer_fee",
-	3: "forfeit_fee",
-	4: "emission_fee",
+	1: "offer_fee",
+	2: "forfeit_fee",
+	3: "emission_fee",
 }
 
 var feeTypeRevMap = map[string]int32{
 	"FeeTypePaymentFee":  0,
-	"FeeTypeReferralFee": 1,
-	"FeeTypeOfferFee":    2,
-	"FeeTypeForfeitFee":  3,
-	"FeeTypeEmissionFee": 4,
+	"FeeTypeOfferFee":    1,
+	"FeeTypeForfeitFee":  2,
+	"FeeTypeEmissionFee": 3,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -7473,7 +7468,6 @@ func NewCreateAccountSuccessExt(v LedgerVersion, value interface{}) (result Crea
 //   struct CreateAccountSuccess
 //    {
 //    	ExternalSystemAccountID externalSystemIDs<>;
-//    	int64 referrerFee;
 //    	 // reserved for future use
 //        union switch (LedgerVersion v)
 //        {
@@ -7485,7 +7479,6 @@ func NewCreateAccountSuccessExt(v LedgerVersion, value interface{}) (result Crea
 //
 type CreateAccountSuccess struct {
 	ExternalSystemIDs []ExternalSystemAccountId `json:"externalSystemIDs,omitempty"`
-	ReferrerFee       Int64                     `json:"referrerFee,omitempty"`
 	Ext               CreateAccountSuccessExt   `json:"ext,omitempty"`
 }
 
@@ -16029,6 +16022,7 @@ func NewAssetCreationRequestExt(v LedgerVersion, value interface{}) (result Asse
 //    	string256 externalResourceLink;
 //    	uint64 maxIssuanceAmount;
 //        uint32 policies;
+//        longstring logoID;
 //
 //    	// reserved for future use
 //        union switch (LedgerVersion v)
@@ -16047,6 +16041,7 @@ type AssetCreationRequest struct {
 	ExternalResourceLink String256               `json:"externalResourceLink,omitempty"`
 	MaxIssuanceAmount    Uint64                  `json:"maxIssuanceAmount,omitempty"`
 	Policies             Uint32                  `json:"policies,omitempty"`
+	LogoId               Longstring              `json:"logoID,omitempty"`
 	Ext                  AssetCreationRequestExt `json:"ext,omitempty"`
 }
 
@@ -16095,6 +16090,7 @@ func NewAssetUpdateRequestExt(v LedgerVersion, value interface{}) (result AssetU
 //    	longstring description;
 //    	string256 externalResourceLink;
 //    	uint32 policies;
+//        longstring logoID;
 //
 //    	// reserved for future use
 //        union switch (LedgerVersion v)
@@ -16110,6 +16106,7 @@ type AssetUpdateRequest struct {
 	Description          Longstring            `json:"description,omitempty"`
 	ExternalResourceLink String256             `json:"externalResourceLink,omitempty"`
 	Policies             Uint32                `json:"policies,omitempty"`
+	LogoId               Longstring            `json:"logoID,omitempty"`
 	Ext                  AssetUpdateRequestExt `json:"ext,omitempty"`
 }
 
