@@ -10102,22 +10102,24 @@ type ManageAssetOp struct {
 //    	INVALID_POLICIES = -7,            // asset policies (has flag which does not belong to AssetPolicies enum)
 //    	ASSET_NOT_FOUND = -8,             // asset does not exists
 //    	REQUEST_ALREADY_EXISTS = -9,      // request for creation of unique entry already exists
-//    	STATS_ASSET_ALREADY_EXISTS = -10
+//    	STATS_ASSET_ALREADY_EXISTS = -10, // statistics quote asset already exists
+//    	INITIAL_PREISSUED_EXCEEDS_MAX_ISSUANCE = -11 // initial pre issued amount exceeds max issuance amount
 //    };
 //
 type ManageAssetResultCode int32
 
 const (
-	ManageAssetResultCodeSuccess                  ManageAssetResultCode = 0
-	ManageAssetResultCodeRequestNotFound          ManageAssetResultCode = -1
-	ManageAssetResultCodeAssetAlreadyExists       ManageAssetResultCode = -3
-	ManageAssetResultCodeInvalidMaxIssuanceAmount ManageAssetResultCode = -4
-	ManageAssetResultCodeInvalidCode              ManageAssetResultCode = -5
-	ManageAssetResultCodeInvalidName              ManageAssetResultCode = -6
-	ManageAssetResultCodeInvalidPolicies          ManageAssetResultCode = -7
-	ManageAssetResultCodeAssetNotFound            ManageAssetResultCode = -8
-	ManageAssetResultCodeRequestAlreadyExists     ManageAssetResultCode = -9
-	ManageAssetResultCodeStatsAssetAlreadyExists  ManageAssetResultCode = -10
+	ManageAssetResultCodeSuccess                            ManageAssetResultCode = 0
+	ManageAssetResultCodeRequestNotFound                    ManageAssetResultCode = -1
+	ManageAssetResultCodeAssetAlreadyExists                 ManageAssetResultCode = -3
+	ManageAssetResultCodeInvalidMaxIssuanceAmount           ManageAssetResultCode = -4
+	ManageAssetResultCodeInvalidCode                        ManageAssetResultCode = -5
+	ManageAssetResultCodeInvalidName                        ManageAssetResultCode = -6
+	ManageAssetResultCodeInvalidPolicies                    ManageAssetResultCode = -7
+	ManageAssetResultCodeAssetNotFound                      ManageAssetResultCode = -8
+	ManageAssetResultCodeRequestAlreadyExists               ManageAssetResultCode = -9
+	ManageAssetResultCodeStatsAssetAlreadyExists            ManageAssetResultCode = -10
+	ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance ManageAssetResultCode = -11
 )
 
 var ManageAssetResultCodeAll = []ManageAssetResultCode{
@@ -10131,6 +10133,7 @@ var ManageAssetResultCodeAll = []ManageAssetResultCode{
 	ManageAssetResultCodeAssetNotFound,
 	ManageAssetResultCodeRequestAlreadyExists,
 	ManageAssetResultCodeStatsAssetAlreadyExists,
+	ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance,
 }
 
 var manageAssetResultCodeMap = map[int32]string{
@@ -10144,6 +10147,7 @@ var manageAssetResultCodeMap = map[int32]string{
 	-8:  "ManageAssetResultCodeAssetNotFound",
 	-9:  "ManageAssetResultCodeRequestAlreadyExists",
 	-10: "ManageAssetResultCodeStatsAssetAlreadyExists",
+	-11: "ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance",
 }
 
 var manageAssetResultCodeShortMap = map[int32]string{
@@ -10157,19 +10161,21 @@ var manageAssetResultCodeShortMap = map[int32]string{
 	-8:  "asset_not_found",
 	-9:  "request_already_exists",
 	-10: "stats_asset_already_exists",
+	-11: "initial_preissued_exceeds_max_issuance",
 }
 
 var manageAssetResultCodeRevMap = map[string]int32{
-	"ManageAssetResultCodeSuccess":                  0,
-	"ManageAssetResultCodeRequestNotFound":          -1,
-	"ManageAssetResultCodeAssetAlreadyExists":       -3,
-	"ManageAssetResultCodeInvalidMaxIssuanceAmount": -4,
-	"ManageAssetResultCodeInvalidCode":              -5,
-	"ManageAssetResultCodeInvalidName":              -6,
-	"ManageAssetResultCodeInvalidPolicies":          -7,
-	"ManageAssetResultCodeAssetNotFound":            -8,
-	"ManageAssetResultCodeRequestAlreadyExists":     -9,
-	"ManageAssetResultCodeStatsAssetAlreadyExists":  -10,
+	"ManageAssetResultCodeSuccess":                            0,
+	"ManageAssetResultCodeRequestNotFound":                    -1,
+	"ManageAssetResultCodeAssetAlreadyExists":                 -3,
+	"ManageAssetResultCodeInvalidMaxIssuanceAmount":           -4,
+	"ManageAssetResultCodeInvalidCode":                        -5,
+	"ManageAssetResultCodeInvalidName":                        -6,
+	"ManageAssetResultCodeInvalidPolicies":                    -7,
+	"ManageAssetResultCodeAssetNotFound":                      -8,
+	"ManageAssetResultCodeRequestAlreadyExists":               -9,
+	"ManageAssetResultCodeStatsAssetAlreadyExists":            -10,
+	"ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance": -11,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -10504,7 +10510,6 @@ func NewManageBalanceOpExt(v LedgerVersion, value interface{}) (result ManageBal
 //
 //   struct ManageBalanceOp
 //    {
-//        BalanceID balanceID;
 //        ManageBalanceAction action;
 //        AccountID destination;
 //        AssetCode asset;
@@ -10517,7 +10522,6 @@ func NewManageBalanceOpExt(v LedgerVersion, value interface{}) (result ManageBal
 //    };
 //
 type ManageBalanceOp struct {
-	BalanceId   BalanceId           `json:"balanceID,omitempty"`
 	Action      ManageBalanceAction `json:"action,omitempty"`
 	Destination AccountId           `json:"destination,omitempty"`
 	Asset       AssetCode           `json:"asset,omitempty"`
@@ -10535,9 +10539,8 @@ type ManageBalanceOp struct {
 //        MALFORMED = -1,       // invalid destination
 //        NOT_FOUND = -2,
 //        DESTINATION_NOT_FOUND = -3,
-//        ALREADY_EXISTS = -4,
-//        ASSET_NOT_FOUND = -5,
-//        INVALID_ASSET = -6
+//        ASSET_NOT_FOUND = -4,
+//        INVALID_ASSET = -5
 //    };
 //
 type ManageBalanceResultCode int32
@@ -10547,9 +10550,8 @@ const (
 	ManageBalanceResultCodeMalformed           ManageBalanceResultCode = -1
 	ManageBalanceResultCodeNotFound            ManageBalanceResultCode = -2
 	ManageBalanceResultCodeDestinationNotFound ManageBalanceResultCode = -3
-	ManageBalanceResultCodeAlreadyExists       ManageBalanceResultCode = -4
-	ManageBalanceResultCodeAssetNotFound       ManageBalanceResultCode = -5
-	ManageBalanceResultCodeInvalidAsset        ManageBalanceResultCode = -6
+	ManageBalanceResultCodeAssetNotFound       ManageBalanceResultCode = -4
+	ManageBalanceResultCodeInvalidAsset        ManageBalanceResultCode = -5
 )
 
 var ManageBalanceResultCodeAll = []ManageBalanceResultCode{
@@ -10557,7 +10559,6 @@ var ManageBalanceResultCodeAll = []ManageBalanceResultCode{
 	ManageBalanceResultCodeMalformed,
 	ManageBalanceResultCodeNotFound,
 	ManageBalanceResultCodeDestinationNotFound,
-	ManageBalanceResultCodeAlreadyExists,
 	ManageBalanceResultCodeAssetNotFound,
 	ManageBalanceResultCodeInvalidAsset,
 }
@@ -10567,9 +10568,8 @@ var manageBalanceResultCodeMap = map[int32]string{
 	-1: "ManageBalanceResultCodeMalformed",
 	-2: "ManageBalanceResultCodeNotFound",
 	-3: "ManageBalanceResultCodeDestinationNotFound",
-	-4: "ManageBalanceResultCodeAlreadyExists",
-	-5: "ManageBalanceResultCodeAssetNotFound",
-	-6: "ManageBalanceResultCodeInvalidAsset",
+	-4: "ManageBalanceResultCodeAssetNotFound",
+	-5: "ManageBalanceResultCodeInvalidAsset",
 }
 
 var manageBalanceResultCodeShortMap = map[int32]string{
@@ -10577,9 +10577,8 @@ var manageBalanceResultCodeShortMap = map[int32]string{
 	-1: "malformed",
 	-2: "not_found",
 	-3: "destination_not_found",
-	-4: "already_exists",
-	-5: "asset_not_found",
-	-6: "invalid_asset",
+	-4: "asset_not_found",
+	-5: "invalid_asset",
 }
 
 var manageBalanceResultCodeRevMap = map[string]int32{
@@ -10587,9 +10586,8 @@ var manageBalanceResultCodeRevMap = map[string]int32{
 	"ManageBalanceResultCodeMalformed":           -1,
 	"ManageBalanceResultCodeNotFound":            -2,
 	"ManageBalanceResultCodeDestinationNotFound": -3,
-	"ManageBalanceResultCodeAlreadyExists":       -4,
-	"ManageBalanceResultCodeAssetNotFound":       -5,
-	"ManageBalanceResultCodeInvalidAsset":        -6,
+	"ManageBalanceResultCodeAssetNotFound":       -4,
+	"ManageBalanceResultCodeInvalidAsset":        -5,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -10694,6 +10692,7 @@ func NewManageBalanceSuccessExt(v LedgerVersion, value interface{}) (result Mana
 // ManageBalanceSuccess is an XDR Struct defines as:
 //
 //   struct ManageBalanceSuccess {
+//    	BalanceID balanceID;
 //    	// reserved for future use
 //        union switch (LedgerVersion v)
 //        {
@@ -10704,7 +10703,8 @@ func NewManageBalanceSuccessExt(v LedgerVersion, value interface{}) (result Mana
 //    };
 //
 type ManageBalanceSuccess struct {
-	Ext ManageBalanceSuccessExt `json:"ext,omitempty"`
+	BalanceId BalanceId               `json:"balanceID,omitempty"`
+	Ext       ManageBalanceSuccessExt `json:"ext,omitempty"`
 }
 
 // ManageBalanceResult is an XDR Union defines as:
@@ -16194,6 +16194,7 @@ func NewAssetCreationRequestExt(v LedgerVersion, value interface{}) (result Asse
 //    	longstring description;
 //    	string256 externalResourceLink;
 //    	uint64 maxIssuanceAmount;
+//    	uint64 initialPreissuedAmount;
 //        uint32 policies;
 //        longstring logoID;
 //
@@ -16207,15 +16208,16 @@ func NewAssetCreationRequestExt(v LedgerVersion, value interface{}) (result Asse
 //    };
 //
 type AssetCreationRequest struct {
-	Code                 AssetCode               `json:"code,omitempty"`
-	Name                 String64                `json:"name,omitempty"`
-	PreissuedAssetSigner AccountId               `json:"preissuedAssetSigner,omitempty"`
-	Description          Longstring              `json:"description,omitempty"`
-	ExternalResourceLink String256               `json:"externalResourceLink,omitempty"`
-	MaxIssuanceAmount    Uint64                  `json:"maxIssuanceAmount,omitempty"`
-	Policies             Uint32                  `json:"policies,omitempty"`
-	LogoId               Longstring              `json:"logoID,omitempty"`
-	Ext                  AssetCreationRequestExt `json:"ext,omitempty"`
+	Code                   AssetCode               `json:"code,omitempty"`
+	Name                   String64                `json:"name,omitempty"`
+	PreissuedAssetSigner   AccountId               `json:"preissuedAssetSigner,omitempty"`
+	Description            Longstring              `json:"description,omitempty"`
+	ExternalResourceLink   String256               `json:"externalResourceLink,omitempty"`
+	MaxIssuanceAmount      Uint64                  `json:"maxIssuanceAmount,omitempty"`
+	InitialPreissuedAmount Uint64                  `json:"initialPreissuedAmount,omitempty"`
+	Policies               Uint32                  `json:"policies,omitempty"`
+	LogoId                 Longstring              `json:"logoID,omitempty"`
+	Ext                    AssetCreationRequestExt `json:"ext,omitempty"`
 }
 
 // AssetUpdateRequestExt is an XDR NestedUnion defines as:
