@@ -7683,7 +7683,8 @@ type CreateIssuanceRequestOp struct {
 //    	NO_COUNTERPARTY = -4,
 //    	NOT_AUTHORIZED = -5,
 //    	EXCEEDS_MAX_ISSUANCE_AMOUNT = -6,
-//    	RECEIVER_FULL_LINE = -7
+//    	RECEIVER_FULL_LINE = -7,
+//    	INVALID_EXTERNAL_DETAILS = -8 // external details size exceeds max allowed
 //    };
 //
 type CreateIssuanceRequestResultCode int32
@@ -7697,6 +7698,7 @@ const (
 	CreateIssuanceRequestResultCodeNotAuthorized            CreateIssuanceRequestResultCode = -5
 	CreateIssuanceRequestResultCodeExceedsMaxIssuanceAmount CreateIssuanceRequestResultCode = -6
 	CreateIssuanceRequestResultCodeReceiverFullLine         CreateIssuanceRequestResultCode = -7
+	CreateIssuanceRequestResultCodeInvalidExternalDetails   CreateIssuanceRequestResultCode = -8
 )
 
 var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
@@ -7708,6 +7710,7 @@ var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
 	CreateIssuanceRequestResultCodeNotAuthorized,
 	CreateIssuanceRequestResultCodeExceedsMaxIssuanceAmount,
 	CreateIssuanceRequestResultCodeReceiverFullLine,
+	CreateIssuanceRequestResultCodeInvalidExternalDetails,
 }
 
 var createIssuanceRequestResultCodeMap = map[int32]string{
@@ -7719,6 +7722,7 @@ var createIssuanceRequestResultCodeMap = map[int32]string{
 	-5: "CreateIssuanceRequestResultCodeNotAuthorized",
 	-6: "CreateIssuanceRequestResultCodeExceedsMaxIssuanceAmount",
 	-7: "CreateIssuanceRequestResultCodeReceiverFullLine",
+	-8: "CreateIssuanceRequestResultCodeInvalidExternalDetails",
 }
 
 var createIssuanceRequestResultCodeShortMap = map[int32]string{
@@ -7730,6 +7734,7 @@ var createIssuanceRequestResultCodeShortMap = map[int32]string{
 	-5: "not_authorized",
 	-6: "exceeds_max_issuance_amount",
 	-7: "receiver_full_line",
+	-8: "invalid_external_details",
 }
 
 var createIssuanceRequestResultCodeRevMap = map[string]int32{
@@ -7741,6 +7746,7 @@ var createIssuanceRequestResultCodeRevMap = map[string]int32{
 	"CreateIssuanceRequestResultCodeNotAuthorized":            -5,
 	"CreateIssuanceRequestResultCodeExceedsMaxIssuanceAmount": -6,
 	"CreateIssuanceRequestResultCodeReceiverFullLine":         -7,
+	"CreateIssuanceRequestResultCodeInvalidExternalDetails":   -8,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -10530,7 +10536,6 @@ func NewManageBalanceOpExt(v LedgerVersion, value interface{}) (result ManageBal
 //
 //   struct ManageBalanceOp
 //    {
-//        BalanceID balanceID;
 //        ManageBalanceAction action;
 //        AccountID destination;
 //        AssetCode asset;
@@ -10543,7 +10548,6 @@ func NewManageBalanceOpExt(v LedgerVersion, value interface{}) (result ManageBal
 //    };
 //
 type ManageBalanceOp struct {
-	BalanceId   BalanceId           `json:"balanceID,omitempty"`
 	Action      ManageBalanceAction `json:"action,omitempty"`
 	Destination AccountId           `json:"destination,omitempty"`
 	Asset       AssetCode           `json:"asset,omitempty"`
@@ -10561,9 +10565,8 @@ type ManageBalanceOp struct {
 //        MALFORMED = -1,       // invalid destination
 //        NOT_FOUND = -2,
 //        DESTINATION_NOT_FOUND = -3,
-//        ALREADY_EXISTS = -4,
-//        ASSET_NOT_FOUND = -5,
-//        INVALID_ASSET = -6
+//        ASSET_NOT_FOUND = -4,
+//        INVALID_ASSET = -5
 //    };
 //
 type ManageBalanceResultCode int32
@@ -10573,9 +10576,8 @@ const (
 	ManageBalanceResultCodeMalformed           ManageBalanceResultCode = -1
 	ManageBalanceResultCodeNotFound            ManageBalanceResultCode = -2
 	ManageBalanceResultCodeDestinationNotFound ManageBalanceResultCode = -3
-	ManageBalanceResultCodeAlreadyExists       ManageBalanceResultCode = -4
-	ManageBalanceResultCodeAssetNotFound       ManageBalanceResultCode = -5
-	ManageBalanceResultCodeInvalidAsset        ManageBalanceResultCode = -6
+	ManageBalanceResultCodeAssetNotFound       ManageBalanceResultCode = -4
+	ManageBalanceResultCodeInvalidAsset        ManageBalanceResultCode = -5
 )
 
 var ManageBalanceResultCodeAll = []ManageBalanceResultCode{
@@ -10583,7 +10585,6 @@ var ManageBalanceResultCodeAll = []ManageBalanceResultCode{
 	ManageBalanceResultCodeMalformed,
 	ManageBalanceResultCodeNotFound,
 	ManageBalanceResultCodeDestinationNotFound,
-	ManageBalanceResultCodeAlreadyExists,
 	ManageBalanceResultCodeAssetNotFound,
 	ManageBalanceResultCodeInvalidAsset,
 }
@@ -10593,9 +10594,8 @@ var manageBalanceResultCodeMap = map[int32]string{
 	-1: "ManageBalanceResultCodeMalformed",
 	-2: "ManageBalanceResultCodeNotFound",
 	-3: "ManageBalanceResultCodeDestinationNotFound",
-	-4: "ManageBalanceResultCodeAlreadyExists",
-	-5: "ManageBalanceResultCodeAssetNotFound",
-	-6: "ManageBalanceResultCodeInvalidAsset",
+	-4: "ManageBalanceResultCodeAssetNotFound",
+	-5: "ManageBalanceResultCodeInvalidAsset",
 }
 
 var manageBalanceResultCodeShortMap = map[int32]string{
@@ -10603,9 +10603,8 @@ var manageBalanceResultCodeShortMap = map[int32]string{
 	-1: "malformed",
 	-2: "not_found",
 	-3: "destination_not_found",
-	-4: "already_exists",
-	-5: "asset_not_found",
-	-6: "invalid_asset",
+	-4: "asset_not_found",
+	-5: "invalid_asset",
 }
 
 var manageBalanceResultCodeRevMap = map[string]int32{
@@ -10613,9 +10612,8 @@ var manageBalanceResultCodeRevMap = map[string]int32{
 	"ManageBalanceResultCodeMalformed":           -1,
 	"ManageBalanceResultCodeNotFound":            -2,
 	"ManageBalanceResultCodeDestinationNotFound": -3,
-	"ManageBalanceResultCodeAlreadyExists":       -4,
-	"ManageBalanceResultCodeAssetNotFound":       -5,
-	"ManageBalanceResultCodeInvalidAsset":        -6,
+	"ManageBalanceResultCodeAssetNotFound":       -4,
+	"ManageBalanceResultCodeInvalidAsset":        -5,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -10720,6 +10718,7 @@ func NewManageBalanceSuccessExt(v LedgerVersion, value interface{}) (result Mana
 // ManageBalanceSuccess is an XDR Struct defines as:
 //
 //   struct ManageBalanceSuccess {
+//    	BalanceID balanceID;
 //    	// reserved for future use
 //        union switch (LedgerVersion v)
 //        {
@@ -10730,7 +10729,8 @@ func NewManageBalanceSuccessExt(v LedgerVersion, value interface{}) (result Mana
 //    };
 //
 type ManageBalanceSuccess struct {
-	Ext ManageBalanceSuccessExt `json:"ext,omitempty"`
+	BalanceId BalanceId               `json:"balanceID,omitempty"`
+	Ext       ManageBalanceSuccessExt `json:"ext,omitempty"`
 }
 
 // ManageBalanceResult is an XDR Union defines as:
@@ -13431,11 +13431,69 @@ type WithdrawalDetails struct {
 	Ext             WithdrawalDetailsExt `json:"ext,omitempty"`
 }
 
+// IssuanceDetailsExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type IssuanceDetailsExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u IssuanceDetailsExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of IssuanceDetailsExt
+func (u IssuanceDetailsExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewIssuanceDetailsExt creates a new  IssuanceDetailsExt.
+func NewIssuanceDetailsExt(v LedgerVersion, value interface{}) (result IssuanceDetailsExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// IssuanceDetails is an XDR Struct defines as:
+//
+//   struct IssuanceDetails {
+//    	string externalDetails<>;
+//    	// reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type IssuanceDetails struct {
+	ExternalDetails string             `json:"externalDetails,omitempty"`
+	Ext             IssuanceDetailsExt `json:"ext,omitempty"`
+}
+
 // ReviewRequestOpRequestDetails is an XDR NestedUnion defines as:
 //
 //   union switch(ReviewableRequestType requestType) {
 //    	case WITHDRAW:
 //    		WithdrawalDetails withdrawal;
+//    	case ISSUANCE_CREATE:
+//    		IssuanceDetails issuance;
 //    	default:
 //    		void;
 //    	}
@@ -13443,6 +13501,7 @@ type WithdrawalDetails struct {
 type ReviewRequestOpRequestDetails struct {
 	RequestType ReviewableRequestType `json:"requestType,omitempty"`
 	Withdrawal  *WithdrawalDetails    `json:"withdrawal,omitempty"`
+	Issuance    *IssuanceDetails      `json:"issuance,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -13457,6 +13516,8 @@ func (u ReviewRequestOpRequestDetails) ArmForSwitch(sw int32) (string, bool) {
 	switch ReviewableRequestType(sw) {
 	case ReviewableRequestTypeWithdraw:
 		return "Withdrawal", true
+	case ReviewableRequestTypeIssuanceCreate:
+		return "Issuance", true
 	default:
 		return "", true
 	}
@@ -13473,6 +13534,13 @@ func NewReviewRequestOpRequestDetails(requestType ReviewableRequestType, value i
 			return
 		}
 		result.Withdrawal = &tv
+	case ReviewableRequestTypeIssuanceCreate:
+		tv, ok := value.(IssuanceDetails)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be IssuanceDetails")
+			return
+		}
+		result.Issuance = &tv
 	default:
 		// void
 	}
@@ -13498,6 +13566,31 @@ func (u ReviewRequestOpRequestDetails) GetWithdrawal() (result WithdrawalDetails
 
 	if armName == "Withdrawal" {
 		result = *u.Withdrawal
+		ok = true
+	}
+
+	return
+}
+
+// MustIssuance retrieves the Issuance value from the union,
+// panicing if the value is not set.
+func (u ReviewRequestOpRequestDetails) MustIssuance() IssuanceDetails {
+	val, ok := u.GetIssuance()
+
+	if !ok {
+		panic("arm Issuance is not set")
+	}
+
+	return val
+}
+
+// GetIssuance retrieves the Issuance value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewRequestOpRequestDetails) GetIssuance() (result IssuanceDetails, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.RequestType))
+
+	if armName == "Issuance" {
+		result = *u.Issuance
 		ok = true
 	}
 
@@ -13551,6 +13644,8 @@ func NewReviewRequestOpExt(v LedgerVersion, value interface{}) (result ReviewReq
 //    	union switch(ReviewableRequestType requestType) {
 //    	case WITHDRAW:
 //    		WithdrawalDetails withdrawal;
+//    	case ISSUANCE_CREATE:
+//    		IssuanceDetails issuance;
 //    	default:
 //    		void;
 //    	} requestDetails;
@@ -16352,7 +16447,6 @@ func NewPreIssuanceRequestExt(v LedgerVersion, value interface{}) (result PreIss
 // PreIssuanceRequest is an XDR Struct defines as:
 //
 //   struct PreIssuanceRequest {
-//
 //    	AssetCode asset;
 //    	uint64 amount;
 //    	DecoratedSignature signature;
@@ -16419,6 +16513,7 @@ func NewIssuanceRequestExt(v LedgerVersion, value interface{}) (result IssuanceR
 //    	AssetCode asset;
 //    	uint64 amount;
 //    	BalanceID receiver;
+//    	string externalDetails<>; // details of the issuance (External system id, etc.)
 //    	// reserved for future use
 //        union switch (LedgerVersion v)
 //        {
@@ -16429,10 +16524,11 @@ func NewIssuanceRequestExt(v LedgerVersion, value interface{}) (result IssuanceR
 //    };
 //
 type IssuanceRequest struct {
-	Asset    AssetCode          `json:"asset,omitempty"`
-	Amount   Uint64             `json:"amount,omitempty"`
-	Receiver BalanceId          `json:"receiver,omitempty"`
-	Ext      IssuanceRequestExt `json:"ext,omitempty"`
+	Asset           AssetCode          `json:"asset,omitempty"`
+	Amount          Uint64             `json:"amount,omitempty"`
+	Receiver        BalanceId          `json:"receiver,omitempty"`
+	ExternalDetails string             `json:"externalDetails,omitempty"`
+	Ext             IssuanceRequestExt `json:"ext,omitempty"`
 }
 
 // WithdrawalType is an XDR Enum defines as:
