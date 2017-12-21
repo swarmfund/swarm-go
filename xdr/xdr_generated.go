@@ -2005,7 +2005,7 @@ type ExternalSystemAccountId struct {
 //        PAYMENT_FEE = 0,
 //    	OFFER_FEE = 1,
 //        WITHDRAWAL_FEE = 2,
-//        EMISSION_FEE = 3
+//        ISSUANCE_FEE = 3
 //    };
 //
 type FeeType int32
@@ -2014,35 +2014,35 @@ const (
 	FeeTypePaymentFee    FeeType = 0
 	FeeTypeOfferFee      FeeType = 1
 	FeeTypeWithdrawalFee FeeType = 2
-	FeeTypeEmissionFee   FeeType = 3
+	FeeTypeIssuanceFee   FeeType = 3
 )
 
 var FeeTypeAll = []FeeType{
 	FeeTypePaymentFee,
 	FeeTypeOfferFee,
 	FeeTypeWithdrawalFee,
-	FeeTypeEmissionFee,
+	FeeTypeIssuanceFee,
 }
 
 var feeTypeMap = map[int32]string{
 	0: "FeeTypePaymentFee",
 	1: "FeeTypeOfferFee",
 	2: "FeeTypeWithdrawalFee",
-	3: "FeeTypeEmissionFee",
+	3: "FeeTypeIssuanceFee",
 }
 
 var feeTypeShortMap = map[int32]string{
 	0: "payment_fee",
 	1: "offer_fee",
 	2: "withdrawal_fee",
-	3: "emission_fee",
+	3: "issuance_fee",
 }
 
 var feeTypeRevMap = map[string]int32{
 	"FeeTypePaymentFee":    0,
 	"FeeTypeOfferFee":      1,
 	"FeeTypeWithdrawalFee": 2,
-	"FeeTypeEmissionFee":   3,
+	"FeeTypeIssuanceFee":   3,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -7950,7 +7950,8 @@ type CreateIssuanceRequestOp struct {
 //    	NO_COUNTERPARTY = -4,
 //    	NOT_AUTHORIZED = -5,
 //    	EXCEEDS_MAX_ISSUANCE_AMOUNT = -6,
-//    	RECEIVER_FULL_LINE = -7
+//    	RECEIVER_FULL_LINE = -7,
+//    	FEE_EXCEEDS_AMOUNT = -8 // fee more than amount to issue
 //    };
 //
 type CreateIssuanceRequestResultCode int32
@@ -7964,6 +7965,7 @@ const (
 	CreateIssuanceRequestResultCodeNotAuthorized            CreateIssuanceRequestResultCode = -5
 	CreateIssuanceRequestResultCodeExceedsMaxIssuanceAmount CreateIssuanceRequestResultCode = -6
 	CreateIssuanceRequestResultCodeReceiverFullLine         CreateIssuanceRequestResultCode = -7
+	CreateIssuanceRequestResultCodeFeeExceedsAmount         CreateIssuanceRequestResultCode = -8
 )
 
 var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
@@ -7975,6 +7977,7 @@ var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
 	CreateIssuanceRequestResultCodeNotAuthorized,
 	CreateIssuanceRequestResultCodeExceedsMaxIssuanceAmount,
 	CreateIssuanceRequestResultCodeReceiverFullLine,
+	CreateIssuanceRequestResultCodeFeeExceedsAmount,
 }
 
 var createIssuanceRequestResultCodeMap = map[int32]string{
@@ -7986,6 +7989,7 @@ var createIssuanceRequestResultCodeMap = map[int32]string{
 	-5: "CreateIssuanceRequestResultCodeNotAuthorized",
 	-6: "CreateIssuanceRequestResultCodeExceedsMaxIssuanceAmount",
 	-7: "CreateIssuanceRequestResultCodeReceiverFullLine",
+	-8: "CreateIssuanceRequestResultCodeFeeExceedsAmount",
 }
 
 var createIssuanceRequestResultCodeShortMap = map[int32]string{
@@ -7997,6 +8001,7 @@ var createIssuanceRequestResultCodeShortMap = map[int32]string{
 	-5: "not_authorized",
 	-6: "exceeds_max_issuance_amount",
 	-7: "receiver_full_line",
+	-8: "fee_exceeds_amount",
 }
 
 var createIssuanceRequestResultCodeRevMap = map[string]int32{
@@ -8008,6 +8013,7 @@ var createIssuanceRequestResultCodeRevMap = map[string]int32{
 	"CreateIssuanceRequestResultCodeNotAuthorized":            -5,
 	"CreateIssuanceRequestResultCodeExceedsMaxIssuanceAmount": -6,
 	"CreateIssuanceRequestResultCodeReceiverFullLine":         -7,
+	"CreateIssuanceRequestResultCodeFeeExceedsAmount":         -8,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -8115,6 +8121,7 @@ func NewCreateIssuanceRequestSuccessExt(v LedgerVersion, value interface{}) (res
 //    	uint64 requestID;
 //    	AccountID receiver;
 //    	bool fulfilled;
+//    	Fee fee;
 //    	union switch (LedgerVersion v)
 //    	{
 //    	case EMPTY_VERSION:
@@ -8127,6 +8134,7 @@ type CreateIssuanceRequestSuccess struct {
 	RequestId Uint64                          `json:"requestID,omitempty"`
 	Receiver  AccountId                       `json:"receiver,omitempty"`
 	Fulfilled bool                            `json:"fulfilled,omitempty"`
+	Fee       Fee                             `json:"fee,omitempty"`
 	Ext       CreateIssuanceRequestSuccessExt `json:"ext,omitempty"`
 }
 
@@ -8438,6 +8446,7 @@ func NewCreatePreIssuanceRequestResultSuccessExt(v LedgerVersion, value interfac
 //
 //   struct {
 //    		uint64 requestID;
+//    		bool fulfilled;
 //    		// reserved for future use
 //    		union switch (LedgerVersion v)
 //    		{
@@ -8449,6 +8458,7 @@ func NewCreatePreIssuanceRequestResultSuccessExt(v LedgerVersion, value interfac
 //
 type CreatePreIssuanceRequestResultSuccess struct {
 	RequestId Uint64                                   `json:"requestID,omitempty"`
+	Fulfilled bool                                     `json:"fulfilled,omitempty"`
 	Ext       CreatePreIssuanceRequestResultSuccessExt `json:"ext,omitempty"`
 }
 
@@ -8459,6 +8469,7 @@ type CreatePreIssuanceRequestResultSuccess struct {
 //    case SUCCESS:
 //        struct {
 //    		uint64 requestID;
+//    		bool fulfilled;
 //    		// reserved for future use
 //    		union switch (LedgerVersion v)
 //    		{
@@ -17033,6 +17044,7 @@ func NewIssuanceRequestExt(v LedgerVersion, value interface{}) (result IssuanceR
 //    	AssetCode asset;
 //    	uint64 amount;
 //    	BalanceID receiver;
+//    	Fee fee; //totalFee to be payed (calculated automatically)
 //    	// reserved for future use
 //        union switch (LedgerVersion v)
 //        {
@@ -17046,6 +17058,7 @@ type IssuanceRequest struct {
 	Asset    AssetCode          `json:"asset,omitempty"`
 	Amount   Uint64             `json:"amount,omitempty"`
 	Receiver BalanceId          `json:"receiver,omitempty"`
+	Fee      Fee                `json:"fee,omitempty"`
 	Ext      IssuanceRequestExt `json:"ext,omitempty"`
 }
 
@@ -20522,16 +20535,63 @@ type Salt Uint64
 //
 type DataValue []byte
 
+// FeeExt is an XDR NestedUnion defines as:
+//
+//   union switch(LedgerVersion v)
+//        {
+//            case EMPTY_VERSION:
+//                void;
+//        }
+//
+type FeeExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u FeeExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of FeeExt
+func (u FeeExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewFeeExt creates a new  FeeExt.
+func NewFeeExt(v LedgerVersion, value interface{}) (result FeeExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
 // Fee is an XDR Struct defines as:
 //
 //   struct Fee {
 //    	uint64 fixed;
 //    	uint64 percent;
+//
+//        // reserved for future use
+//        union switch(LedgerVersion v)
+//        {
+//            case EMPTY_VERSION:
+//                void;
+//        }
+//        ext;
 //    };
 //
 type Fee struct {
 	Fixed   Uint64 `json:"fixed,omitempty"`
 	Percent Uint64 `json:"percent,omitempty"`
+	Ext     FeeExt `json:"ext,omitempty"`
 }
 
 // OperationType is an XDR Enum defines as:
