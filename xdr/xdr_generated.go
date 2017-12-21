@@ -8179,6 +8179,7 @@ func NewCreatePreIssuanceRequestResultSuccessExt(v LedgerVersion, value interfac
 //
 //   struct {
 //    		uint64 requestID;
+//    		bool fulfilled;
 //    		// reserved for future use
 //    		union switch (LedgerVersion v)
 //    		{
@@ -8190,6 +8191,7 @@ func NewCreatePreIssuanceRequestResultSuccessExt(v LedgerVersion, value interfac
 //
 type CreatePreIssuanceRequestResultSuccess struct {
 	RequestId Uint64                                   `json:"requestID,omitempty"`
+	Fulfilled bool                                     `json:"fulfilled,omitempty"`
 	Ext       CreatePreIssuanceRequestResultSuccessExt `json:"ext,omitempty"`
 }
 
@@ -8200,6 +8202,7 @@ type CreatePreIssuanceRequestResultSuccess struct {
 //    case SUCCESS:
 //        struct {
 //    		uint64 requestID;
+//    		bool fulfilled;
 //    		// reserved for future use
 //    		union switch (LedgerVersion v)
 //    		{
