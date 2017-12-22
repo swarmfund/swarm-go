@@ -14046,69 +14046,11 @@ type WithdrawalDetails struct {
 	Ext             WithdrawalDetailsExt `json:"ext,omitempty"`
 }
 
-// IssuanceDetailsExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//
-type IssuanceDetailsExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u IssuanceDetailsExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of IssuanceDetailsExt
-func (u IssuanceDetailsExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewIssuanceDetailsExt creates a new  IssuanceDetailsExt.
-func NewIssuanceDetailsExt(v LedgerVersion, value interface{}) (result IssuanceDetailsExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// IssuanceDetails is an XDR Struct defines as:
-//
-//   struct IssuanceDetails {
-//    	string externalDetails<>;
-//    	// reserved for future use
-//        union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
-//    };
-//
-type IssuanceDetails struct {
-	ExternalDetails string             `json:"externalDetails,omitempty"`
-	Ext             IssuanceDetailsExt `json:"ext,omitempty"`
-}
-
 // ReviewRequestOpRequestDetails is an XDR NestedUnion defines as:
 //
 //   union switch(ReviewableRequestType requestType) {
 //    	case WITHDRAW:
 //    		WithdrawalDetails withdrawal;
-//    	case ISSUANCE_CREATE:
-//    		IssuanceDetails issuance;
 //    	default:
 //    		void;
 //    	}
@@ -14116,7 +14058,6 @@ type IssuanceDetails struct {
 type ReviewRequestOpRequestDetails struct {
 	RequestType ReviewableRequestType `json:"requestType,omitempty"`
 	Withdrawal  *WithdrawalDetails    `json:"withdrawal,omitempty"`
-	Issuance    *IssuanceDetails      `json:"issuance,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -14131,8 +14072,6 @@ func (u ReviewRequestOpRequestDetails) ArmForSwitch(sw int32) (string, bool) {
 	switch ReviewableRequestType(sw) {
 	case ReviewableRequestTypeWithdraw:
 		return "Withdrawal", true
-	case ReviewableRequestTypeIssuanceCreate:
-		return "Issuance", true
 	default:
 		return "", true
 	}
@@ -14149,13 +14088,6 @@ func NewReviewRequestOpRequestDetails(requestType ReviewableRequestType, value i
 			return
 		}
 		result.Withdrawal = &tv
-	case ReviewableRequestTypeIssuanceCreate:
-		tv, ok := value.(IssuanceDetails)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be IssuanceDetails")
-			return
-		}
-		result.Issuance = &tv
 	default:
 		// void
 	}
@@ -14181,31 +14113,6 @@ func (u ReviewRequestOpRequestDetails) GetWithdrawal() (result WithdrawalDetails
 
 	if armName == "Withdrawal" {
 		result = *u.Withdrawal
-		ok = true
-	}
-
-	return
-}
-
-// MustIssuance retrieves the Issuance value from the union,
-// panicing if the value is not set.
-func (u ReviewRequestOpRequestDetails) MustIssuance() IssuanceDetails {
-	val, ok := u.GetIssuance()
-
-	if !ok {
-		panic("arm Issuance is not set")
-	}
-
-	return val
-}
-
-// GetIssuance retrieves the Issuance value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u ReviewRequestOpRequestDetails) GetIssuance() (result IssuanceDetails, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.RequestType))
-
-	if armName == "Issuance" {
-		result = *u.Issuance
 		ok = true
 	}
 
@@ -14259,8 +14166,6 @@ func NewReviewRequestOpExt(v LedgerVersion, value interface{}) (result ReviewReq
 //    	union switch(ReviewableRequestType requestType) {
 //    	case WITHDRAW:
 //    		WithdrawalDetails withdrawal;
-//    	case ISSUANCE_CREATE:
-//    		IssuanceDetails issuance;
 //    	default:
 //    		void;
 //    	} requestDetails;
@@ -17138,7 +17043,7 @@ func NewIssuanceRequestExt(v LedgerVersion, value interface{}) (result IssuanceR
 //    	AssetCode asset;
 //    	uint64 amount;
 //    	BalanceID receiver;
-//    	string externalDetails<>; // details of the issuance (External system id, etc.)
+//    	longstring externalDetails; // details of the issuance (External system id, etc.)
 //    	Fee fee; //totalFee to be payed (calculated automatically)
 //    	// reserved for future use
 //        union switch (LedgerVersion v)
@@ -17153,7 +17058,7 @@ type IssuanceRequest struct {
 	Asset           AssetCode          `json:"asset,omitempty"`
 	Amount          Uint64             `json:"amount,omitempty"`
 	Receiver        BalanceId          `json:"receiver,omitempty"`
-	ExternalDetails string             `json:"externalDetails,omitempty"`
+	ExternalDetails Longstring         `json:"externalDetails,omitempty"`
 	Fee             Fee                `json:"fee,omitempty"`
 	Ext             IssuanceRequestExt `json:"ext,omitempty"`
 }
