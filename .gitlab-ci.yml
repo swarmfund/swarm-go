@@ -1,0 +1,14 @@
+image: shebgregor/ci-golang
+
+stages:
+  - test
+
+test:
+  stage: test
+  variables:
+    APP_PATH: gitlab.com/swarmfund/go
+  script:
+    - mkdir -p $GOPATH/src/$APP_PATH
+    - cp -rf ./* $GOPATH/src/$APP_PATH
+    - cd $GOPATH/src/$APP_PATH
+    - go test ./...
