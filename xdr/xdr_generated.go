@@ -8274,19 +8274,21 @@ type CreateAccountOp struct {
 //    	TYPE_NOT_ALLOWED = -3, // master or commission account types are not allowed
 //        NAME_DUPLICATION = -4,
 //        REFERRER_NOT_FOUND = -5,
-//    	INVALID_ACCOUNT_VERSION = -6 // if account version is higher than ledger version
+//    	INVALID_ACCOUNT_VERSION = -6, // if account version is higher than ledger version
+//    	NOT_VERIFIED_CANNOT_HAVE_POLICIES = -7
 //    };
 //
 type CreateAccountResultCode int32
 
 const (
-	CreateAccountResultCodeSuccess               CreateAccountResultCode = 0
-	CreateAccountResultCodeMalformed             CreateAccountResultCode = -1
-	CreateAccountResultCodeAccountTypeMismatched CreateAccountResultCode = -2
-	CreateAccountResultCodeTypeNotAllowed        CreateAccountResultCode = -3
-	CreateAccountResultCodeNameDuplication       CreateAccountResultCode = -4
-	CreateAccountResultCodeReferrerNotFound      CreateAccountResultCode = -5
-	CreateAccountResultCodeInvalidAccountVersion CreateAccountResultCode = -6
+	CreateAccountResultCodeSuccess                       CreateAccountResultCode = 0
+	CreateAccountResultCodeMalformed                     CreateAccountResultCode = -1
+	CreateAccountResultCodeAccountTypeMismatched         CreateAccountResultCode = -2
+	CreateAccountResultCodeTypeNotAllowed                CreateAccountResultCode = -3
+	CreateAccountResultCodeNameDuplication               CreateAccountResultCode = -4
+	CreateAccountResultCodeReferrerNotFound              CreateAccountResultCode = -5
+	CreateAccountResultCodeInvalidAccountVersion         CreateAccountResultCode = -6
+	CreateAccountResultCodeNotVerifiedCannotHavePolicies CreateAccountResultCode = -7
 )
 
 var CreateAccountResultCodeAll = []CreateAccountResultCode{
@@ -8297,6 +8299,7 @@ var CreateAccountResultCodeAll = []CreateAccountResultCode{
 	CreateAccountResultCodeNameDuplication,
 	CreateAccountResultCodeReferrerNotFound,
 	CreateAccountResultCodeInvalidAccountVersion,
+	CreateAccountResultCodeNotVerifiedCannotHavePolicies,
 }
 
 var createAccountResultCodeMap = map[int32]string{
@@ -8307,6 +8310,7 @@ var createAccountResultCodeMap = map[int32]string{
 	-4: "CreateAccountResultCodeNameDuplication",
 	-5: "CreateAccountResultCodeReferrerNotFound",
 	-6: "CreateAccountResultCodeInvalidAccountVersion",
+	-7: "CreateAccountResultCodeNotVerifiedCannotHavePolicies",
 }
 
 var createAccountResultCodeShortMap = map[int32]string{
@@ -8317,16 +8321,18 @@ var createAccountResultCodeShortMap = map[int32]string{
 	-4: "name_duplication",
 	-5: "referrer_not_found",
 	-6: "invalid_account_version",
+	-7: "not_verified_cannot_have_policies",
 }
 
 var createAccountResultCodeRevMap = map[string]int32{
-	"CreateAccountResultCodeSuccess":               0,
-	"CreateAccountResultCodeMalformed":             -1,
-	"CreateAccountResultCodeAccountTypeMismatched": -2,
-	"CreateAccountResultCodeTypeNotAllowed":        -3,
-	"CreateAccountResultCodeNameDuplication":       -4,
-	"CreateAccountResultCodeReferrerNotFound":      -5,
-	"CreateAccountResultCodeInvalidAccountVersion": -6,
+	"CreateAccountResultCodeSuccess":                       0,
+	"CreateAccountResultCodeMalformed":                     -1,
+	"CreateAccountResultCodeAccountTypeMismatched":         -2,
+	"CreateAccountResultCodeTypeNotAllowed":                -3,
+	"CreateAccountResultCodeNameDuplication":               -4,
+	"CreateAccountResultCodeReferrerNotFound":              -5,
+	"CreateAccountResultCodeInvalidAccountVersion":         -6,
+	"CreateAccountResultCodeNotVerifiedCannotHavePolicies": -7,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -12503,7 +12509,12 @@ type ManageOfferOp struct {
 //    	ORDER_VIOLATES_HARD_CAP = -16, // currentcap + order will exceed hard cap
 //    	CANT_PARTICIPATE_OWN_SALE = -17, // it's not allowed to participate in own sale
 //    	ASSET_MISMATCHED = -18, // sale assets does not match assets for specified balances
-//    	PRICE_DOES_NOT_MATCH = -19 // price does not match sale price
+//    	PRICE_DOES_NOT_MATCH = -19, // price does not match sale price
+//    	PRICE_IS_INVALID = -20, // price must be positive
+//    	UPDATE_IS_NOT_ALLOWED = -21, // update of the offer is not allowed
+//    	INVALID_AMOUNT = -22, // amount must be positive
+//    	SALE_IS_NOT_ACTIVE = -23
+//
 //    };
 //
 type ManageOfferResultCode int32
@@ -12529,6 +12540,10 @@ const (
 	ManageOfferResultCodeCantParticipateOwnSale   ManageOfferResultCode = -17
 	ManageOfferResultCodeAssetMismatched          ManageOfferResultCode = -18
 	ManageOfferResultCodePriceDoesNotMatch        ManageOfferResultCode = -19
+	ManageOfferResultCodePriceIsInvalid           ManageOfferResultCode = -20
+	ManageOfferResultCodeUpdateIsNotAllowed       ManageOfferResultCode = -21
+	ManageOfferResultCodeInvalidAmount            ManageOfferResultCode = -22
+	ManageOfferResultCodeSaleIsNotActive          ManageOfferResultCode = -23
 )
 
 var ManageOfferResultCodeAll = []ManageOfferResultCode{
@@ -12552,6 +12567,10 @@ var ManageOfferResultCodeAll = []ManageOfferResultCode{
 	ManageOfferResultCodeCantParticipateOwnSale,
 	ManageOfferResultCodeAssetMismatched,
 	ManageOfferResultCodePriceDoesNotMatch,
+	ManageOfferResultCodePriceIsInvalid,
+	ManageOfferResultCodeUpdateIsNotAllowed,
+	ManageOfferResultCodeInvalidAmount,
+	ManageOfferResultCodeSaleIsNotActive,
 }
 
 var manageOfferResultCodeMap = map[int32]string{
@@ -12575,6 +12594,10 @@ var manageOfferResultCodeMap = map[int32]string{
 	-17: "ManageOfferResultCodeCantParticipateOwnSale",
 	-18: "ManageOfferResultCodeAssetMismatched",
 	-19: "ManageOfferResultCodePriceDoesNotMatch",
+	-20: "ManageOfferResultCodePriceIsInvalid",
+	-21: "ManageOfferResultCodeUpdateIsNotAllowed",
+	-22: "ManageOfferResultCodeInvalidAmount",
+	-23: "ManageOfferResultCodeSaleIsNotActive",
 }
 
 var manageOfferResultCodeShortMap = map[int32]string{
@@ -12598,6 +12621,10 @@ var manageOfferResultCodeShortMap = map[int32]string{
 	-17: "cant_participate_own_sale",
 	-18: "asset_mismatched",
 	-19: "price_does_not_match",
+	-20: "price_is_invalid",
+	-21: "update_is_not_allowed",
+	-22: "invalid_amount",
+	-23: "sale_is_not_active",
 }
 
 var manageOfferResultCodeRevMap = map[string]int32{
@@ -12621,6 +12648,10 @@ var manageOfferResultCodeRevMap = map[string]int32{
 	"ManageOfferResultCodeCantParticipateOwnSale":   -17,
 	"ManageOfferResultCodeAssetMismatched":          -18,
 	"ManageOfferResultCodePriceDoesNotMatch":        -19,
+	"ManageOfferResultCodePriceIsInvalid":           -20,
+	"ManageOfferResultCodeUpdateIsNotAllowed":       -21,
+	"ManageOfferResultCodeInvalidAmount":            -22,
+	"ManageOfferResultCodeSaleIsNotActive":          -23,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
