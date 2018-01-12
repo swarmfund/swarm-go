@@ -21025,7 +21025,6 @@ type Fee struct {
 //        SET_FEES = 5,
 //    	MANAGE_ACCOUNT = 6,
 //        CREATE_WITHDRAWAL_REQUEST = 7,
-//        RECOVER = 8,
 //        MANAGE_BALANCE = 9,
 //        REVIEW_PAYMENT_REQUEST = 10,
 //        MANAGE_ASSET = 11,
@@ -21050,7 +21049,6 @@ const (
 	OperationTypeSetFees                  OperationType = 5
 	OperationTypeManageAccount            OperationType = 6
 	OperationTypeCreateWithdrawalRequest  OperationType = 7
-	OperationTypeRecover                  OperationType = 8
 	OperationTypeManageBalance            OperationType = 9
 	OperationTypeReviewPaymentRequest     OperationType = 10
 	OperationTypeManageAsset              OperationType = 11
@@ -21073,7 +21071,6 @@ var OperationTypeAll = []OperationType{
 	OperationTypeSetFees,
 	OperationTypeManageAccount,
 	OperationTypeCreateWithdrawalRequest,
-	OperationTypeRecover,
 	OperationTypeManageBalance,
 	OperationTypeReviewPaymentRequest,
 	OperationTypeManageAsset,
@@ -21096,7 +21093,6 @@ var operationTypeMap = map[int32]string{
 	5:  "OperationTypeSetFees",
 	6:  "OperationTypeManageAccount",
 	7:  "OperationTypeCreateWithdrawalRequest",
-	8:  "OperationTypeRecover",
 	9:  "OperationTypeManageBalance",
 	10: "OperationTypeReviewPaymentRequest",
 	11: "OperationTypeManageAsset",
@@ -21119,7 +21115,6 @@ var operationTypeShortMap = map[int32]string{
 	5:  "set_fees",
 	6:  "manage_account",
 	7:  "create_withdrawal_request",
-	8:  "recover",
 	9:  "manage_balance",
 	10: "review_payment_request",
 	11: "manage_asset",
@@ -21142,7 +21137,6 @@ var operationTypeRevMap = map[string]int32{
 	"OperationTypeSetFees":                  5,
 	"OperationTypeManageAccount":            6,
 	"OperationTypeCreateWithdrawalRequest":  7,
-	"OperationTypeRecover":                  8,
 	"OperationTypeManageBalance":            9,
 	"OperationTypeReviewPaymentRequest":     10,
 	"OperationTypeManageAsset":              11,
