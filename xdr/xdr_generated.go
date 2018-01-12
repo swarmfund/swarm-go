@@ -41,6 +41,7 @@
 //  xdr/raw/Stellar-overlay.x
 //  xdr/raw/Stellar-reviewable-request-asset.x
 //  xdr/raw/Stellar-reviewable-request-issuance.x
+//  xdr/raw/Stellar-reviewable-request-limits-update.x
 //  xdr/raw/Stellar-reviewable-request-sale.x
 //  xdr/raw/Stellar-reviewable-request-withdrawal.x
 //  xdr/raw/Stellar-transaction.x
@@ -2810,8 +2811,8 @@ type ReferenceEntry struct {
 //    	PRE_ISSUANCE_CREATE = 2,
 //    	ISSUANCE_CREATE = 3,
 //    	WITHDRAW = 4,
-//    	SALE = 5
-//
+//    	SALE = 5,
+//    	LIMITS_UPDATE = 6
 //    };
 //
 type ReviewableRequestType int32
@@ -2823,6 +2824,7 @@ const (
 	ReviewableRequestTypeIssuanceCreate    ReviewableRequestType = 3
 	ReviewableRequestTypeWithdraw          ReviewableRequestType = 4
 	ReviewableRequestTypeSale              ReviewableRequestType = 5
+	ReviewableRequestTypeLimitsUpdate      ReviewableRequestType = 6
 )
 
 var ReviewableRequestTypeAll = []ReviewableRequestType{
@@ -2832,6 +2834,7 @@ var ReviewableRequestTypeAll = []ReviewableRequestType{
 	ReviewableRequestTypeIssuanceCreate,
 	ReviewableRequestTypeWithdraw,
 	ReviewableRequestTypeSale,
+	ReviewableRequestTypeLimitsUpdate,
 }
 
 var reviewableRequestTypeMap = map[int32]string{
@@ -2841,6 +2844,7 @@ var reviewableRequestTypeMap = map[int32]string{
 	3: "ReviewableRequestTypeIssuanceCreate",
 	4: "ReviewableRequestTypeWithdraw",
 	5: "ReviewableRequestTypeSale",
+	6: "ReviewableRequestTypeLimitsUpdate",
 }
 
 var reviewableRequestTypeShortMap = map[int32]string{
@@ -2850,6 +2854,7 @@ var reviewableRequestTypeShortMap = map[int32]string{
 	3: "issuance_create",
 	4: "withdraw",
 	5: "sale",
+	6: "limits_update",
 }
 
 var reviewableRequestTypeRevMap = map[string]int32{
@@ -2859,6 +2864,7 @@ var reviewableRequestTypeRevMap = map[string]int32{
 	"ReviewableRequestTypeIssuanceCreate":    3,
 	"ReviewableRequestTypeWithdraw":          4,
 	"ReviewableRequestTypeSale":              5,
+	"ReviewableRequestTypeLimitsUpdate":      6,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -2937,6 +2943,8 @@ func (e *ReviewableRequestType) UnmarshalJSON(data []byte) error {
 //    			WithdrawalRequest withdrawalRequest;
 //    		case SALE:
 //    			SaleCreationRequest saleCreationRequest;
+//            case LIMITS_UPDATE:
+//                LimitsUpdateRequest limitsUpdateRequest;
 //    	}
 //
 type ReviewableRequestEntryBody struct {
@@ -2947,6 +2955,7 @@ type ReviewableRequestEntryBody struct {
 	IssuanceRequest      *IssuanceRequest      `json:"issuanceRequest,omitempty"`
 	WithdrawalRequest    *WithdrawalRequest    `json:"withdrawalRequest,omitempty"`
 	SaleCreationRequest  *SaleCreationRequest  `json:"saleCreationRequest,omitempty"`
+	LimitsUpdateRequest  *LimitsUpdateRequest  `json:"limitsUpdateRequest,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -2971,6 +2980,8 @@ func (u ReviewableRequestEntryBody) ArmForSwitch(sw int32) (string, bool) {
 		return "WithdrawalRequest", true
 	case ReviewableRequestTypeSale:
 		return "SaleCreationRequest", true
+	case ReviewableRequestTypeLimitsUpdate:
+		return "LimitsUpdateRequest", true
 	}
 	return "-", false
 }
@@ -3021,6 +3032,13 @@ func NewReviewableRequestEntryBody(aType ReviewableRequestType, value interface{
 			return
 		}
 		result.SaleCreationRequest = &tv
+	case ReviewableRequestTypeLimitsUpdate:
+		tv, ok := value.(LimitsUpdateRequest)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be LimitsUpdateRequest")
+			return
+		}
+		result.LimitsUpdateRequest = &tv
 	}
 	return
 }
@@ -3175,6 +3193,31 @@ func (u ReviewableRequestEntryBody) GetSaleCreationRequest() (result SaleCreatio
 	return
 }
 
+// MustLimitsUpdateRequest retrieves the LimitsUpdateRequest value from the union,
+// panicing if the value is not set.
+func (u ReviewableRequestEntryBody) MustLimitsUpdateRequest() LimitsUpdateRequest {
+	val, ok := u.GetLimitsUpdateRequest()
+
+	if !ok {
+		panic("arm LimitsUpdateRequest is not set")
+	}
+
+	return val
+}
+
+// GetLimitsUpdateRequest retrieves the LimitsUpdateRequest value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewableRequestEntryBody) GetLimitsUpdateRequest() (result LimitsUpdateRequest, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "LimitsUpdateRequest" {
+		result = *u.LimitsUpdateRequest
+		ok = true
+	}
+
+	return
+}
+
 // ReviewableRequestEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -3237,6 +3280,8 @@ func NewReviewableRequestEntryExt(v LedgerVersion, value interface{}) (result Re
 //    			WithdrawalRequest withdrawalRequest;
 //    		case SALE:
 //    			SaleCreationRequest saleCreationRequest;
+//            case LIMITS_UPDATE:
+//                LimitsUpdateRequest limitsUpdateRequest;
 //    	} body;
 //
 //    	// reserved for future use
@@ -14715,6 +14760,61 @@ func (e *ReviewRequestOpAction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// LimitsUpdateDetailsExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//            {
+//            case EMPTY_VERSION:
+//                void;
+//            }
+//
+type LimitsUpdateDetailsExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u LimitsUpdateDetailsExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of LimitsUpdateDetailsExt
+func (u LimitsUpdateDetailsExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewLimitsUpdateDetailsExt creates a new  LimitsUpdateDetailsExt.
+func NewLimitsUpdateDetailsExt(v LedgerVersion, value interface{}) (result LimitsUpdateDetailsExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// LimitsUpdateDetails is an XDR Struct defines as:
+//
+//   struct LimitsUpdateDetails {
+//        Limits newLimits;
+//        union switch (LedgerVersion v)
+//            {
+//            case EMPTY_VERSION:
+//                void;
+//            }
+//            ext;
+//    };
+//
+type LimitsUpdateDetails struct {
+	NewLimits Limits                 `json:"newLimits,omitempty"`
+	Ext       LimitsUpdateDetailsExt `json:"ext,omitempty"`
+}
+
 // WithdrawalDetailsExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -14776,13 +14876,16 @@ type WithdrawalDetails struct {
 //   union switch(ReviewableRequestType requestType) {
 //    	case WITHDRAW:
 //    		WithdrawalDetails withdrawal;
+//        case LIMITS_UPDATE:
+//            LimitsUpdateDetails limitsUpdate;
 //    	default:
 //    		void;
 //    	}
 //
 type ReviewRequestOpRequestDetails struct {
-	RequestType ReviewableRequestType `json:"requestType,omitempty"`
-	Withdrawal  *WithdrawalDetails    `json:"withdrawal,omitempty"`
+	RequestType  ReviewableRequestType `json:"requestType,omitempty"`
+	Withdrawal   *WithdrawalDetails    `json:"withdrawal,omitempty"`
+	LimitsUpdate *LimitsUpdateDetails  `json:"limitsUpdate,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -14797,6 +14900,8 @@ func (u ReviewRequestOpRequestDetails) ArmForSwitch(sw int32) (string, bool) {
 	switch ReviewableRequestType(sw) {
 	case ReviewableRequestTypeWithdraw:
 		return "Withdrawal", true
+	case ReviewableRequestTypeLimitsUpdate:
+		return "LimitsUpdate", true
 	default:
 		return "", true
 	}
@@ -14813,6 +14918,13 @@ func NewReviewRequestOpRequestDetails(requestType ReviewableRequestType, value i
 			return
 		}
 		result.Withdrawal = &tv
+	case ReviewableRequestTypeLimitsUpdate:
+		tv, ok := value.(LimitsUpdateDetails)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be LimitsUpdateDetails")
+			return
+		}
+		result.LimitsUpdate = &tv
 	default:
 		// void
 	}
@@ -14838,6 +14950,31 @@ func (u ReviewRequestOpRequestDetails) GetWithdrawal() (result WithdrawalDetails
 
 	if armName == "Withdrawal" {
 		result = *u.Withdrawal
+		ok = true
+	}
+
+	return
+}
+
+// MustLimitsUpdate retrieves the LimitsUpdate value from the union,
+// panicing if the value is not set.
+func (u ReviewRequestOpRequestDetails) MustLimitsUpdate() LimitsUpdateDetails {
+	val, ok := u.GetLimitsUpdate()
+
+	if !ok {
+		panic("arm LimitsUpdate is not set")
+	}
+
+	return val
+}
+
+// GetLimitsUpdate retrieves the LimitsUpdate value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewRequestOpRequestDetails) GetLimitsUpdate() (result LimitsUpdateDetails, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.RequestType))
+
+	if armName == "LimitsUpdate" {
+		result = *u.LimitsUpdate
 		ok = true
 	}
 
@@ -14891,6 +15028,8 @@ func NewReviewRequestOpExt(v LedgerVersion, value interface{}) (result ReviewReq
 //    	union switch(ReviewableRequestType requestType) {
 //    	case WITHDRAW:
 //    		WithdrawalDetails withdrawal;
+//        case LIMITS_UPDATE:
+//            LimitsUpdateDetails limitsUpdate;
 //    	default:
 //    		void;
 //    	} requestDetails;
@@ -14938,7 +15077,7 @@ type ReviewRequestOp struct {
 //    	INSUFFICIENT_AVAILABLE_FOR_ISSUANCE_AMOUNT = -41,
 //    	FULL_LINE = -42, // can't fund balance - total funds exceed UINT64_MAX
 //
-//    	// sale creation reuqests
+//    	// sale creation requests
 //    	QUOTE_ASSET_DOES_NOT_EXISTS = -50,
 //    	BASE_ASSET_DOES_NOT_EXISTS = -51,
 //    	HARD_CAP_WILL_EXCEED_MAX_ISSUANCE = -52
@@ -16026,6 +16165,61 @@ type TrustData struct {
 	Ext    TrustDataExt      `json:"ext,omitempty"`
 }
 
+// LimitsUpdateRequestDataExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type LimitsUpdateRequestDataExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u LimitsUpdateRequestDataExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of LimitsUpdateRequestDataExt
+func (u LimitsUpdateRequestDataExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewLimitsUpdateRequestDataExt creates a new  LimitsUpdateRequestDataExt.
+func NewLimitsUpdateRequestDataExt(v LedgerVersion, value interface{}) (result LimitsUpdateRequestDataExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// LimitsUpdateRequestData is an XDR Struct defines as:
+//
+//   struct LimitsUpdateRequestData {
+//        Hash documentHash;
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type LimitsUpdateRequestData struct {
+	DocumentHash Hash                       `json:"documentHash,omitempty"`
+	Ext          LimitsUpdateRequestDataExt `json:"ext,omitempty"`
+}
+
 // SetOptionsOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -16079,6 +16273,10 @@ func NewSetOptionsOpExt(v LedgerVersion, value interface{}) (result SetOptionsOp
 //        Signer* signer;
 //
 //        TrustData* trustData;
+//
+//        // Create LimitsUpdateRequest for account
+//        LimitsUpdateRequestData* limitsUpdateRequestData;
+//
 //    	// reserved for future use
 //    	union switch (LedgerVersion v)
 //    	{
@@ -16090,13 +16288,14 @@ func NewSetOptionsOpExt(v LedgerVersion, value interface{}) (result SetOptionsOp
 //    };
 //
 type SetOptionsOp struct {
-	MasterWeight  *Uint32         `json:"masterWeight,omitempty"`
-	LowThreshold  *Uint32         `json:"lowThreshold,omitempty"`
-	MedThreshold  *Uint32         `json:"medThreshold,omitempty"`
-	HighThreshold *Uint32         `json:"highThreshold,omitempty"`
-	Signer        *Signer         `json:"signer,omitempty"`
-	TrustData     *TrustData      `json:"trustData,omitempty"`
-	Ext           SetOptionsOpExt `json:"ext,omitempty"`
+	MasterWeight            *Uint32                  `json:"masterWeight,omitempty"`
+	LowThreshold            *Uint32                  `json:"lowThreshold,omitempty"`
+	MedThreshold            *Uint32                  `json:"medThreshold,omitempty"`
+	HighThreshold           *Uint32                  `json:"highThreshold,omitempty"`
+	Signer                  *Signer                  `json:"signer,omitempty"`
+	TrustData               *TrustData               `json:"trustData,omitempty"`
+	LimitsUpdateRequestData *LimitsUpdateRequestData `json:"limitsUpdateRequestData,omitempty"`
+	Ext                     SetOptionsOpExt          `json:"ext,omitempty"`
 }
 
 // SetOptionsResultCode is an XDR Enum defines as:
@@ -16112,20 +16311,22 @@ type SetOptionsOp struct {
 //        BALANCE_NOT_FOUND = -4,
 //        TRUST_MALFORMED = -5,
 //    	TRUST_TOO_MANY = -6,
-//    	INVALID_SIGNER_VERSION = -7 // if signer version is higher than ledger version
+//    	INVALID_SIGNER_VERSION = -7, // if signer version is higher than ledger version
+//    	LIMITS_UPDATE_REQUEST_REFERENCE_DUPLICATION = -8
 //    };
 //
 type SetOptionsResultCode int32
 
 const (
-	SetOptionsResultCodeSuccess              SetOptionsResultCode = 0
-	SetOptionsResultCodeTooManySigners       SetOptionsResultCode = -1
-	SetOptionsResultCodeThresholdOutOfRange  SetOptionsResultCode = -2
-	SetOptionsResultCodeBadSigner            SetOptionsResultCode = -3
-	SetOptionsResultCodeBalanceNotFound      SetOptionsResultCode = -4
-	SetOptionsResultCodeTrustMalformed       SetOptionsResultCode = -5
-	SetOptionsResultCodeTrustTooMany         SetOptionsResultCode = -6
-	SetOptionsResultCodeInvalidSignerVersion SetOptionsResultCode = -7
+	SetOptionsResultCodeSuccess                                 SetOptionsResultCode = 0
+	SetOptionsResultCodeTooManySigners                          SetOptionsResultCode = -1
+	SetOptionsResultCodeThresholdOutOfRange                     SetOptionsResultCode = -2
+	SetOptionsResultCodeBadSigner                               SetOptionsResultCode = -3
+	SetOptionsResultCodeBalanceNotFound                         SetOptionsResultCode = -4
+	SetOptionsResultCodeTrustMalformed                          SetOptionsResultCode = -5
+	SetOptionsResultCodeTrustTooMany                            SetOptionsResultCode = -6
+	SetOptionsResultCodeInvalidSignerVersion                    SetOptionsResultCode = -7
+	SetOptionsResultCodeLimitsUpdateRequestReferenceDuplication SetOptionsResultCode = -8
 )
 
 var SetOptionsResultCodeAll = []SetOptionsResultCode{
@@ -16137,6 +16338,7 @@ var SetOptionsResultCodeAll = []SetOptionsResultCode{
 	SetOptionsResultCodeTrustMalformed,
 	SetOptionsResultCodeTrustTooMany,
 	SetOptionsResultCodeInvalidSignerVersion,
+	SetOptionsResultCodeLimitsUpdateRequestReferenceDuplication,
 }
 
 var setOptionsResultCodeMap = map[int32]string{
@@ -16148,6 +16350,7 @@ var setOptionsResultCodeMap = map[int32]string{
 	-5: "SetOptionsResultCodeTrustMalformed",
 	-6: "SetOptionsResultCodeTrustTooMany",
 	-7: "SetOptionsResultCodeInvalidSignerVersion",
+	-8: "SetOptionsResultCodeLimitsUpdateRequestReferenceDuplication",
 }
 
 var setOptionsResultCodeShortMap = map[int32]string{
@@ -16159,17 +16362,19 @@ var setOptionsResultCodeShortMap = map[int32]string{
 	-5: "trust_malformed",
 	-6: "trust_too_many",
 	-7: "invalid_signer_version",
+	-8: "limits_update_request_reference_duplication",
 }
 
 var setOptionsResultCodeRevMap = map[string]int32{
-	"SetOptionsResultCodeSuccess":              0,
-	"SetOptionsResultCodeTooManySigners":       -1,
-	"SetOptionsResultCodeThresholdOutOfRange":  -2,
-	"SetOptionsResultCodeBadSigner":            -3,
-	"SetOptionsResultCodeBalanceNotFound":      -4,
-	"SetOptionsResultCodeTrustMalformed":       -5,
-	"SetOptionsResultCodeTrustTooMany":         -6,
-	"SetOptionsResultCodeInvalidSignerVersion": -7,
+	"SetOptionsResultCodeSuccess":                                 0,
+	"SetOptionsResultCodeTooManySigners":                          -1,
+	"SetOptionsResultCodeThresholdOutOfRange":                     -2,
+	"SetOptionsResultCodeBadSigner":                               -3,
+	"SetOptionsResultCodeBalanceNotFound":                         -4,
+	"SetOptionsResultCodeTrustMalformed":                          -5,
+	"SetOptionsResultCodeTrustTooMany":                            -6,
+	"SetOptionsResultCodeInvalidSignerVersion":                    -7,
+	"SetOptionsResultCodeLimitsUpdateRequestReferenceDuplication": -8,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -16274,6 +16479,7 @@ func NewSetOptionsResultSuccessExt(v LedgerVersion, value interface{}) (result S
 // SetOptionsResultSuccess is an XDR NestedStruct defines as:
 //
 //   struct {
+//            uint64 limitsUpdateRequestID;
 //    		// reserved for future use
 //    		union switch (LedgerVersion v)
 //    		{
@@ -16284,7 +16490,8 @@ func NewSetOptionsResultSuccessExt(v LedgerVersion, value interface{}) (result S
 //    	}
 //
 type SetOptionsResultSuccess struct {
-	Ext SetOptionsResultSuccessExt `json:"ext,omitempty"`
+	LimitsUpdateRequestId Uint64                     `json:"limitsUpdateRequestID,omitempty"`
+	Ext                   SetOptionsResultSuccessExt `json:"ext,omitempty"`
 }
 
 // SetOptionsResult is an XDR Union defines as:
@@ -16293,6 +16500,7 @@ type SetOptionsResultSuccess struct {
 //    {
 //    case SUCCESS:
 //        struct {
+//            uint64 limitsUpdateRequestID;
 //    		// reserved for future use
 //    		union switch (LedgerVersion v)
 //    		{
@@ -17786,6 +17994,63 @@ type IssuanceRequest struct {
 	ExternalDetails Longstring         `json:"externalDetails,omitempty"`
 	Fee             Fee                `json:"fee,omitempty"`
 	Ext             IssuanceRequestExt `json:"ext,omitempty"`
+}
+
+// LimitsUpdateRequestExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type LimitsUpdateRequestExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u LimitsUpdateRequestExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of LimitsUpdateRequestExt
+func (u LimitsUpdateRequestExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewLimitsUpdateRequestExt creates a new  LimitsUpdateRequestExt.
+func NewLimitsUpdateRequestExt(v LedgerVersion, value interface{}) (result LimitsUpdateRequestExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// LimitsUpdateRequest is an XDR Struct defines as:
+//
+//   struct LimitsUpdateRequest {
+//        Hash documentHash;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type LimitsUpdateRequest struct {
+	DocumentHash Hash                   `json:"documentHash,omitempty"`
+	Ext          LimitsUpdateRequestExt `json:"ext,omitempty"`
 }
 
 // SaleCreationRequestExt is an XDR NestedUnion defines as:
