@@ -32,7 +32,6 @@
 //  xdr/raw/Stellar-operation-manage-invoice.x
 //  xdr/raw/Stellar-operation-manage-offer.x
 //  xdr/raw/Stellar-operation-payment.x
-//  xdr/raw/Stellar-operation-recover.x
 //  xdr/raw/Stellar-operation-review-payment-request.x
 //  xdr/raw/Stellar-operation-review-request.x
 //  xdr/raw/Stellar-operation-set-fees.x
@@ -1404,6 +1403,7 @@ func NewAccountEntryExt(v LedgerVersion, value interface{}) (result AccountEntry
 //   struct AccountEntry
 //    {
 //        AccountID accountID;      // master public key for this account
+//        AccountID recoveryID;
 //
 //        // fields used for signatures
 //        // thresholds stores unsigned bytes: [weight of master|low|medium|high]
@@ -1431,6 +1431,7 @@ func NewAccountEntryExt(v LedgerVersion, value interface{}) (result AccountEntry
 //
 type AccountEntry struct {
 	AccountId    AccountId       `json:"accountID,omitempty"`
+	RecoveryId   AccountId       `json:"recoveryID,omitempty"`
 	Thresholds   Thresholds      `json:"thresholds,omitempty"`
 	Signers      []Signer        `json:"signers,omitempty"`
 	Limits       *Limits         `json:"limits,omitempty"`
@@ -8240,6 +8241,7 @@ func NewCreateAccountOpExt(v LedgerVersion, value interface{}) (result CreateAcc
 //   struct CreateAccountOp
 //    {
 //        AccountID destination; // account to create
+//        AccountID recoveryKey; // recovery signer's public key
 //        AccountID* referrer;     // parent account
 //    	AccountType accountType;
 //    	uint32 policies;
@@ -8255,6 +8257,7 @@ func NewCreateAccountOpExt(v LedgerVersion, value interface{}) (result CreateAcc
 //
 type CreateAccountOp struct {
 	Destination AccountId          `json:"destination,omitempty"`
+	RecoveryKey AccountId          `json:"recoveryKey,omitempty"`
 	Referrer    *AccountId         `json:"referrer,omitempty"`
 	AccountType AccountType        `json:"accountType,omitempty"`
 	Policies    Uint32             `json:"policies,omitempty"`
@@ -13903,315 +13906,6 @@ func (u PaymentResult) GetPaymentResponse() (result PaymentResponse, ok bool) {
 	return
 }
 
-// RecoverOpExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//
-type RecoverOpExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u RecoverOpExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of RecoverOpExt
-func (u RecoverOpExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewRecoverOpExt creates a new  RecoverOpExt.
-func NewRecoverOpExt(v LedgerVersion, value interface{}) (result RecoverOpExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// RecoverOp is an XDR Struct defines as:
-//
-//   struct RecoverOp
-//    {
-//        AccountID account;
-//        PublicKey oldSigner;
-//        PublicKey newSigner;
-//    	// reserved for future use
-//        union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
-//    };
-//
-type RecoverOp struct {
-	Account   AccountId    `json:"account,omitempty"`
-	OldSigner PublicKey    `json:"oldSigner,omitempty"`
-	NewSigner PublicKey    `json:"newSigner,omitempty"`
-	Ext       RecoverOpExt `json:"ext,omitempty"`
-}
-
-// RecoverResultCode is an XDR Enum defines as:
-//
-//   enum RecoverResultCode
-//    {
-//        // codes considered as "success" for the operation
-//        SUCCESS = 0,
-//
-//        // codes considered as "failure" for the operation
-//
-//        MALFORMED = -1,
-//        OLD_SIGNER_NOT_FOUND = -2,
-//        SIGNER_ALREADY_EXISTS = -3
-//    };
-//
-type RecoverResultCode int32
-
-const (
-	RecoverResultCodeSuccess             RecoverResultCode = 0
-	RecoverResultCodeMalformed           RecoverResultCode = -1
-	RecoverResultCodeOldSignerNotFound   RecoverResultCode = -2
-	RecoverResultCodeSignerAlreadyExists RecoverResultCode = -3
-)
-
-var RecoverResultCodeAll = []RecoverResultCode{
-	RecoverResultCodeSuccess,
-	RecoverResultCodeMalformed,
-	RecoverResultCodeOldSignerNotFound,
-	RecoverResultCodeSignerAlreadyExists,
-}
-
-var recoverResultCodeMap = map[int32]string{
-	0:  "RecoverResultCodeSuccess",
-	-1: "RecoverResultCodeMalformed",
-	-2: "RecoverResultCodeOldSignerNotFound",
-	-3: "RecoverResultCodeSignerAlreadyExists",
-}
-
-var recoverResultCodeShortMap = map[int32]string{
-	0:  "success",
-	-1: "malformed",
-	-2: "old_signer_not_found",
-	-3: "signer_already_exists",
-}
-
-var recoverResultCodeRevMap = map[string]int32{
-	"RecoverResultCodeSuccess":             0,
-	"RecoverResultCodeMalformed":           -1,
-	"RecoverResultCodeOldSignerNotFound":   -2,
-	"RecoverResultCodeSignerAlreadyExists": -3,
-}
-
-// ValidEnum validates a proposed value for this enum.  Implements
-// the Enum interface for RecoverResultCode
-func (e RecoverResultCode) ValidEnum(v int32) bool {
-	_, ok := recoverResultCodeMap[v]
-	return ok
-}
-func (e RecoverResultCode) isFlag() bool {
-	for i := len(RecoverResultCodeAll) - 1; i >= 0; i-- {
-		expected := RecoverResultCode(2) << uint64(len(RecoverResultCodeAll)-1) >> uint64(len(RecoverResultCodeAll)-i)
-		if expected != RecoverResultCodeAll[i] {
-			return false
-		}
-	}
-	return true
-}
-
-// String returns the name of `e`
-func (e RecoverResultCode) String() string {
-	name, _ := recoverResultCodeMap[int32(e)]
-	return name
-}
-
-func (e RecoverResultCode) ShortString() string {
-	name, _ := recoverResultCodeShortMap[int32(e)]
-	return name
-}
-
-func (e RecoverResultCode) MarshalJSON() ([]byte, error) {
-	if e.isFlag() {
-		// marshal as mask
-		result := flag{
-			Value: int32(e),
-		}
-		for _, value := range RecoverResultCodeAll {
-			if (value & e) == value {
-				result.Flags = append(result.Flags, flagValue{
-					Value: int32(value),
-					Name:  value.ShortString(),
-				})
-			}
-		}
-		return json.Marshal(&result)
-	} else {
-		// marshal as enum
-		result := enum{
-			Value:  int32(e),
-			String: e.ShortString(),
-		}
-		return json.Marshal(&result)
-	}
-}
-
-func (e *RecoverResultCode) UnmarshalJSON(data []byte) error {
-	var t value
-	if err := json.Unmarshal(data, &t); err != nil {
-		return err
-	}
-	*e = RecoverResultCode(t.Value)
-	return nil
-}
-
-// RecoverResultSuccessExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//    		{
-//    		case EMPTY_VERSION:
-//    			void;
-//    		}
-//
-type RecoverResultSuccessExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u RecoverResultSuccessExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of RecoverResultSuccessExt
-func (u RecoverResultSuccessExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewRecoverResultSuccessExt creates a new  RecoverResultSuccessExt.
-func NewRecoverResultSuccessExt(v LedgerVersion, value interface{}) (result RecoverResultSuccessExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// RecoverResultSuccess is an XDR NestedStruct defines as:
-//
-//   struct {
-//    		// reserved for future use
-//    		union switch (LedgerVersion v)
-//    		{
-//    		case EMPTY_VERSION:
-//    			void;
-//    		}
-//    		ext;
-//    	}
-//
-type RecoverResultSuccess struct {
-	Ext RecoverResultSuccessExt `json:"ext,omitempty"`
-}
-
-// RecoverResult is an XDR Union defines as:
-//
-//   union RecoverResult switch (RecoverResultCode code)
-//    {
-//    case SUCCESS:
-//        struct {
-//    		// reserved for future use
-//    		union switch (LedgerVersion v)
-//    		{
-//    		case EMPTY_VERSION:
-//    			void;
-//    		}
-//    		ext;
-//    	} success;
-//    default:
-//        void;
-//    };
-//
-type RecoverResult struct {
-	Code    RecoverResultCode     `json:"code,omitempty"`
-	Success *RecoverResultSuccess `json:"success,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u RecoverResult) SwitchFieldName() string {
-	return "Code"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of RecoverResult
-func (u RecoverResult) ArmForSwitch(sw int32) (string, bool) {
-	switch RecoverResultCode(sw) {
-	case RecoverResultCodeSuccess:
-		return "Success", true
-	default:
-		return "", true
-	}
-}
-
-// NewRecoverResult creates a new  RecoverResult.
-func NewRecoverResult(code RecoverResultCode, value interface{}) (result RecoverResult, err error) {
-	result.Code = code
-	switch RecoverResultCode(code) {
-	case RecoverResultCodeSuccess:
-		tv, ok := value.(RecoverResultSuccess)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be RecoverResultSuccess")
-			return
-		}
-		result.Success = &tv
-	default:
-		// void
-	}
-	return
-}
-
-// MustSuccess retrieves the Success value from the union,
-// panicing if the value is not set.
-func (u RecoverResult) MustSuccess() RecoverResultSuccess {
-	val, ok := u.GetSuccess()
-
-	if !ok {
-		panic("arm Success is not set")
-	}
-
-	return val
-}
-
-// GetSuccess retrieves the Success value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u RecoverResult) GetSuccess() (result RecoverResultSuccess, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Code))
-
-	if armName == "Success" {
-		result = *u.Success
-		ok = true
-	}
-
-	return
-}
-
 // ReviewPaymentRequestOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -18160,8 +17854,6 @@ type WithdrawalRequest struct {
 //    		ManageAccountOp manageAccountOp;
 //    	case CREATE_WITHDRAWAL_REQUEST:
 //    		CreateWithdrawalRequestOp createWithdrawalRequestOp;
-//    	case RECOVER:
-//    		RecoverOp recoverOp;
 //    	case MANAGE_BALANCE:
 //    		ManageBalanceOp manageBalanceOp;
 //    	case REVIEW_PAYMENT_REQUEST:
@@ -18197,7 +17889,6 @@ type OperationBody struct {
 	SetFeesOp                   *SetFeesOp                   `json:"setFeesOp,omitempty"`
 	ManageAccountOp             *ManageAccountOp             `json:"manageAccountOp,omitempty"`
 	CreateWithdrawalRequestOp   *CreateWithdrawalRequestOp   `json:"createWithdrawalRequestOp,omitempty"`
-	RecoverOp                   *RecoverOp                   `json:"recoverOp,omitempty"`
 	ManageBalanceOp             *ManageBalanceOp             `json:"manageBalanceOp,omitempty"`
 	ReviewPaymentRequestOp      *ReviewPaymentRequestOp      `json:"reviewPaymentRequestOp,omitempty"`
 	ManageAssetOp               *ManageAssetOp               `json:"manageAssetOp,omitempty"`
@@ -18236,8 +17927,6 @@ func (u OperationBody) ArmForSwitch(sw int32) (string, bool) {
 		return "ManageAccountOp", true
 	case OperationTypeCreateWithdrawalRequest:
 		return "CreateWithdrawalRequestOp", true
-	case OperationTypeRecover:
-		return "RecoverOp", true
 	case OperationTypeManageBalance:
 		return "ManageBalanceOp", true
 	case OperationTypeReviewPaymentRequest:
@@ -18319,13 +18008,6 @@ func NewOperationBody(aType OperationType, value interface{}) (result OperationB
 			return
 		}
 		result.CreateWithdrawalRequestOp = &tv
-	case OperationTypeRecover:
-		tv, ok := value.(RecoverOp)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be RecoverOp")
-			return
-		}
-		result.RecoverOp = &tv
 	case OperationTypeManageBalance:
 		tv, ok := value.(ManageBalanceOp)
 		if !ok {
@@ -18583,31 +18265,6 @@ func (u OperationBody) GetCreateWithdrawalRequestOp() (result CreateWithdrawalRe
 
 	if armName == "CreateWithdrawalRequestOp" {
 		result = *u.CreateWithdrawalRequestOp
-		ok = true
-	}
-
-	return
-}
-
-// MustRecoverOp retrieves the RecoverOp value from the union,
-// panicing if the value is not set.
-func (u OperationBody) MustRecoverOp() RecoverOp {
-	val, ok := u.GetRecoverOp()
-
-	if !ok {
-		panic("arm RecoverOp is not set")
-	}
-
-	return val
-}
-
-// GetRecoverOp retrieves the RecoverOp value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u OperationBody) GetRecoverOp() (result RecoverOp, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Type))
-
-	if armName == "RecoverOp" {
-		result = *u.RecoverOp
 		ok = true
 	}
 
@@ -18939,8 +18596,6 @@ func (u OperationBody) GetCheckSaleStateOp() (result CheckSaleStateOp, ok bool) 
 //    		ManageAccountOp manageAccountOp;
 //    	case CREATE_WITHDRAWAL_REQUEST:
 //    		CreateWithdrawalRequestOp createWithdrawalRequestOp;
-//    	case RECOVER:
-//    		RecoverOp recoverOp;
 //    	case MANAGE_BALANCE:
 //    		ManageBalanceOp manageBalanceOp;
 //    	case REVIEW_PAYMENT_REQUEST:
@@ -19529,8 +19184,6 @@ func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
 //    		ManageAccountResult manageAccountResult;
 //        case CREATE_WITHDRAWAL_REQUEST:
 //    		CreateWithdrawalRequestResult createWithdrawalRequestResult;
-//        case RECOVER:
-//    		RecoverResult recoverResult;
 //        case MANAGE_BALANCE:
 //            ManageBalanceResult manageBalanceResult;
 //        case REVIEW_PAYMENT_REQUEST:
@@ -19566,7 +19219,6 @@ type OperationResultTr struct {
 	SetFeesResult                   *SetFeesResult                   `json:"setFeesResult,omitempty"`
 	ManageAccountResult             *ManageAccountResult             `json:"manageAccountResult,omitempty"`
 	CreateWithdrawalRequestResult   *CreateWithdrawalRequestResult   `json:"createWithdrawalRequestResult,omitempty"`
-	RecoverResult                   *RecoverResult                   `json:"recoverResult,omitempty"`
 	ManageBalanceResult             *ManageBalanceResult             `json:"manageBalanceResult,omitempty"`
 	ReviewPaymentRequestResult      *ReviewPaymentRequestResult      `json:"reviewPaymentRequestResult,omitempty"`
 	ManageAssetResult               *ManageAssetResult               `json:"manageAssetResult,omitempty"`
@@ -19605,8 +19257,6 @@ func (u OperationResultTr) ArmForSwitch(sw int32) (string, bool) {
 		return "ManageAccountResult", true
 	case OperationTypeCreateWithdrawalRequest:
 		return "CreateWithdrawalRequestResult", true
-	case OperationTypeRecover:
-		return "RecoverResult", true
 	case OperationTypeManageBalance:
 		return "ManageBalanceResult", true
 	case OperationTypeReviewPaymentRequest:
@@ -19688,13 +19338,6 @@ func NewOperationResultTr(aType OperationType, value interface{}) (result Operat
 			return
 		}
 		result.CreateWithdrawalRequestResult = &tv
-	case OperationTypeRecover:
-		tv, ok := value.(RecoverResult)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be RecoverResult")
-			return
-		}
-		result.RecoverResult = &tv
 	case OperationTypeManageBalance:
 		tv, ok := value.(ManageBalanceResult)
 		if !ok {
@@ -19952,31 +19595,6 @@ func (u OperationResultTr) GetCreateWithdrawalRequestResult() (result CreateWith
 
 	if armName == "CreateWithdrawalRequestResult" {
 		result = *u.CreateWithdrawalRequestResult
-		ok = true
-	}
-
-	return
-}
-
-// MustRecoverResult retrieves the RecoverResult value from the union,
-// panicing if the value is not set.
-func (u OperationResultTr) MustRecoverResult() RecoverResult {
-	val, ok := u.GetRecoverResult()
-
-	if !ok {
-		panic("arm RecoverResult is not set")
-	}
-
-	return val
-}
-
-// GetRecoverResult retrieves the RecoverResult value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u OperationResultTr) GetRecoverResult() (result RecoverResult, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Type))
-
-	if armName == "RecoverResult" {
-		result = *u.RecoverResult
 		ok = true
 	}
 
@@ -20304,8 +19922,6 @@ func (u OperationResultTr) GetCheckSaleStateResult() (result CheckSaleStateResul
 //    		ManageAccountResult manageAccountResult;
 //        case CREATE_WITHDRAWAL_REQUEST:
 //    		CreateWithdrawalRequestResult createWithdrawalRequestResult;
-//        case RECOVER:
-//    		RecoverResult recoverResult;
 //        case MANAGE_BALANCE:
 //            ManageBalanceResult manageBalanceResult;
 //        case REVIEW_PAYMENT_REQUEST:
@@ -21409,7 +21025,6 @@ type Fee struct {
 //        SET_FEES = 5,
 //    	MANAGE_ACCOUNT = 6,
 //        CREATE_WITHDRAWAL_REQUEST = 7,
-//        RECOVER = 8,
 //        MANAGE_BALANCE = 9,
 //        REVIEW_PAYMENT_REQUEST = 10,
 //        MANAGE_ASSET = 11,
@@ -21434,7 +21049,6 @@ const (
 	OperationTypeSetFees                  OperationType = 5
 	OperationTypeManageAccount            OperationType = 6
 	OperationTypeCreateWithdrawalRequest  OperationType = 7
-	OperationTypeRecover                  OperationType = 8
 	OperationTypeManageBalance            OperationType = 9
 	OperationTypeReviewPaymentRequest     OperationType = 10
 	OperationTypeManageAsset              OperationType = 11
@@ -21457,7 +21071,6 @@ var OperationTypeAll = []OperationType{
 	OperationTypeSetFees,
 	OperationTypeManageAccount,
 	OperationTypeCreateWithdrawalRequest,
-	OperationTypeRecover,
 	OperationTypeManageBalance,
 	OperationTypeReviewPaymentRequest,
 	OperationTypeManageAsset,
@@ -21480,7 +21093,6 @@ var operationTypeMap = map[int32]string{
 	5:  "OperationTypeSetFees",
 	6:  "OperationTypeManageAccount",
 	7:  "OperationTypeCreateWithdrawalRequest",
-	8:  "OperationTypeRecover",
 	9:  "OperationTypeManageBalance",
 	10: "OperationTypeReviewPaymentRequest",
 	11: "OperationTypeManageAsset",
@@ -21503,7 +21115,6 @@ var operationTypeShortMap = map[int32]string{
 	5:  "set_fees",
 	6:  "manage_account",
 	7:  "create_withdrawal_request",
-	8:  "recover",
 	9:  "manage_balance",
 	10: "review_payment_request",
 	11: "manage_asset",
@@ -21526,7 +21137,6 @@ var operationTypeRevMap = map[string]int32{
 	"OperationTypeSetFees":                  5,
 	"OperationTypeManageAccount":            6,
 	"OperationTypeCreateWithdrawalRequest":  7,
-	"OperationTypeRecover":                  8,
 	"OperationTypeManageBalance":            9,
 	"OperationTypeReviewPaymentRequest":     10,
 	"OperationTypeManageAsset":              11,
