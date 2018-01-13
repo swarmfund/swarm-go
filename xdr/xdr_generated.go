@@ -1870,34 +1870,40 @@ type BalanceEntry struct {
 //   enum ExternalSystemType
 //    {
 //    	BITCOIN = 1,
-//    	ETHEREUM = 2
+//    	ETHEREUM = 2,
+//    	SECURE_VOTE = 3
 //    };
 //
 type ExternalSystemType int32
 
 const (
-	ExternalSystemTypeBitcoin  ExternalSystemType = 1
-	ExternalSystemTypeEthereum ExternalSystemType = 2
+	ExternalSystemTypeBitcoin    ExternalSystemType = 1
+	ExternalSystemTypeEthereum   ExternalSystemType = 2
+	ExternalSystemTypeSecureVote ExternalSystemType = 3
 )
 
 var ExternalSystemTypeAll = []ExternalSystemType{
 	ExternalSystemTypeBitcoin,
 	ExternalSystemTypeEthereum,
+	ExternalSystemTypeSecureVote,
 }
 
 var externalSystemTypeMap = map[int32]string{
 	1: "ExternalSystemTypeBitcoin",
 	2: "ExternalSystemTypeEthereum",
+	3: "ExternalSystemTypeSecureVote",
 }
 
 var externalSystemTypeShortMap = map[int32]string{
 	1: "bitcoin",
 	2: "ethereum",
+	3: "secure_vote",
 }
 
 var externalSystemTypeRevMap = map[string]int32{
-	"ExternalSystemTypeBitcoin":  1,
-	"ExternalSystemTypeEthereum": 2,
+	"ExternalSystemTypeBitcoin":    1,
+	"ExternalSystemTypeEthereum":   2,
+	"ExternalSystemTypeSecureVote": 3,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -8203,10 +8209,13 @@ func (u CheckSaleStateResult) GetSuccess() (result CheckSaleStateSuccess, ok boo
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//    	case PASS_EXTERNAL_SYS_ACC_ID_IN_CREATE_ACC:
+//    		ExternalSystemAccountID externalSystemIDs<>;
 //        }
 //
 type CreateAccountOpExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V                 LedgerVersion              `json:"v,omitempty"`
+	ExternalSystemIDs *[]ExternalSystemAccountId `json:"externalSystemIDs,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -8221,6 +8230,8 @@ func (u CreateAccountOpExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionPassExternalSysAccIdInCreateAcc:
+		return "ExternalSystemIDs", true
 	}
 	return "-", false
 }
@@ -8231,7 +8242,39 @@ func NewCreateAccountOpExt(v LedgerVersion, value interface{}) (result CreateAcc
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionPassExternalSysAccIdInCreateAcc:
+		tv, ok := value.([]ExternalSystemAccountId)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be []ExternalSystemAccountId")
+			return
+		}
+		result.ExternalSystemIDs = &tv
 	}
+	return
+}
+
+// MustExternalSystemIDs retrieves the ExternalSystemIDs value from the union,
+// panicing if the value is not set.
+func (u CreateAccountOpExt) MustExternalSystemIDs() []ExternalSystemAccountId {
+	val, ok := u.GetExternalSystemIDs()
+
+	if !ok {
+		panic("arm ExternalSystemIDs is not set")
+	}
+
+	return val
+}
+
+// GetExternalSystemIDs retrieves the ExternalSystemIDs value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u CreateAccountOpExt) GetExternalSystemIDs() (result []ExternalSystemAccountId, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "ExternalSystemIDs" {
+		result = *u.ExternalSystemIDs
+		ok = true
+	}
+
 	return
 }
 
@@ -8249,6 +8292,8 @@ func NewCreateAccountOpExt(v LedgerVersion, value interface{}) (result CreateAcc
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//    	case PASS_EXTERNAL_SYS_ACC_ID_IN_CREATE_ACC:
+//    		ExternalSystemAccountID externalSystemIDs<>;
 //        }
 //        ext;
 //    };
@@ -8275,7 +8320,9 @@ type CreateAccountOp struct {
 //        NAME_DUPLICATION = -4,
 //        REFERRER_NOT_FOUND = -5,
 //    	INVALID_ACCOUNT_VERSION = -6, // if account version is higher than ledger version
-//    	NOT_VERIFIED_CANNOT_HAVE_POLICIES = -7
+//    	NOT_VERIFIED_CANNOT_HAVE_POLICIES = -7,
+//    	EXTERNAL_SYS_ACC_NOT_ALLOWED = -8, // op contains external system account ID which should be generated on core level
+//    	EXTERNAL_SYS_ID_EXISTS = -9 // external system account ID already exists
 //    };
 //
 type CreateAccountResultCode int32
@@ -8289,6 +8336,8 @@ const (
 	CreateAccountResultCodeReferrerNotFound              CreateAccountResultCode = -5
 	CreateAccountResultCodeInvalidAccountVersion         CreateAccountResultCode = -6
 	CreateAccountResultCodeNotVerifiedCannotHavePolicies CreateAccountResultCode = -7
+	CreateAccountResultCodeExternalSysAccNotAllowed      CreateAccountResultCode = -8
+	CreateAccountResultCodeExternalSysIdExists           CreateAccountResultCode = -9
 )
 
 var CreateAccountResultCodeAll = []CreateAccountResultCode{
@@ -8300,6 +8349,8 @@ var CreateAccountResultCodeAll = []CreateAccountResultCode{
 	CreateAccountResultCodeReferrerNotFound,
 	CreateAccountResultCodeInvalidAccountVersion,
 	CreateAccountResultCodeNotVerifiedCannotHavePolicies,
+	CreateAccountResultCodeExternalSysAccNotAllowed,
+	CreateAccountResultCodeExternalSysIdExists,
 }
 
 var createAccountResultCodeMap = map[int32]string{
@@ -8311,6 +8362,8 @@ var createAccountResultCodeMap = map[int32]string{
 	-5: "CreateAccountResultCodeReferrerNotFound",
 	-6: "CreateAccountResultCodeInvalidAccountVersion",
 	-7: "CreateAccountResultCodeNotVerifiedCannotHavePolicies",
+	-8: "CreateAccountResultCodeExternalSysAccNotAllowed",
+	-9: "CreateAccountResultCodeExternalSysIdExists",
 }
 
 var createAccountResultCodeShortMap = map[int32]string{
@@ -8322,6 +8375,8 @@ var createAccountResultCodeShortMap = map[int32]string{
 	-5: "referrer_not_found",
 	-6: "invalid_account_version",
 	-7: "not_verified_cannot_have_policies",
+	-8: "external_sys_acc_not_allowed",
+	-9: "external_sys_id_exists",
 }
 
 var createAccountResultCodeRevMap = map[string]int32{
@@ -8333,6 +8388,8 @@ var createAccountResultCodeRevMap = map[string]int32{
 	"CreateAccountResultCodeReferrerNotFound":              -5,
 	"CreateAccountResultCodeInvalidAccountVersion":         -6,
 	"CreateAccountResultCodeNotVerifiedCannotHavePolicies": -7,
+	"CreateAccountResultCodeExternalSysAccNotAllowed":      -8,
+	"CreateAccountResultCodeExternalSysIdExists":           -9,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -20995,52 +21052,34 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //
 //   enum LedgerVersion {
 //    	EMPTY_VERSION = 0,
-//    	IMPROVED_STATS_CALCULATION = 4,
-//    	EMISSION_REQUEST_BALANCE_ID = 5,
-//    	IMPROVED_TRANSFER_FEES_CALC = 8,
-//    	USE_IMPROVED_SIGNATURE_CHECK = 9
+//    	PASS_EXTERNAL_SYS_ACC_ID_IN_CREATE_ACC = 1
 //    };
 //
 type LedgerVersion int32
 
 const (
-	LedgerVersionEmptyVersion              LedgerVersion = 0
-	LedgerVersionImprovedStatsCalculation  LedgerVersion = 4
-	LedgerVersionEmissionRequestBalanceId  LedgerVersion = 5
-	LedgerVersionImprovedTransferFeesCalc  LedgerVersion = 8
-	LedgerVersionUseImprovedSignatureCheck LedgerVersion = 9
+	LedgerVersionEmptyVersion                    LedgerVersion = 0
+	LedgerVersionPassExternalSysAccIdInCreateAcc LedgerVersion = 1
 )
 
 var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionEmptyVersion,
-	LedgerVersionImprovedStatsCalculation,
-	LedgerVersionEmissionRequestBalanceId,
-	LedgerVersionImprovedTransferFeesCalc,
-	LedgerVersionUseImprovedSignatureCheck,
+	LedgerVersionPassExternalSysAccIdInCreateAcc,
 }
 
 var ledgerVersionMap = map[int32]string{
 	0: "LedgerVersionEmptyVersion",
-	4: "LedgerVersionImprovedStatsCalculation",
-	5: "LedgerVersionEmissionRequestBalanceId",
-	8: "LedgerVersionImprovedTransferFeesCalc",
-	9: "LedgerVersionUseImprovedSignatureCheck",
+	1: "LedgerVersionPassExternalSysAccIdInCreateAcc",
 }
 
 var ledgerVersionShortMap = map[int32]string{
 	0: "empty_version",
-	4: "improved_stats_calculation",
-	5: "emission_request_balance_id",
-	8: "improved_transfer_fees_calc",
-	9: "use_improved_signature_check",
+	1: "pass_external_sys_acc_id_in_create_acc",
 }
 
 var ledgerVersionRevMap = map[string]int32{
-	"LedgerVersionEmptyVersion":              0,
-	"LedgerVersionImprovedStatsCalculation":  4,
-	"LedgerVersionEmissionRequestBalanceId":  5,
-	"LedgerVersionImprovedTransferFeesCalc":  8,
-	"LedgerVersionUseImprovedSignatureCheck": 9,
+	"LedgerVersionEmptyVersion":                    0,
+	"LedgerVersionPassExternalSysAccIdInCreateAcc": 1,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
