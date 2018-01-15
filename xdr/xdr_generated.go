@@ -9328,7 +9328,8 @@ type CreateSaleCreationRequestOp struct {
 //    	INSUFFICIENT_MAX_ISSUANCE = -8, // max number of tokens is less then number of tokens required for soft cap
 //    	INVALID_ASSET_PAIR = -9, // one of the assets has invalid code or base asset is equal to quote asset
 //    	REQUEST_OR_SALE_ALREADY_EXISTS = -10,
-//    	INSUFFICIENT_PREISSUED = -11 // amount of pre issued tokens is insufficient for hard cap
+//    	INSUFFICIENT_PREISSUED = -11, // amount of pre issued tokens is insufficient for hard cap
+//    	INVALID_DETAILS = -12 // details must be a valid json
 //    };
 //
 type CreateSaleCreationRequestResultCode int32
@@ -9346,6 +9347,7 @@ const (
 	CreateSaleCreationRequestResultCodeInvalidAssetPair                CreateSaleCreationRequestResultCode = -9
 	CreateSaleCreationRequestResultCodeRequestOrSaleAlreadyExists      CreateSaleCreationRequestResultCode = -10
 	CreateSaleCreationRequestResultCodeInsufficientPreissued           CreateSaleCreationRequestResultCode = -11
+	CreateSaleCreationRequestResultCodeInvalidDetails                  CreateSaleCreationRequestResultCode = -12
 )
 
 var CreateSaleCreationRequestResultCodeAll = []CreateSaleCreationRequestResultCode{
@@ -9361,6 +9363,7 @@ var CreateSaleCreationRequestResultCodeAll = []CreateSaleCreationRequestResultCo
 	CreateSaleCreationRequestResultCodeInvalidAssetPair,
 	CreateSaleCreationRequestResultCodeRequestOrSaleAlreadyExists,
 	CreateSaleCreationRequestResultCodeInsufficientPreissued,
+	CreateSaleCreationRequestResultCodeInvalidDetails,
 }
 
 var createSaleCreationRequestResultCodeMap = map[int32]string{
@@ -9376,6 +9379,7 @@ var createSaleCreationRequestResultCodeMap = map[int32]string{
 	-9:  "CreateSaleCreationRequestResultCodeInvalidAssetPair",
 	-10: "CreateSaleCreationRequestResultCodeRequestOrSaleAlreadyExists",
 	-11: "CreateSaleCreationRequestResultCodeInsufficientPreissued",
+	-12: "CreateSaleCreationRequestResultCodeInvalidDetails",
 }
 
 var createSaleCreationRequestResultCodeShortMap = map[int32]string{
@@ -9391,6 +9395,7 @@ var createSaleCreationRequestResultCodeShortMap = map[int32]string{
 	-9:  "invalid_asset_pair",
 	-10: "request_or_sale_already_exists",
 	-11: "insufficient_preissued",
+	-12: "invalid_details",
 }
 
 var createSaleCreationRequestResultCodeRevMap = map[string]int32{
@@ -9406,6 +9411,7 @@ var createSaleCreationRequestResultCodeRevMap = map[string]int32{
 	"CreateSaleCreationRequestResultCodeInvalidAssetPair":                -9,
 	"CreateSaleCreationRequestResultCodeRequestOrSaleAlreadyExists":      -10,
 	"CreateSaleCreationRequestResultCodeInsufficientPreissued":           -11,
+	"CreateSaleCreationRequestResultCodeInvalidDetails":                  -12,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -11453,7 +11459,8 @@ type ManageAssetOp struct {
 //    	ASSET_NOT_FOUND = -8,             // asset does not exists
 //    	REQUEST_ALREADY_EXISTS = -9,      // request for creation of unique entry already exists
 //    	STATS_ASSET_ALREADY_EXISTS = -10, // statistics quote asset already exists
-//    	INITIAL_PREISSUED_EXCEEDS_MAX_ISSUANCE = -11 // initial pre issued amount exceeds max issuance amount
+//    	INITIAL_PREISSUED_EXCEEDS_MAX_ISSUANCE = -11, // initial pre issued amount exceeds max issuance amount
+//    	INVALID_DETAILS = -12 // details must be a valid json
 //    };
 //
 type ManageAssetResultCode int32
@@ -11469,6 +11476,7 @@ const (
 	ManageAssetResultCodeRequestAlreadyExists               ManageAssetResultCode = -9
 	ManageAssetResultCodeStatsAssetAlreadyExists            ManageAssetResultCode = -10
 	ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance ManageAssetResultCode = -11
+	ManageAssetResultCodeInvalidDetails                     ManageAssetResultCode = -12
 )
 
 var ManageAssetResultCodeAll = []ManageAssetResultCode{
@@ -11482,6 +11490,7 @@ var ManageAssetResultCodeAll = []ManageAssetResultCode{
 	ManageAssetResultCodeRequestAlreadyExists,
 	ManageAssetResultCodeStatsAssetAlreadyExists,
 	ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance,
+	ManageAssetResultCodeInvalidDetails,
 }
 
 var manageAssetResultCodeMap = map[int32]string{
@@ -11495,6 +11504,7 @@ var manageAssetResultCodeMap = map[int32]string{
 	-9:  "ManageAssetResultCodeRequestAlreadyExists",
 	-10: "ManageAssetResultCodeStatsAssetAlreadyExists",
 	-11: "ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance",
+	-12: "ManageAssetResultCodeInvalidDetails",
 }
 
 var manageAssetResultCodeShortMap = map[int32]string{
@@ -11508,6 +11518,7 @@ var manageAssetResultCodeShortMap = map[int32]string{
 	-9:  "request_already_exists",
 	-10: "stats_asset_already_exists",
 	-11: "initial_preissued_exceeds_max_issuance",
+	-12: "invalid_details",
 }
 
 var manageAssetResultCodeRevMap = map[string]int32{
@@ -11521,6 +11532,7 @@ var manageAssetResultCodeRevMap = map[string]int32{
 	"ManageAssetResultCodeRequestAlreadyExists":               -9,
 	"ManageAssetResultCodeStatsAssetAlreadyExists":            -10,
 	"ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance": -11,
+	"ManageAssetResultCodeInvalidDetails":                     -12,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -14761,6 +14773,7 @@ type ReviewRequestOp struct {
 //    	NOT_FOUND = -4,
 //    	TYPE_MISMATCHED = -5,
 //    	REJECT_NOT_ALLOWED = -6, // reject not allowed, use permanent reject
+//    	INVALID_EXTERNAL_DETAILS = -7,
 //
 //    	// Asset requests
 //    	ASSET_ALREADY_EXISTS = -20,
@@ -14788,6 +14801,7 @@ const (
 	ReviewRequestResultCodeNotFound                               ReviewRequestResultCode = -4
 	ReviewRequestResultCodeTypeMismatched                         ReviewRequestResultCode = -5
 	ReviewRequestResultCodeRejectNotAllowed                       ReviewRequestResultCode = -6
+	ReviewRequestResultCodeInvalidExternalDetails                 ReviewRequestResultCode = -7
 	ReviewRequestResultCodeAssetAlreadyExists                     ReviewRequestResultCode = -20
 	ReviewRequestResultCodeAssetDoesNotExists                     ReviewRequestResultCode = -21
 	ReviewRequestResultCodeMaxIssuanceAmountExceeded              ReviewRequestResultCode = -40
@@ -14806,6 +14820,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeNotFound,
 	ReviewRequestResultCodeTypeMismatched,
 	ReviewRequestResultCodeRejectNotAllowed,
+	ReviewRequestResultCodeInvalidExternalDetails,
 	ReviewRequestResultCodeAssetAlreadyExists,
 	ReviewRequestResultCodeAssetDoesNotExists,
 	ReviewRequestResultCodeMaxIssuanceAmountExceeded,
@@ -14824,6 +14839,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-4:  "ReviewRequestResultCodeNotFound",
 	-5:  "ReviewRequestResultCodeTypeMismatched",
 	-6:  "ReviewRequestResultCodeRejectNotAllowed",
+	-7:  "ReviewRequestResultCodeInvalidExternalDetails",
 	-20: "ReviewRequestResultCodeAssetAlreadyExists",
 	-21: "ReviewRequestResultCodeAssetDoesNotExists",
 	-40: "ReviewRequestResultCodeMaxIssuanceAmountExceeded",
@@ -14842,6 +14858,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-4:  "not_found",
 	-5:  "type_mismatched",
 	-6:  "reject_not_allowed",
+	-7:  "invalid_external_details",
 	-20: "asset_already_exists",
 	-21: "asset_does_not_exists",
 	-40: "max_issuance_amount_exceeded",
@@ -14860,6 +14877,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeNotFound":                               -4,
 	"ReviewRequestResultCodeTypeMismatched":                         -5,
 	"ReviewRequestResultCodeRejectNotAllowed":                       -6,
+	"ReviewRequestResultCodeInvalidExternalDetails":                 -7,
 	"ReviewRequestResultCodeAssetAlreadyExists":                     -20,
 	"ReviewRequestResultCodeAssetDoesNotExists":                     -21,
 	"ReviewRequestResultCodeMaxIssuanceAmountExceeded":              -40,
