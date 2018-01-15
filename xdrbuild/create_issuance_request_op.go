@@ -1,0 +1,47 @@
+package xdrbuild
+
+import (
+	"github.com/go-ozzo/ozzo-validation"
+	"github.com/pkg/errors"
+	"gitlab.com/swarmfund/go/xdr"
+)
+
+type CreateIssuanceRequestOp struct {
+	Reference string
+	Receiver  string
+	Asset     string
+	Amount    uint64
+	Details   string
+}
+
+func (op CreateIssuanceRequestOp) Validate() error {
+	return validation.ValidateStruct(&op,
+		validation.Field(&op.Reference, validation.Required, validation.Length(1, 64)),
+		validation.Field(&op.Asset, validation.Required, validation.Length(1, 16)),
+		validation.Field(&op.Amount, validation.Required),
+		validation.Field(&op.Receiver, validation.Required),
+		validation.Field(&op.Details, validation.Required),
+	)
+}
+
+func (op CreateIssuanceRequestOp) XDR() (*xdr.Operation, error) {
+	var receiver xdr.BalanceId
+	if err := receiver.SetString(op.Receiver); err != nil {
+		return nil, errors.Wrap(err, "failed to set receiver")
+	}
+
+	return &xdr.Operation{
+		Body: xdr.OperationBody{
+			Type: xdr.OperationTypeCreateIssuanceRequest,
+			CreateIssuanceRequestOp: &xdr.CreateIssuanceRequestOp{
+				Reference: xdr.String64(op.Reference),
+				Request: xdr.IssuanceRequest{
+					Asset:           xdr.AssetCode(op.Asset),
+					Amount:          xdr.Uint64(op.Amount),
+					Receiver:        receiver,
+					ExternalDetails: xdr.Longstring(op.Details),
+				},
+			},
+		},
+	}, nil
+}
