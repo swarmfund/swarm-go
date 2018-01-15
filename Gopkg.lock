@@ -14,6 +14,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/go-ozzo/ozzo-validation"
+  packages = ["."]
+  revision = "85dcd8368eba387e65a03488b003e233994e87e9"
+  version = "v3.3"
+
+[[projects]]
   branch = "master"
   name = "github.com/nullstyle/go-xdr"
   packages = ["xdr3"]
@@ -69,8 +75,14 @@
 
 [[projects]]
   branch = "master"
+  name = "gitlab.com/tokend/keypair"
+  packages = [".","internal","internal/crc16","internal/strkey"]
+  revision = "c148f15306edac6a1ad994d8b218e8ae61a0b2c1"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  packages = ["ed25519","ed25519/internal/edwards25519","ssh/terminal"]
   revision = "9419663f5a44be8b34ca85f08abc5fe1be11f8a3"
 
 [[projects]]
@@ -100,6 +112,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6502256687527f20417018941df4c5ec0c45fe732883f3b9f5a6e1249a055ec2"
+  inputs-digest = "ce987bd3feb45566720333f290419796d8b91b8e8bbec2123d48f6a11faf111b"
   solver-name = "gps-cdcl"
   solver-version = 1
