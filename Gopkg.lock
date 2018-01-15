@@ -57,6 +57,18 @@
 
 [[projects]]
   branch = "master"
+  name = "gitlab.com/distributed_lab/corer"
+  packages = ["."]
+  revision = "cbfb465258955230864e0a76aba0ff2738000782"
+
+[[projects]]
+  name = "gitlab.com/distributed_lab/logan"
+  packages = ["v3/errors","v3/fields"]
+  revision = "33632ccd631258ce552cfea05961a4844cf1c4b9"
+  version = "v3.4"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   revision = "9419663f5a44be8b34ca85f08abc5fe1be11f8a3"
@@ -88,6 +100,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9f0939b28b717bf4eb6bc80afc4bb0bc9c81470c49fae11de53ca1ef8f39bc83"
+  inputs-digest = "6502256687527f20417018941df4c5ec0c45fe732883f3b9f5a6e1249a055ec2"
   solver-name = "gps-cdcl"
   solver-version = 1
