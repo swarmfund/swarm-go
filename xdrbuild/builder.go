@@ -1,6 +1,11 @@
 package xdrbuild
 
-import "gitlab.com/tokend/keypair"
+import (
+	"github.com/pkg/errors"
+	"gitlab.com/swarmfund/go/xdr"
+	"gitlab.com/swarmfund/go/xdrbuild/internal"
+	"gitlab.com/tokend/keypair"
+)
 
 type Builder struct {
 	passphrase         string
@@ -19,4 +24,17 @@ func (b *Builder) Transaction(source keypair.Address) *Transaction {
 		builder: b,
 		source:  source,
 	}
+}
+
+func (b *Builder) Sign(envelope *xdr.TransactionEnvelope, kp keypair.Full) (*xdr.TransactionEnvelope, error) {
+	hash, err := internal.HashTX(&envelope.Tx, b.passphrase)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to hash tx")
+	}
+
+	if err := internal.SignEnvelope(hash, kp, envelope); err != nil {
+		return nil, err
+	}
+
+	return envelope, nil
 }
