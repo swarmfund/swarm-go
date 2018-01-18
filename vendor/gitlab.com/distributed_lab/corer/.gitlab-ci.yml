@@ -1,0 +1,57 @@
+image: golang:latest
+
+stages:
+  - linter
+  - test
+
+before_script:
+  # Run ssh-agent (inside the build environment)
+  - eval $(ssh-agent -s)
+
+  # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+  - echo "$SSH_PRIVATE_KEY" | ssh-add -
+
+  # For Docker builds disable host key checking. Be aware that by adding that
+  # you are suspectible to man-in-the-middle attacks.
+  # WARNING: Use this only with the Docker executor, if you use it with shell
+  # you will overwrite your user's SSH config.
+  - mkdir -p ~/.ssh
+  - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  - git config --global url.ssh://git@gitlab.com/.insteadOf https://gitlab.com/
+
+linter:
+  stage: linter
+  image: globegitter/golang-psql-ssh:1.9.0-alpine-3.6
+  script:
+    - mkdir -p /go/src/gitlab.com/distributed_lab
+    - cp -r /builds/distributed_lab/corer /go/src/gitlab.com/distributed_lab/
+    - cd /go/src/gitlab.com/distributed_lab/corer
+
+    - go get -u github.com/golang/dep/cmd/dep
+    - dep ensure
+    # required by go vet
+    - go install
+    - go get -u github.com/alecthomas/gometalinter
+    - go get -u github.com/golang/lint/golint
+    - gometalinter --install 1> /dev/null
+    # install pre-commit
+    - apk add --update python py-pip bash gcc libc-dev
+    - pip install pre-commit
+    - pre-commit install
+    - pre-commit run --all-files
+
+test:
+  stage: test
+  image: globegitter/golang-psql-ssh:1.9.0-alpine-3.6
+  script:
+    - mkdir -p /go/src/gitlab.com/distributed_lab
+    - cp -r /builds/distributed_lab/corer /go/src/gitlab.com/distributed_lab/
+    - cd /go/src/gitlab.com/distributed_lab/corer
+
+    - go get -u github.com/golang/dep/cmd/dep
+    - dep ensure
+    # Do not test vendor
+    # Some of the tests are not thread safe so make sure tests are only run single-threaded
+    - go test $(go list ./... | grep -v /vendor/) -parallel 1
+  dependencies:
+    - linter
