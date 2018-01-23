@@ -14995,10 +14995,10 @@ type ReviewRequestOp struct {
 //    	INSUFFICIENT_AVAILABLE_FOR_ISSUANCE_AMOUNT = -41,
 //    	FULL_LINE = -42, // can't fund balance - total funds exceed UINT64_MAX
 //
-//    	// sale creation reuqests
-//    	QUOTE_ASSET_DOES_NOT_EXISTS = -50,
-//    	BASE_ASSET_DOES_NOT_EXISTS = -51,
-//    	HARD_CAP_WILL_EXCEED_MAX_ISSUANCE = -52
+//    	// sale creation requests
+//    	BASE_ASSET_DOES_NOT_EXISTS = -50,
+//    	HARD_CAP_WILL_EXCEED_MAX_ISSUANCE = -51,
+//    	INSUFFICIENT_PREISSUED_FOR_HARD_CAP = -52
 //
 //    };
 //
@@ -15017,9 +15017,9 @@ const (
 	ReviewRequestResultCodeMaxIssuanceAmountExceeded              ReviewRequestResultCode = -40
 	ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount ReviewRequestResultCode = -41
 	ReviewRequestResultCodeFullLine                               ReviewRequestResultCode = -42
-	ReviewRequestResultCodeQuoteAssetDoesNotExists                ReviewRequestResultCode = -50
-	ReviewRequestResultCodeBaseAssetDoesNotExists                 ReviewRequestResultCode = -51
-	ReviewRequestResultCodeHardCapWillExceedMaxIssuance           ReviewRequestResultCode = -52
+	ReviewRequestResultCodeBaseAssetDoesNotExists                 ReviewRequestResultCode = -50
+	ReviewRequestResultCodeHardCapWillExceedMaxIssuance           ReviewRequestResultCode = -51
+	ReviewRequestResultCodeInsufficientPreissuedForHardCap        ReviewRequestResultCode = -52
 )
 
 var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
@@ -15035,9 +15035,9 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeMaxIssuanceAmountExceeded,
 	ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount,
 	ReviewRequestResultCodeFullLine,
-	ReviewRequestResultCodeQuoteAssetDoesNotExists,
 	ReviewRequestResultCodeBaseAssetDoesNotExists,
 	ReviewRequestResultCodeHardCapWillExceedMaxIssuance,
+	ReviewRequestResultCodeInsufficientPreissuedForHardCap,
 }
 
 var reviewRequestResultCodeMap = map[int32]string{
@@ -15053,9 +15053,9 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-40: "ReviewRequestResultCodeMaxIssuanceAmountExceeded",
 	-41: "ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount",
 	-42: "ReviewRequestResultCodeFullLine",
-	-50: "ReviewRequestResultCodeQuoteAssetDoesNotExists",
-	-51: "ReviewRequestResultCodeBaseAssetDoesNotExists",
-	-52: "ReviewRequestResultCodeHardCapWillExceedMaxIssuance",
+	-50: "ReviewRequestResultCodeBaseAssetDoesNotExists",
+	-51: "ReviewRequestResultCodeHardCapWillExceedMaxIssuance",
+	-52: "ReviewRequestResultCodeInsufficientPreissuedForHardCap",
 }
 
 var reviewRequestResultCodeShortMap = map[int32]string{
@@ -15071,9 +15071,9 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-40: "max_issuance_amount_exceeded",
 	-41: "insufficient_available_for_issuance_amount",
 	-42: "full_line",
-	-50: "quote_asset_does_not_exists",
-	-51: "base_asset_does_not_exists",
-	-52: "hard_cap_will_exceed_max_issuance",
+	-50: "base_asset_does_not_exists",
+	-51: "hard_cap_will_exceed_max_issuance",
+	-52: "insufficient_preissued_for_hard_cap",
 }
 
 var reviewRequestResultCodeRevMap = map[string]int32{
@@ -15089,9 +15089,9 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeMaxIssuanceAmountExceeded":              -40,
 	"ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount": -41,
 	"ReviewRequestResultCodeFullLine":                               -42,
-	"ReviewRequestResultCodeQuoteAssetDoesNotExists":                -50,
-	"ReviewRequestResultCodeBaseAssetDoesNotExists":                 -51,
-	"ReviewRequestResultCodeHardCapWillExceedMaxIssuance":           -52,
+	"ReviewRequestResultCodeBaseAssetDoesNotExists":                 -50,
+	"ReviewRequestResultCodeHardCapWillExceedMaxIssuance":           -51,
+	"ReviewRequestResultCodeInsufficientPreissuedForHardCap":        -52,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
