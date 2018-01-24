@@ -15,9 +15,9 @@ import (
 	"strconv"
 )
 
-// One is the value of one whole unit of currency.  Stellar uses 4 fixed digits
-// for fractional values, thus One is 10 thousand (10^4)
-const One = 10000
+// One is the value of one whole unit of currency.  The system uses 6 fixed digits
+// for fractional values, thus One is 1 million (10^6)
+const One = 1000000
 
 // MustParse is the panicking version of Parse
 func MustParse(v string) int64 {
@@ -52,7 +52,7 @@ func String(v int64) string {
 	o.SetInt64(One)
 	r.Quo(&f, &o)
 
-	return r.FloatString(4)
+	return r.FloatString(6)
 }
 
 func stringToIntString(v string) (string, error) {
@@ -95,5 +95,5 @@ func StringU(v uint64) string {
 	o.SetInt64(One)
 	r.Quo(&f, &o)
 
-	return r.FloatString(4)
+	return r.FloatString(6)
 }
