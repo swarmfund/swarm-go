@@ -1627,7 +1627,8 @@ type AssetPairEntry struct {
 //    	BASE_ASSET = 2,
 //    	STATS_QUOTE_ASSET = 4,
 //    	WITHDRAWABLE = 8,
-//    	TWO_STEP_WITHDRAWAL = 16
+//    	TWO_STEP_WITHDRAWAL = 16,
+//    	REQUIRES_KYC = 32
 //    };
 //
 type AssetPolicy int32
@@ -1638,6 +1639,7 @@ const (
 	AssetPolicyStatsQuoteAsset   AssetPolicy = 4
 	AssetPolicyWithdrawable      AssetPolicy = 8
 	AssetPolicyTwoStepWithdrawal AssetPolicy = 16
+	AssetPolicyRequiresKyc       AssetPolicy = 32
 )
 
 var AssetPolicyAll = []AssetPolicy{
@@ -1646,6 +1648,7 @@ var AssetPolicyAll = []AssetPolicy{
 	AssetPolicyStatsQuoteAsset,
 	AssetPolicyWithdrawable,
 	AssetPolicyTwoStepWithdrawal,
+	AssetPolicyRequiresKyc,
 }
 
 var assetPolicyMap = map[int32]string{
@@ -1654,6 +1657,7 @@ var assetPolicyMap = map[int32]string{
 	4:  "AssetPolicyStatsQuoteAsset",
 	8:  "AssetPolicyWithdrawable",
 	16: "AssetPolicyTwoStepWithdrawal",
+	32: "AssetPolicyRequiresKyc",
 }
 
 var assetPolicyShortMap = map[int32]string{
@@ -1662,6 +1666,7 @@ var assetPolicyShortMap = map[int32]string{
 	4:  "stats_quote_asset",
 	8:  "withdrawable",
 	16: "two_step_withdrawal",
+	32: "requires_kyc",
 }
 
 var assetPolicyRevMap = map[string]int32{
@@ -1670,6 +1675,7 @@ var assetPolicyRevMap = map[string]int32{
 	"AssetPolicyStatsQuoteAsset":   4,
 	"AssetPolicyWithdrawable":      8,
 	"AssetPolicyTwoStepWithdrawal": 16,
+	"AssetPolicyRequiresKyc":       32,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -8848,7 +8854,8 @@ type CreateIssuanceRequestOp struct {
 //    	EXCEEDS_MAX_ISSUANCE_AMOUNT = -6,
 //    	RECEIVER_FULL_LINE = -7,
 //    	INVALID_EXTERNAL_DETAILS = -8, // external details size exceeds max allowed
-//    	FEE_EXCEEDS_AMOUNT = -9 // fee more than amount to issue
+//    	FEE_EXCEEDS_AMOUNT = -9, // fee more than amount to issue
+//        REQUIRES_KYC = -10 // asset requires receiver to have KYC
 //    };
 //
 type CreateIssuanceRequestResultCode int32
@@ -8864,6 +8871,7 @@ const (
 	CreateIssuanceRequestResultCodeReceiverFullLine         CreateIssuanceRequestResultCode = -7
 	CreateIssuanceRequestResultCodeInvalidExternalDetails   CreateIssuanceRequestResultCode = -8
 	CreateIssuanceRequestResultCodeFeeExceedsAmount         CreateIssuanceRequestResultCode = -9
+	CreateIssuanceRequestResultCodeRequiresKyc              CreateIssuanceRequestResultCode = -10
 )
 
 var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
@@ -8877,32 +8885,35 @@ var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
 	CreateIssuanceRequestResultCodeReceiverFullLine,
 	CreateIssuanceRequestResultCodeInvalidExternalDetails,
 	CreateIssuanceRequestResultCodeFeeExceedsAmount,
+	CreateIssuanceRequestResultCodeRequiresKyc,
 }
 
 var createIssuanceRequestResultCodeMap = map[int32]string{
-	0:  "CreateIssuanceRequestResultCodeSuccess",
-	-1: "CreateIssuanceRequestResultCodeAssetNotFound",
-	-2: "CreateIssuanceRequestResultCodeInvalidAmount",
-	-3: "CreateIssuanceRequestResultCodeReferenceDuplication",
-	-4: "CreateIssuanceRequestResultCodeNoCounterparty",
-	-5: "CreateIssuanceRequestResultCodeNotAuthorized",
-	-6: "CreateIssuanceRequestResultCodeExceedsMaxIssuanceAmount",
-	-7: "CreateIssuanceRequestResultCodeReceiverFullLine",
-	-8: "CreateIssuanceRequestResultCodeInvalidExternalDetails",
-	-9: "CreateIssuanceRequestResultCodeFeeExceedsAmount",
+	0:   "CreateIssuanceRequestResultCodeSuccess",
+	-1:  "CreateIssuanceRequestResultCodeAssetNotFound",
+	-2:  "CreateIssuanceRequestResultCodeInvalidAmount",
+	-3:  "CreateIssuanceRequestResultCodeReferenceDuplication",
+	-4:  "CreateIssuanceRequestResultCodeNoCounterparty",
+	-5:  "CreateIssuanceRequestResultCodeNotAuthorized",
+	-6:  "CreateIssuanceRequestResultCodeExceedsMaxIssuanceAmount",
+	-7:  "CreateIssuanceRequestResultCodeReceiverFullLine",
+	-8:  "CreateIssuanceRequestResultCodeInvalidExternalDetails",
+	-9:  "CreateIssuanceRequestResultCodeFeeExceedsAmount",
+	-10: "CreateIssuanceRequestResultCodeRequiresKyc",
 }
 
 var createIssuanceRequestResultCodeShortMap = map[int32]string{
-	0:  "success",
-	-1: "asset_not_found",
-	-2: "invalid_amount",
-	-3: "reference_duplication",
-	-4: "no_counterparty",
-	-5: "not_authorized",
-	-6: "exceeds_max_issuance_amount",
-	-7: "receiver_full_line",
-	-8: "invalid_external_details",
-	-9: "fee_exceeds_amount",
+	0:   "success",
+	-1:  "asset_not_found",
+	-2:  "invalid_amount",
+	-3:  "reference_duplication",
+	-4:  "no_counterparty",
+	-5:  "not_authorized",
+	-6:  "exceeds_max_issuance_amount",
+	-7:  "receiver_full_line",
+	-8:  "invalid_external_details",
+	-9:  "fee_exceeds_amount",
+	-10: "requires_kyc",
 }
 
 var createIssuanceRequestResultCodeRevMap = map[string]int32{
@@ -8916,6 +8927,7 @@ var createIssuanceRequestResultCodeRevMap = map[string]int32{
 	"CreateIssuanceRequestResultCodeReceiverFullLine":         -7,
 	"CreateIssuanceRequestResultCodeInvalidExternalDetails":   -8,
 	"CreateIssuanceRequestResultCodeFeeExceedsAmount":         -9,
+	"CreateIssuanceRequestResultCodeRequiresKyc":              -10,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -12777,7 +12789,8 @@ type ManageOfferOp struct {
 //    	PRICE_IS_INVALID = -20, // price must be positive
 //    	UPDATE_IS_NOT_ALLOWED = -21, // update of the offer is not allowed
 //    	INVALID_AMOUNT = -22, // amount must be positive
-//    	SALE_IS_NOT_ACTIVE = -23
+//    	SALE_IS_NOT_ACTIVE = -23,
+//    	REQUIRES_KYC = -24 // source must have KYC in order to participate
 //
 //    };
 //
@@ -12808,6 +12821,7 @@ const (
 	ManageOfferResultCodeUpdateIsNotAllowed       ManageOfferResultCode = -21
 	ManageOfferResultCodeInvalidAmount            ManageOfferResultCode = -22
 	ManageOfferResultCodeSaleIsNotActive          ManageOfferResultCode = -23
+	ManageOfferResultCodeRequiresKyc              ManageOfferResultCode = -24
 )
 
 var ManageOfferResultCodeAll = []ManageOfferResultCode{
@@ -12835,6 +12849,7 @@ var ManageOfferResultCodeAll = []ManageOfferResultCode{
 	ManageOfferResultCodeUpdateIsNotAllowed,
 	ManageOfferResultCodeInvalidAmount,
 	ManageOfferResultCodeSaleIsNotActive,
+	ManageOfferResultCodeRequiresKyc,
 }
 
 var manageOfferResultCodeMap = map[int32]string{
@@ -12862,6 +12877,7 @@ var manageOfferResultCodeMap = map[int32]string{
 	-21: "ManageOfferResultCodeUpdateIsNotAllowed",
 	-22: "ManageOfferResultCodeInvalidAmount",
 	-23: "ManageOfferResultCodeSaleIsNotActive",
+	-24: "ManageOfferResultCodeRequiresKyc",
 }
 
 var manageOfferResultCodeShortMap = map[int32]string{
@@ -12889,6 +12905,7 @@ var manageOfferResultCodeShortMap = map[int32]string{
 	-21: "update_is_not_allowed",
 	-22: "invalid_amount",
 	-23: "sale_is_not_active",
+	-24: "requires_kyc",
 }
 
 var manageOfferResultCodeRevMap = map[string]int32{
@@ -12916,6 +12933,7 @@ var manageOfferResultCodeRevMap = map[string]int32{
 	"ManageOfferResultCodeUpdateIsNotAllowed":       -21,
 	"ManageOfferResultCodeInvalidAmount":            -22,
 	"ManageOfferResultCodeSaleIsNotActive":          -23,
+	"ManageOfferResultCodeRequiresKyc":              -24,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
