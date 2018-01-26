@@ -41,6 +41,19 @@ func (d WithdrawalDetails) ReviewRequestDetails() xdr.ReviewRequestOpRequestDeta
 	}
 }
 
+type TwoStepWithdrawalDetails struct {
+	ExternalDetails string
+}
+
+func (d TwoStepWithdrawalDetails) ReviewRequestDetails() xdr.ReviewRequestOpRequestDetails {
+	return xdr.ReviewRequestOpRequestDetails{
+		RequestType:       xdr.ReviewableRequestTypeTwoStepWithdrawal,
+		TwoStepWithdrawal: &xdr.WithdrawalDetails{
+			ExternalDetails: d.ExternalDetails,
+		},
+	}
+}
+
 func (op ReviewRequestOp) XDR() (*xdr.Operation, error) {
 	hash, err := hex.DecodeString(op.Hash)
 	if err != nil {
