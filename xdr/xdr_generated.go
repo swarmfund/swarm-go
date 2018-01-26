@@ -3459,6 +3459,67 @@ type ReviewableRequestEntry struct {
 	Ext          ReviewableRequestEntryExt  `json:"ext,omitempty"`
 }
 
+// SaleQuoteAssetExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type SaleQuoteAssetExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u SaleQuoteAssetExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of SaleQuoteAssetExt
+func (u SaleQuoteAssetExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewSaleQuoteAssetExt creates a new  SaleQuoteAssetExt.
+func NewSaleQuoteAssetExt(v LedgerVersion, value interface{}) (result SaleQuoteAssetExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// SaleQuoteAsset is an XDR Struct defines as:
+//
+//   struct SaleQuoteAsset {
+//    	AssetCode quoteAsset; // asset in which participation will be accepted
+//    	uint64 price; // price for 1 baseAsset in terms of quote asset
+//    	BalanceID quoteBalance;
+//    	uint64 currentCap; // current capitalization
+//    	union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type SaleQuoteAsset struct {
+	QuoteAsset   AssetCode         `json:"quoteAsset,omitempty"`
+	Price        Uint64            `json:"price,omitempty"`
+	QuoteBalance BalanceId         `json:"quoteBalance,omitempty"`
+	CurrentCap   Uint64            `json:"currentCap,omitempty"`
+	Ext          SaleQuoteAssetExt `json:"ext,omitempty"`
+}
+
 // SaleEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -3504,18 +3565,15 @@ func NewSaleEntryExt(v LedgerVersion, value interface{}) (result SaleEntryExt, e
 //    	uint64 saleID;
 //    	AccountID ownerID;
 //        AssetCode baseAsset; // asset for which sale will be performed
-//    	AssetCode quoteAsset; // asset in which participation will be accepted
 //    	uint64 startTime; // start time of the sale
 //    	uint64 endTime; // close time of the sale
-//    	uint64 price; // price for 1 baseAsset in terms of quote asset
+//    	AssetCode defaultQuoteAsset; // asset for soft and hard cap
 //    	uint64 softCap; // minimum amount of quote asset to be received at which sale will be considered a successful
 //    	uint64 hardCap; // max amount of quote asset to be received
 //    	longstring details; // sale specific details
+//    	SaleQuoteAsset quoteAssets<100>;
 //
 //    	BalanceID baseBalance;
-//    	BalanceID quoteBalance;
-//
-//    	uint64 currentCap; // current capitalization
 //
 //    	union switch (LedgerVersion v)
 //        {
@@ -3526,20 +3584,18 @@ func NewSaleEntryExt(v LedgerVersion, value interface{}) (result SaleEntryExt, e
 //    };
 //
 type SaleEntry struct {
-	SaleId       Uint64       `json:"saleID,omitempty"`
-	OwnerId      AccountId    `json:"ownerID,omitempty"`
-	BaseAsset    AssetCode    `json:"baseAsset,omitempty"`
-	QuoteAsset   AssetCode    `json:"quoteAsset,omitempty"`
-	StartTime    Uint64       `json:"startTime,omitempty"`
-	EndTime      Uint64       `json:"endTime,omitempty"`
-	Price        Uint64       `json:"price,omitempty"`
-	SoftCap      Uint64       `json:"softCap,omitempty"`
-	HardCap      Uint64       `json:"hardCap,omitempty"`
-	Details      Longstring   `json:"details,omitempty"`
-	BaseBalance  BalanceId    `json:"baseBalance,omitempty"`
-	QuoteBalance BalanceId    `json:"quoteBalance,omitempty"`
-	CurrentCap   Uint64       `json:"currentCap,omitempty"`
-	Ext          SaleEntryExt `json:"ext,omitempty"`
+	SaleId            Uint64           `json:"saleID,omitempty"`
+	OwnerId           AccountId        `json:"ownerID,omitempty"`
+	BaseAsset         AssetCode        `json:"baseAsset,omitempty"`
+	StartTime         Uint64           `json:"startTime,omitempty"`
+	EndTime           Uint64           `json:"endTime,omitempty"`
+	DefaultQuoteAsset AssetCode        `json:"defaultQuoteAsset,omitempty"`
+	SoftCap           Uint64           `json:"softCap,omitempty"`
+	HardCap           Uint64           `json:"hardCap,omitempty"`
+	Details           Longstring       `json:"details,omitempty"`
+	QuoteAssets       []SaleQuoteAsset `json:"quoteAssets,omitempty" xdrmaxsize:"100"`
+	BaseBalance       BalanceId        `json:"baseBalance,omitempty"`
+	Ext               SaleEntryExt     `json:"ext,omitempty"`
 }
 
 // StatisticsEntryExt is an XDR NestedUnion defines as:
@@ -7826,7 +7882,7 @@ func NewCheckSaleStateOpExt(v LedgerVersion, value interface{}) (result CheckSal
 //
 //   struct CheckSaleStateOp
 //    {
-//
+//    	uint64 saleID;
 //    	 // reserved for future use
 //        union switch (LedgerVersion v)
 //        {
@@ -7837,7 +7893,8 @@ func NewCheckSaleStateOpExt(v LedgerVersion, value interface{}) (result CheckSal
 //    };
 //
 type CheckSaleStateOp struct {
-	Ext CheckSaleStateOpExt `json:"ext,omitempty"`
+	SaleId Uint64              `json:"saleID,omitempty"`
+	Ext    CheckSaleStateOpExt `json:"ext,omitempty"`
 }
 
 // CheckSaleStateResultCode is an XDR Enum defines as:
@@ -7848,34 +7905,40 @@ type CheckSaleStateOp struct {
 //        SUCCESS = 0, // sale was processed
 //
 //        // codes considered as "failure" for the operation
-//        NO_SALES_FOUND = -1 // no sales were found to meet specified conditions
+//        NOT_FOUND = -1, // sale was not found
+//    	NOT_READY = -2 // sale is not ready to be closed or canceled
 //    };
 //
 type CheckSaleStateResultCode int32
 
 const (
-	CheckSaleStateResultCodeSuccess      CheckSaleStateResultCode = 0
-	CheckSaleStateResultCodeNoSalesFound CheckSaleStateResultCode = -1
+	CheckSaleStateResultCodeSuccess  CheckSaleStateResultCode = 0
+	CheckSaleStateResultCodeNotFound CheckSaleStateResultCode = -1
+	CheckSaleStateResultCodeNotReady CheckSaleStateResultCode = -2
 )
 
 var CheckSaleStateResultCodeAll = []CheckSaleStateResultCode{
 	CheckSaleStateResultCodeSuccess,
-	CheckSaleStateResultCodeNoSalesFound,
+	CheckSaleStateResultCodeNotFound,
+	CheckSaleStateResultCodeNotReady,
 }
 
 var checkSaleStateResultCodeMap = map[int32]string{
 	0:  "CheckSaleStateResultCodeSuccess",
-	-1: "CheckSaleStateResultCodeNoSalesFound",
+	-1: "CheckSaleStateResultCodeNotFound",
+	-2: "CheckSaleStateResultCodeNotReady",
 }
 
 var checkSaleStateResultCodeShortMap = map[int32]string{
 	0:  "success",
-	-1: "no_sales_found",
+	-1: "not_found",
+	-2: "not_ready",
 }
 
 var checkSaleStateResultCodeRevMap = map[string]int32{
-	"CheckSaleStateResultCodeSuccess":      0,
-	"CheckSaleStateResultCodeNoSalesFound": -1,
+	"CheckSaleStateResultCodeSuccess":  0,
+	"CheckSaleStateResultCodeNotFound": -1,
+	"CheckSaleStateResultCodeNotReady": -2,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -8088,6 +8151,66 @@ type SaleCanceled struct {
 	Ext SaleCanceledExt `json:"ext,omitempty"`
 }
 
+// CheckSubSaleClosedResultExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type CheckSubSaleClosedResultExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CheckSubSaleClosedResultExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CheckSubSaleClosedResultExt
+func (u CheckSubSaleClosedResultExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewCheckSubSaleClosedResultExt creates a new  CheckSubSaleClosedResultExt.
+func NewCheckSubSaleClosedResultExt(v LedgerVersion, value interface{}) (result CheckSubSaleClosedResultExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// CheckSubSaleClosedResult is an XDR Struct defines as:
+//
+//   struct CheckSubSaleClosedResult {
+//    	BalanceID saleBaseBalance;
+//    	BalanceID saleQuoteBalance;
+//    	ManageOfferSuccessResult saleDetails;
+//    	 // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type CheckSubSaleClosedResult struct {
+	SaleBaseBalance  BalanceId                   `json:"saleBaseBalance,omitempty"`
+	SaleQuoteBalance BalanceId                   `json:"saleQuoteBalance,omitempty"`
+	SaleDetails      ManageOfferSuccessResult    `json:"saleDetails,omitempty"`
+	Ext              CheckSubSaleClosedResultExt `json:"ext,omitempty"`
+}
+
 // CheckSaleClosedResultExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -8130,9 +8253,7 @@ func NewCheckSaleClosedResultExt(v LedgerVersion, value interface{}) (result Che
 //
 //   struct CheckSaleClosedResult {
 //    	AccountID saleOwner;
-//    	BalanceID saleBaseBalance;
-//    	BalanceID saleQuoteBalance;
-//    	ManageOfferSuccessResult saleDetails;
+//    	CheckSubSaleClosedResult results<>;
 //    	 // reserved for future use
 //        union switch (LedgerVersion v)
 //        {
@@ -8143,11 +8264,9 @@ func NewCheckSaleClosedResultExt(v LedgerVersion, value interface{}) (result Che
 //    };
 //
 type CheckSaleClosedResult struct {
-	SaleOwner        AccountId                `json:"saleOwner,omitempty"`
-	SaleBaseBalance  BalanceId                `json:"saleBaseBalance,omitempty"`
-	SaleQuoteBalance BalanceId                `json:"saleQuoteBalance,omitempty"`
-	SaleDetails      ManageOfferSuccessResult `json:"saleDetails,omitempty"`
-	Ext              CheckSaleClosedResultExt `json:"ext,omitempty"`
+	SaleOwner AccountId                  `json:"saleOwner,omitempty"`
+	Results   []CheckSubSaleClosedResult `json:"results,omitempty"`
+	Ext       CheckSaleClosedResultExt   `json:"ext,omitempty"`
 }
 
 // CheckSaleStateSuccessEffect is an XDR NestedUnion defines as:
@@ -18026,6 +18145,63 @@ type LimitsUpdateRequest struct {
 	Ext          LimitsUpdateRequestExt `json:"ext,omitempty"`
 }
 
+// SaleCreationRequestQuoteAssetExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type SaleCreationRequestQuoteAssetExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u SaleCreationRequestQuoteAssetExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of SaleCreationRequestQuoteAssetExt
+func (u SaleCreationRequestQuoteAssetExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewSaleCreationRequestQuoteAssetExt creates a new  SaleCreationRequestQuoteAssetExt.
+func NewSaleCreationRequestQuoteAssetExt(v LedgerVersion, value interface{}) (result SaleCreationRequestQuoteAssetExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// SaleCreationRequestQuoteAsset is an XDR Struct defines as:
+//
+//   struct SaleCreationRequestQuoteAsset {
+//    	AssetCode quoteAsset; // asset in which participation will be accepted
+//    	uint64 price; // price for 1 baseAsset in terms of quote asset
+//    	union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type SaleCreationRequestQuoteAsset struct {
+	QuoteAsset AssetCode                        `json:"quoteAsset,omitempty"`
+	Price      Uint64                           `json:"price,omitempty"`
+	Ext        SaleCreationRequestQuoteAssetExt `json:"ext,omitempty"`
+}
+
 // SaleCreationRequestExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -18068,13 +18244,14 @@ func NewSaleCreationRequestExt(v LedgerVersion, value interface{}) (result SaleC
 //
 //   struct SaleCreationRequest {
 //    	AssetCode baseAsset; // asset for which sale will be performed
-//    	AssetCode quoteAsset; // asset in which participation will be accepted
+//    	AssetCode defaultQuoteAsset; // asset for soft and hard cap
 //    	uint64 startTime; // start time of the sale
 //    	uint64 endTime; // close time of the sale
-//    	uint64 price; // price for 1 baseAsset in terms of quote asset
 //    	uint64 softCap; // minimum amount of quote asset to be received at which sale will be considered a successful
 //    	uint64 hardCap; // max amount of quote asset to be received
 //    	longstring details; // sale specific details
+//
+//    	SaleCreationRequestQuoteAsset quoteAssets<100>;
 //
 //    	union switch (LedgerVersion v)
 //        {
@@ -18085,15 +18262,15 @@ func NewSaleCreationRequestExt(v LedgerVersion, value interface{}) (result SaleC
 //    };
 //
 type SaleCreationRequest struct {
-	BaseAsset  AssetCode              `json:"baseAsset,omitempty"`
-	QuoteAsset AssetCode              `json:"quoteAsset,omitempty"`
-	StartTime  Uint64                 `json:"startTime,omitempty"`
-	EndTime    Uint64                 `json:"endTime,omitempty"`
-	Price      Uint64                 `json:"price,omitempty"`
-	SoftCap    Uint64                 `json:"softCap,omitempty"`
-	HardCap    Uint64                 `json:"hardCap,omitempty"`
-	Details    Longstring             `json:"details,omitempty"`
-	Ext        SaleCreationRequestExt `json:"ext,omitempty"`
+	BaseAsset         AssetCode                       `json:"baseAsset,omitempty"`
+	DefaultQuoteAsset AssetCode                       `json:"defaultQuoteAsset,omitempty"`
+	StartTime         Uint64                          `json:"startTime,omitempty"`
+	EndTime           Uint64                          `json:"endTime,omitempty"`
+	SoftCap           Uint64                          `json:"softCap,omitempty"`
+	HardCap           Uint64                          `json:"hardCap,omitempty"`
+	Details           Longstring                      `json:"details,omitempty"`
+	QuoteAssets       []SaleCreationRequestQuoteAsset `json:"quoteAssets,omitempty" xdrmaxsize:"100"`
+	Ext               SaleCreationRequestExt          `json:"ext,omitempty"`
 }
 
 // WithdrawalType is an XDR Enum defines as:
