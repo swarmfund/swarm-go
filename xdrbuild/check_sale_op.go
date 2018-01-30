@@ -3,13 +3,16 @@ package xdrbuild
 import "gitlab.com/swarmfund/go/xdr"
 
 type CheckSaleOp struct {
+	SaleID uint64
 }
 
 func (op CheckSaleOp) XDR() (*xdr.Operation, error) {
 	return &xdr.Operation{
 		Body: xdr.OperationBody{
-			Type:             xdr.OperationTypeCheckSaleState,
-			CheckSaleStateOp: &xdr.CheckSaleStateOp{},
+			Type: xdr.OperationTypeCheckSaleState,
+			CheckSaleStateOp: &xdr.CheckSaleStateOp{
+				SaleId: xdr.Uint64(op.SaleID),
+			},
 		},
 	}, nil
 }
