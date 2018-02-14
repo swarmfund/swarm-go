@@ -4,12 +4,21 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/swarmfund/go/xdr"
 )
 
 func TestCheckSaleOp_XDR(t *testing.T) {
-	op := CheckSaleOp{}
-	got, err := op.XDR()
-	assert.NoError(t, err)
-	assert.Equal(t, xdr.OperationTypeCheckSaleState, got.Body.Type)
+	t.Run("valid", func(t *testing.T) {
+		op := CheckSaleOp{
+			SaleID: 10,
+		}
+		assert.NoError(t, op.Validate())
+		got, err := op.XDR()
+		assert.NoError(t, err)
+		assert.EqualValues(t, op.SaleID, got.Body.CheckSaleStateOp.SaleId)
+	})
+
+	t.Run("missing sale id", func(t *testing.T) {
+		op := CheckSaleOp{}
+		assert.Error(t, op.Validate())
+	})
 }
