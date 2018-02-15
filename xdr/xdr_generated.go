@@ -3594,6 +3594,8 @@ func NewSaleEntryExt(v LedgerVersion, value interface{}) (result SaleEntryExt, e
 //    	AssetCode defaultQuoteAsset; // asset for soft and hard cap
 //    	uint64 softCap; // minimum amount of quote asset to be received at which sale will be considered a successful
 //    	uint64 hardCap; // max amount of quote asset to be received
+//    	uint64 currentCapInBase;
+//    	uint64 hardCapInBase;
 //    	longstring details; // sale specific details
 //    	SaleQuoteAsset quoteAssets<100>;
 //
@@ -3616,6 +3618,8 @@ type SaleEntry struct {
 	DefaultQuoteAsset AssetCode        `json:"defaultQuoteAsset,omitempty"`
 	SoftCap           Uint64           `json:"softCap,omitempty"`
 	HardCap           Uint64           `json:"hardCap,omitempty"`
+	CurrentCapInBase  Uint64           `json:"currentCapInBase,omitempty"`
+	HardCapInBase     Uint64           `json:"hardCapInBase,omitempty"`
 	Details           Longstring       `json:"details,omitempty"`
 	QuoteAssets       []SaleQuoteAsset `json:"quoteAssets,omitempty" xdrmaxsize:"100"`
 	BaseBalance       BalanceId        `json:"baseBalance,omitempty"`
@@ -15178,6 +15182,7 @@ type ReviewRequestOp struct {
 //    	TYPE_MISMATCHED = -5,
 //    	REJECT_NOT_ALLOWED = -6, // reject not allowed, use permanent reject
 //    	INVALID_EXTERNAL_DETAILS = -7,
+//    	REQUESTOR_IS_BLOCKED = -8,
 //
 //    	// Asset requests
 //    	ASSET_ALREADY_EXISTS = -20,
@@ -15192,7 +15197,6 @@ type ReviewRequestOp struct {
 //    	BASE_ASSET_DOES_NOT_EXISTS = -50,
 //    	HARD_CAP_WILL_EXCEED_MAX_ISSUANCE = -51,
 //    	INSUFFICIENT_PREISSUED_FOR_HARD_CAP = -52
-//
 //    };
 //
 type ReviewRequestResultCode int32
@@ -15206,6 +15210,7 @@ const (
 	ReviewRequestResultCodeTypeMismatched                         ReviewRequestResultCode = -5
 	ReviewRequestResultCodeRejectNotAllowed                       ReviewRequestResultCode = -6
 	ReviewRequestResultCodeInvalidExternalDetails                 ReviewRequestResultCode = -7
+	ReviewRequestResultCodeRequestorIsBlocked                     ReviewRequestResultCode = -8
 	ReviewRequestResultCodeAssetAlreadyExists                     ReviewRequestResultCode = -20
 	ReviewRequestResultCodeAssetDoesNotExists                     ReviewRequestResultCode = -21
 	ReviewRequestResultCodeMaxIssuanceAmountExceeded              ReviewRequestResultCode = -40
@@ -15225,6 +15230,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeTypeMismatched,
 	ReviewRequestResultCodeRejectNotAllowed,
 	ReviewRequestResultCodeInvalidExternalDetails,
+	ReviewRequestResultCodeRequestorIsBlocked,
 	ReviewRequestResultCodeAssetAlreadyExists,
 	ReviewRequestResultCodeAssetDoesNotExists,
 	ReviewRequestResultCodeMaxIssuanceAmountExceeded,
@@ -15244,6 +15250,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-5:  "ReviewRequestResultCodeTypeMismatched",
 	-6:  "ReviewRequestResultCodeRejectNotAllowed",
 	-7:  "ReviewRequestResultCodeInvalidExternalDetails",
+	-8:  "ReviewRequestResultCodeRequestorIsBlocked",
 	-20: "ReviewRequestResultCodeAssetAlreadyExists",
 	-21: "ReviewRequestResultCodeAssetDoesNotExists",
 	-40: "ReviewRequestResultCodeMaxIssuanceAmountExceeded",
@@ -15263,6 +15270,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-5:  "type_mismatched",
 	-6:  "reject_not_allowed",
 	-7:  "invalid_external_details",
+	-8:  "requestor_is_blocked",
 	-20: "asset_already_exists",
 	-21: "asset_does_not_exists",
 	-40: "max_issuance_amount_exceeded",
@@ -15282,6 +15290,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeTypeMismatched":                         -5,
 	"ReviewRequestResultCodeRejectNotAllowed":                       -6,
 	"ReviewRequestResultCodeInvalidExternalDetails":                 -7,
+	"ReviewRequestResultCodeRequestorIsBlocked":                     -8,
 	"ReviewRequestResultCodeAssetAlreadyExists":                     -20,
 	"ReviewRequestResultCodeAssetDoesNotExists":                     -21,
 	"ReviewRequestResultCodeMaxIssuanceAmountExceeded":              -40,
