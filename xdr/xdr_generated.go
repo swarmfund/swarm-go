@@ -12566,7 +12566,8 @@ func (u ManageAssetResult) GetSuccess() (result ManageAssetSuccess, ok bool) {
 //   enum ManageBalanceAction
 //    {
 //        CREATE = 0,
-//        DELETE_BALANCE = 1
+//        DELETE_BALANCE = 1,
+//    	CREATE_UNIQUE = 2 // ensures that balance will not be created if one for such asset and account exists
 //    };
 //
 type ManageBalanceAction int32
@@ -12574,26 +12575,31 @@ type ManageBalanceAction int32
 const (
 	ManageBalanceActionCreate        ManageBalanceAction = 0
 	ManageBalanceActionDeleteBalance ManageBalanceAction = 1
+	ManageBalanceActionCreateUnique  ManageBalanceAction = 2
 )
 
 var ManageBalanceActionAll = []ManageBalanceAction{
 	ManageBalanceActionCreate,
 	ManageBalanceActionDeleteBalance,
+	ManageBalanceActionCreateUnique,
 }
 
 var manageBalanceActionMap = map[int32]string{
 	0: "ManageBalanceActionCreate",
 	1: "ManageBalanceActionDeleteBalance",
+	2: "ManageBalanceActionCreateUnique",
 }
 
 var manageBalanceActionShortMap = map[int32]string{
 	0: "create",
 	1: "delete_balance",
+	2: "create_unique",
 }
 
 var manageBalanceActionRevMap = map[string]int32{
 	"ManageBalanceActionCreate":        0,
 	"ManageBalanceActionDeleteBalance": 1,
+	"ManageBalanceActionCreateUnique":  2,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -12729,18 +12735,22 @@ type ManageBalanceOp struct {
 //        NOT_FOUND = -2,
 //        DESTINATION_NOT_FOUND = -3,
 //        ASSET_NOT_FOUND = -4,
-//        INVALID_ASSET = -5
+//        INVALID_ASSET = -5,
+//    	BALANCE_ALREADY_EXISTS = -6,
+//    	VERSION_IS_NOT_SUPPORTED_YET = -7 // version specified in request is not supported yet
 //    };
 //
 type ManageBalanceResultCode int32
 
 const (
-	ManageBalanceResultCodeSuccess             ManageBalanceResultCode = 0
-	ManageBalanceResultCodeMalformed           ManageBalanceResultCode = -1
-	ManageBalanceResultCodeNotFound            ManageBalanceResultCode = -2
-	ManageBalanceResultCodeDestinationNotFound ManageBalanceResultCode = -3
-	ManageBalanceResultCodeAssetNotFound       ManageBalanceResultCode = -4
-	ManageBalanceResultCodeInvalidAsset        ManageBalanceResultCode = -5
+	ManageBalanceResultCodeSuccess                  ManageBalanceResultCode = 0
+	ManageBalanceResultCodeMalformed                ManageBalanceResultCode = -1
+	ManageBalanceResultCodeNotFound                 ManageBalanceResultCode = -2
+	ManageBalanceResultCodeDestinationNotFound      ManageBalanceResultCode = -3
+	ManageBalanceResultCodeAssetNotFound            ManageBalanceResultCode = -4
+	ManageBalanceResultCodeInvalidAsset             ManageBalanceResultCode = -5
+	ManageBalanceResultCodeBalanceAlreadyExists     ManageBalanceResultCode = -6
+	ManageBalanceResultCodeVersionIsNotSupportedYet ManageBalanceResultCode = -7
 )
 
 var ManageBalanceResultCodeAll = []ManageBalanceResultCode{
@@ -12750,6 +12760,8 @@ var ManageBalanceResultCodeAll = []ManageBalanceResultCode{
 	ManageBalanceResultCodeDestinationNotFound,
 	ManageBalanceResultCodeAssetNotFound,
 	ManageBalanceResultCodeInvalidAsset,
+	ManageBalanceResultCodeBalanceAlreadyExists,
+	ManageBalanceResultCodeVersionIsNotSupportedYet,
 }
 
 var manageBalanceResultCodeMap = map[int32]string{
@@ -12759,6 +12771,8 @@ var manageBalanceResultCodeMap = map[int32]string{
 	-3: "ManageBalanceResultCodeDestinationNotFound",
 	-4: "ManageBalanceResultCodeAssetNotFound",
 	-5: "ManageBalanceResultCodeInvalidAsset",
+	-6: "ManageBalanceResultCodeBalanceAlreadyExists",
+	-7: "ManageBalanceResultCodeVersionIsNotSupportedYet",
 }
 
 var manageBalanceResultCodeShortMap = map[int32]string{
@@ -12768,15 +12782,19 @@ var manageBalanceResultCodeShortMap = map[int32]string{
 	-3: "destination_not_found",
 	-4: "asset_not_found",
 	-5: "invalid_asset",
+	-6: "balance_already_exists",
+	-7: "version_is_not_supported_yet",
 }
 
 var manageBalanceResultCodeRevMap = map[string]int32{
-	"ManageBalanceResultCodeSuccess":             0,
-	"ManageBalanceResultCodeMalformed":           -1,
-	"ManageBalanceResultCodeNotFound":            -2,
-	"ManageBalanceResultCodeDestinationNotFound": -3,
-	"ManageBalanceResultCodeAssetNotFound":       -4,
-	"ManageBalanceResultCodeInvalidAsset":        -5,
+	"ManageBalanceResultCodeSuccess":                  0,
+	"ManageBalanceResultCodeMalformed":                -1,
+	"ManageBalanceResultCodeNotFound":                 -2,
+	"ManageBalanceResultCodeDestinationNotFound":      -3,
+	"ManageBalanceResultCodeAssetNotFound":            -4,
+	"ManageBalanceResultCodeInvalidAsset":             -5,
+	"ManageBalanceResultCodeBalanceAlreadyExists":     -6,
+	"ManageBalanceResultCodeVersionIsNotSupportedYet": -7,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -21878,7 +21896,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	PASS_EXTERNAL_SYS_ACC_ID_IN_CREATE_ACC = 1,
 //    	DETAILED_LEDGER_CHANGES = 2, // write more all ledger changes to transaction meta
 //    	NEW_SIGNER_TYPES = 3, // use more comprehensive list of signer types
-//    	TYPED_SALE = 4 // sales can have type
+//    	TYPED_SALE = 4, // sales can have type
+//    	UNIQUE_BALANCE_CREATION = 5 // allows to specify in manage balance that balance should not be created if one for such asset and account exists
 //    };
 //
 type LedgerVersion int32
@@ -21889,6 +21908,7 @@ const (
 	LedgerVersionDetailedLedgerChanges           LedgerVersion = 2
 	LedgerVersionNewSignerTypes                  LedgerVersion = 3
 	LedgerVersionTypedSale                       LedgerVersion = 4
+	LedgerVersionUniqueBalanceCreation           LedgerVersion = 5
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -21897,6 +21917,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionDetailedLedgerChanges,
 	LedgerVersionNewSignerTypes,
 	LedgerVersionTypedSale,
+	LedgerVersionUniqueBalanceCreation,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -21905,6 +21926,7 @@ var ledgerVersionMap = map[int32]string{
 	2: "LedgerVersionDetailedLedgerChanges",
 	3: "LedgerVersionNewSignerTypes",
 	4: "LedgerVersionTypedSale",
+	5: "LedgerVersionUniqueBalanceCreation",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -21913,6 +21935,7 @@ var ledgerVersionShortMap = map[int32]string{
 	2: "detailed_ledger_changes",
 	3: "new_signer_types",
 	4: "typed_sale",
+	5: "unique_balance_creation",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -21921,6 +21944,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionDetailedLedgerChanges":           2,
 	"LedgerVersionNewSignerTypes":                  3,
 	"LedgerVersionTypedSale":                       4,
+	"LedgerVersionUniqueBalanceCreation":           5,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
