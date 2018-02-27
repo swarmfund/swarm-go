@@ -1,9 +1,18 @@
 package xdrbuild
 
-import "gitlab.com/swarmfund/go/xdr"
+import (
+	"github.com/go-ozzo/ozzo-validation"
+	"gitlab.com/swarmfund/go/xdr"
+)
 
 type CheckSaleOp struct {
 	SaleID uint64
+}
+
+func (op CheckSaleOp) Validate() error {
+	return validation.ValidateStruct(&op,
+		validation.Field(&op.SaleID, validation.Required),
+	)
 }
 
 func (op CheckSaleOp) XDR() (*xdr.Operation, error) {

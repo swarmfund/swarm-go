@@ -29,3 +29,20 @@ func SignerOf(address string) SignerConstraint {
 		return signcontrol.ErrNotAllowed
 	}
 }
+
+
+func SignatureOf(address string) SignerConstraint {
+	return func(r *http.Request, doorman Doorman) error {
+		signer, err := signcontrol.CheckSignature(r)
+		if err != nil {
+			return err
+		}
+
+		if signer == address {
+			return nil
+		}
+
+		return signcontrol.ErrNotAllowed
+	}
+}
+
