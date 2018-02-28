@@ -1,0 +1,6 @@
+{
+  "Vendor": true,
+  "Exclude": ["vendor"],
+  "Cyclo": 10,
+  "LineLength": 200
+}

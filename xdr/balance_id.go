@@ -1,6 +1,7 @@
 package xdr
 
 import (
+	"errors"
 	"fmt"
 
 	"gitlab.com/swarmfund/go/strkey"
@@ -20,6 +21,28 @@ func (bid *BalanceId) AsString() string {
 	default:
 		panic(fmt.Errorf("Unknown account id type: %v", bid.Type))
 	}
+}
+
+func (bid *BalanceId) SetString(addr string) error {
+	if bid == nil {
+		return nil
+	}
+
+	raw, err := strkey.Decode(strkey.VersionByteBalanceID, addr)
+	if err != nil {
+		return err
+	}
+
+	if len(raw) != 32 {
+		return errors.New("invalid address")
+	}
+
+	var ui Uint256
+	copy(ui[:], raw)
+
+	*bid, err = NewBalanceId(CryptoKeyTypeKeyTypeEd25519, ui)
+
+	return err
 }
 
 func (bid *BalanceId) MarshalJSON() ([]byte, error) {
