@@ -1762,18 +1762,20 @@ type AssetPairEntry struct {
 //    	STATS_QUOTE_ASSET = 4,
 //    	WITHDRAWABLE = 8,
 //    	TWO_STEP_WITHDRAWAL = 16,
-//    	REQUIRES_KYC = 32
+//    	REQUIRES_KYC = 32,
+//    	ISSUANCE_MANUAL_REVIEW_REQUIRED = 64
 //    };
 //
 type AssetPolicy int32
 
 const (
-	AssetPolicyTransferable      AssetPolicy = 1
-	AssetPolicyBaseAsset         AssetPolicy = 2
-	AssetPolicyStatsQuoteAsset   AssetPolicy = 4
-	AssetPolicyWithdrawable      AssetPolicy = 8
-	AssetPolicyTwoStepWithdrawal AssetPolicy = 16
-	AssetPolicyRequiresKyc       AssetPolicy = 32
+	AssetPolicyTransferable                 AssetPolicy = 1
+	AssetPolicyBaseAsset                    AssetPolicy = 2
+	AssetPolicyStatsQuoteAsset              AssetPolicy = 4
+	AssetPolicyWithdrawable                 AssetPolicy = 8
+	AssetPolicyTwoStepWithdrawal            AssetPolicy = 16
+	AssetPolicyRequiresKyc                  AssetPolicy = 32
+	AssetPolicyIssuanceManualReviewRequired AssetPolicy = 64
 )
 
 var AssetPolicyAll = []AssetPolicy{
@@ -1783,6 +1785,7 @@ var AssetPolicyAll = []AssetPolicy{
 	AssetPolicyWithdrawable,
 	AssetPolicyTwoStepWithdrawal,
 	AssetPolicyRequiresKyc,
+	AssetPolicyIssuanceManualReviewRequired,
 }
 
 var assetPolicyMap = map[int32]string{
@@ -1792,6 +1795,7 @@ var assetPolicyMap = map[int32]string{
 	8:  "AssetPolicyWithdrawable",
 	16: "AssetPolicyTwoStepWithdrawal",
 	32: "AssetPolicyRequiresKyc",
+	64: "AssetPolicyIssuanceManualReviewRequired",
 }
 
 var assetPolicyShortMap = map[int32]string{
@@ -1801,15 +1805,17 @@ var assetPolicyShortMap = map[int32]string{
 	8:  "withdrawable",
 	16: "two_step_withdrawal",
 	32: "requires_kyc",
+	64: "issuance_manual_review_required",
 }
 
 var assetPolicyRevMap = map[string]int32{
-	"AssetPolicyTransferable":      1,
-	"AssetPolicyBaseAsset":         2,
-	"AssetPolicyStatsQuoteAsset":   4,
-	"AssetPolicyWithdrawable":      8,
-	"AssetPolicyTwoStepWithdrawal": 16,
-	"AssetPolicyRequiresKyc":       32,
+	"AssetPolicyTransferable":                 1,
+	"AssetPolicyBaseAsset":                    2,
+	"AssetPolicyStatsQuoteAsset":              4,
+	"AssetPolicyWithdrawable":                 8,
+	"AssetPolicyTwoStepWithdrawal":            16,
+	"AssetPolicyRequiresKyc":                  32,
+	"AssetPolicyIssuanceManualReviewRequired": 64,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
