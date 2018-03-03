@@ -7,11 +7,11 @@ import (
 )
 
 type CreateKYCRequestOp struct {
-	RequestID      xdr.Uint64
+	RequestID      uint64
 	AccountType    xdr.AccountType
-	KYCData        xdr.Longstring
+	KYCData        string
 	UpdatedAccount string
-	KYCLevel       xdr.Uint32
+	KYCLevel       uint32
 }
 
 func (op CreateKYCRequestOp) Validate() error {
@@ -32,12 +32,12 @@ func (op CreateKYCRequestOp) XDR() (*xdr.Operation, error) {
 		Body: xdr.OperationBody{
 			Type: xdr.OperationTypeCreateKycRequest,
 			CreateKycRequestOp: &xdr.CreateKycRequestOp{
-				RequestId: op.RequestID,
+				RequestId: xdr.Uint64(op.RequestID),
 				ChangeKycRequest: xdr.ChangeKycRequest{
 					UpdatedAccount:   updatedAccount,
 					AccountTypeToSet: op.AccountType,
-					KycLevel:         op.KYCLevel,
-					KycData:          op.KYCData,
+					KycLevel:         xdr.Uint32(op.KYCLevel),
+					KycData:          xdr.Longstring(op.KYCData),
 				},
 			},
 		},
