@@ -684,8 +684,7 @@ type AccountTypeLimitsEntry struct {
 //    	USER_ASSET_MANAGER = 131072, // can review sale, asset creation/update requests
 //    	USER_ISSUANCE_MANAGER = 262144, // can review pre-issuance/issuance requests
 //    	WITHDRAW_MANAGER = 524288, // can review withdraw requests
-//    	FEES_MANAGER = 1048576, // can set fee
-//    	TX_SENDER = 2097152 // can send tx
+//    	FEES_MANAGER = 1048576 // can set fee
 //    };
 //
 type SignerType int32
@@ -712,7 +711,6 @@ const (
 	SignerTypeUserIssuanceManager       SignerType = 262144
 	SignerTypeWithdrawManager           SignerType = 524288
 	SignerTypeFeesManager               SignerType = 1048576
-	SignerTypeTxSender                  SignerType = 2097152
 )
 
 var SignerTypeAll = []SignerType{
@@ -737,7 +735,6 @@ var SignerTypeAll = []SignerType{
 	SignerTypeUserIssuanceManager,
 	SignerTypeWithdrawManager,
 	SignerTypeFeesManager,
-	SignerTypeTxSender,
 }
 
 var signerTypeMap = map[int32]string{
@@ -762,7 +759,6 @@ var signerTypeMap = map[int32]string{
 	262144:  "SignerTypeUserIssuanceManager",
 	524288:  "SignerTypeWithdrawManager",
 	1048576: "SignerTypeFeesManager",
-	2097152: "SignerTypeTxSender",
 }
 
 var signerTypeShortMap = map[int32]string{
@@ -787,7 +783,6 @@ var signerTypeShortMap = map[int32]string{
 	262144:  "user_issuance_manager",
 	524288:  "withdraw_manager",
 	1048576: "fees_manager",
-	2097152: "tx_sender",
 }
 
 var signerTypeRevMap = map[string]int32{
@@ -812,7 +807,6 @@ var signerTypeRevMap = map[string]int32{
 	"SignerTypeUserIssuanceManager":       262144,
 	"SignerTypeWithdrawManager":           524288,
 	"SignerTypeFeesManager":               1048576,
-	"SignerTypeTxSender":                  2097152,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -11925,8 +11919,7 @@ func (u ManageAssetPairResult) GetSuccess() (result ManageAssetPairSuccess, ok b
 //    {
 //        CREATE_ASSET_CREATION_REQUEST = 0,
 //        CREATE_ASSET_UPDATE_REQUEST = 1,
-//    	CANCEL_ASSET_REQUEST = 2,
-//    	CHANGE_PREISSUED_ASSET_SIGNER = 3
+//    	CANCEL_ASSET_REQUEST = 2
 //    };
 //
 type ManageAssetAction int32
@@ -11935,35 +11928,30 @@ const (
 	ManageAssetActionCreateAssetCreationRequest ManageAssetAction = 0
 	ManageAssetActionCreateAssetUpdateRequest   ManageAssetAction = 1
 	ManageAssetActionCancelAssetRequest         ManageAssetAction = 2
-	ManageAssetActionChangePreissuedAssetSigner ManageAssetAction = 3
 )
 
 var ManageAssetActionAll = []ManageAssetAction{
 	ManageAssetActionCreateAssetCreationRequest,
 	ManageAssetActionCreateAssetUpdateRequest,
 	ManageAssetActionCancelAssetRequest,
-	ManageAssetActionChangePreissuedAssetSigner,
 }
 
 var manageAssetActionMap = map[int32]string{
 	0: "ManageAssetActionCreateAssetCreationRequest",
 	1: "ManageAssetActionCreateAssetUpdateRequest",
 	2: "ManageAssetActionCancelAssetRequest",
-	3: "ManageAssetActionChangePreissuedAssetSigner",
 }
 
 var manageAssetActionShortMap = map[int32]string{
 	0: "create_asset_creation_request",
 	1: "create_asset_update_request",
 	2: "cancel_asset_request",
-	3: "change_preissued_asset_signer",
 }
 
 var manageAssetActionRevMap = map[string]int32{
 	"ManageAssetActionCreateAssetCreationRequest": 0,
 	"ManageAssetActionCreateAssetUpdateRequest":   1,
 	"ManageAssetActionCancelAssetRequest":         2,
-	"ManageAssetActionChangePreissuedAssetSigner": 3,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -12092,16 +12080,13 @@ type CancelAssetRequest struct {
 //    		AssetUpdateRequest updateAsset;
 //    	case CANCEL_ASSET_REQUEST:
 //    		CancelAssetRequest cancelRequest;
-//    	case CHANGE_PREISSUED_ASSET_SIGNER:
-//    		AssetChangePreissuedSigner changePreissuedSigner;
 //    	}
 //
 type ManageAssetOpRequest struct {
-	Action                ManageAssetAction           `json:"action,omitempty"`
-	CreateAsset           *AssetCreationRequest       `json:"createAsset,omitempty"`
-	UpdateAsset           *AssetUpdateRequest         `json:"updateAsset,omitempty"`
-	CancelRequest         *CancelAssetRequest         `json:"cancelRequest,omitempty"`
-	ChangePreissuedSigner *AssetChangePreissuedSigner `json:"changePreissuedSigner,omitempty"`
+	Action        ManageAssetAction     `json:"action,omitempty"`
+	CreateAsset   *AssetCreationRequest `json:"createAsset,omitempty"`
+	UpdateAsset   *AssetUpdateRequest   `json:"updateAsset,omitempty"`
+	CancelRequest *CancelAssetRequest   `json:"cancelRequest,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -12120,8 +12105,6 @@ func (u ManageAssetOpRequest) ArmForSwitch(sw int32) (string, bool) {
 		return "UpdateAsset", true
 	case ManageAssetActionCancelAssetRequest:
 		return "CancelRequest", true
-	case ManageAssetActionChangePreissuedAssetSigner:
-		return "ChangePreissuedSigner", true
 	}
 	return "-", false
 }
@@ -12151,13 +12134,6 @@ func NewManageAssetOpRequest(action ManageAssetAction, value interface{}) (resul
 			return
 		}
 		result.CancelRequest = &tv
-	case ManageAssetActionChangePreissuedAssetSigner:
-		tv, ok := value.(AssetChangePreissuedSigner)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be AssetChangePreissuedSigner")
-			return
-		}
-		result.ChangePreissuedSigner = &tv
 	}
 	return
 }
@@ -12237,31 +12213,6 @@ func (u ManageAssetOpRequest) GetCancelRequest() (result CancelAssetRequest, ok 
 	return
 }
 
-// MustChangePreissuedSigner retrieves the ChangePreissuedSigner value from the union,
-// panicing if the value is not set.
-func (u ManageAssetOpRequest) MustChangePreissuedSigner() AssetChangePreissuedSigner {
-	val, ok := u.GetChangePreissuedSigner()
-
-	if !ok {
-		panic("arm ChangePreissuedSigner is not set")
-	}
-
-	return val
-}
-
-// GetChangePreissuedSigner retrieves the ChangePreissuedSigner value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u ManageAssetOpRequest) GetChangePreissuedSigner() (result AssetChangePreissuedSigner, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Action))
-
-	if armName == "ChangePreissuedSigner" {
-		result = *u.ChangePreissuedSigner
-		ok = true
-	}
-
-	return
-}
-
 // ManageAssetOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -12313,8 +12264,6 @@ func NewManageAssetOpExt(v LedgerVersion, value interface{}) (result ManageAsset
 //    		AssetUpdateRequest updateAsset;
 //    	case CANCEL_ASSET_REQUEST:
 //    		CancelAssetRequest cancelRequest;
-//    	case CHANGE_PREISSUED_ASSET_SIGNER:
-//    		AssetChangePreissuedSigner changePreissuedSigner;
 //    	} request;
 //
 //    	// reserved for future use
@@ -13865,6 +13814,64 @@ type ClaimOfferAtom struct {
 	Ext          ClaimOfferAtomExt `json:"ext,omitempty"`
 }
 
+// OfferTotalAmountExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type OfferTotalAmountExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u OfferTotalAmountExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of OfferTotalAmountExt
+func (u OfferTotalAmountExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewOfferTotalAmountExt creates a new  OfferTotalAmountExt.
+func NewOfferTotalAmountExt(v LedgerVersion, value interface{}) (result OfferTotalAmountExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// OfferTotalAmount is an XDR Struct defines as:
+//
+//   struct OfferTotalAmount {
+//        int64 baseAmount;
+//    	int64 quoteAmount;
+//
+//    	union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type OfferTotalAmount struct {
+	BaseAmount  Int64               `json:"baseAmount,omitempty"`
+	QuoteAmount Int64               `json:"quoteAmount,omitempty"`
+	Ext         OfferTotalAmountExt `json:"ext,omitempty"`
+}
+
 // ManageOfferSuccessResultOffer is an XDR NestedUnion defines as:
 //
 //   union switch (ManageOfferEffect effect)
@@ -13872,13 +13879,16 @@ type ClaimOfferAtom struct {
 //        case CREATED:
 //        case UPDATED:
 //            OfferEntry offer;
+//        case DELETED:
+//            OfferTotalAmount totalAmount;
 //        default:
 //            void;
 //        }
 //
 type ManageOfferSuccessResultOffer struct {
-	Effect ManageOfferEffect `json:"effect,omitempty"`
-	Offer  *OfferEntry       `json:"offer,omitempty"`
+	Effect      ManageOfferEffect `json:"effect,omitempty"`
+	Offer       *OfferEntry       `json:"offer,omitempty"`
+	TotalAmount *OfferTotalAmount `json:"totalAmount,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -13895,6 +13905,8 @@ func (u ManageOfferSuccessResultOffer) ArmForSwitch(sw int32) (string, bool) {
 		return "Offer", true
 	case ManageOfferEffectUpdated:
 		return "Offer", true
+	case ManageOfferEffectDeleted:
+		return "TotalAmount", true
 	default:
 		return "", true
 	}
@@ -13918,6 +13930,13 @@ func NewManageOfferSuccessResultOffer(effect ManageOfferEffect, value interface{
 			return
 		}
 		result.Offer = &tv
+	case ManageOfferEffectDeleted:
+		tv, ok := value.(OfferTotalAmount)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be OfferTotalAmount")
+			return
+		}
+		result.TotalAmount = &tv
 	default:
 		// void
 	}
@@ -13943,6 +13962,31 @@ func (u ManageOfferSuccessResultOffer) GetOffer() (result OfferEntry, ok bool) {
 
 	if armName == "Offer" {
 		result = *u.Offer
+		ok = true
+	}
+
+	return
+}
+
+// MustTotalAmount retrieves the TotalAmount value from the union,
+// panicing if the value is not set.
+func (u ManageOfferSuccessResultOffer) MustTotalAmount() OfferTotalAmount {
+	val, ok := u.GetTotalAmount()
+
+	if !ok {
+		panic("arm TotalAmount is not set")
+	}
+
+	return val
+}
+
+// GetTotalAmount retrieves the TotalAmount value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageOfferSuccessResultOffer) GetTotalAmount() (result OfferTotalAmount, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Effect))
+
+	if armName == "TotalAmount" {
+		result = *u.TotalAmount
 		ok = true
 	}
 
@@ -13991,7 +14035,6 @@ func NewManageOfferSuccessResultExt(v LedgerVersion, value interface{}) (result 
 //
 //   struct ManageOfferSuccessResult
 //    {
-//
 //        // offers that got claimed while creating this offer
 //        ClaimOfferAtom offersClaimed<>;
 //    	AssetCode baseAsset;
@@ -14002,6 +14045,8 @@ func NewManageOfferSuccessResultExt(v LedgerVersion, value interface{}) (result 
 //        case CREATED:
 //        case UPDATED:
 //            OfferEntry offer;
+//        case DELETED:
+//            OfferTotalAmount totalAmount;
 //        default:
 //            void;
 //        }
@@ -18538,64 +18583,6 @@ type AssetUpdateRequest struct {
 	Ext      AssetUpdateRequestExt `json:"ext,omitempty"`
 }
 
-// AssetChangePreissuedSignerExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//
-type AssetChangePreissuedSignerExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u AssetChangePreissuedSignerExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of AssetChangePreissuedSignerExt
-func (u AssetChangePreissuedSignerExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewAssetChangePreissuedSignerExt creates a new  AssetChangePreissuedSignerExt.
-func NewAssetChangePreissuedSignerExt(v LedgerVersion, value interface{}) (result AssetChangePreissuedSignerExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// AssetChangePreissuedSigner is an XDR Struct defines as:
-//
-//   struct AssetChangePreissuedSigner {
-//    	AssetCode code;
-//    	AccountID accountID;
-//    	// reserved for future use
-//        union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
-//    };
-//
-type AssetChangePreissuedSigner struct {
-	Code      AssetCode                     `json:"code,omitempty"`
-	AccountId AccountId                     `json:"accountID,omitempty"`
-	Ext       AssetChangePreissuedSignerExt `json:"ext,omitempty"`
-}
-
 // PreIssuanceRequestExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -22012,9 +21999,7 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	DETAILED_LEDGER_CHANGES = 2, // write more all ledger changes to transaction meta
 //    	NEW_SIGNER_TYPES = 3, // use more comprehensive list of signer types
 //    	TYPED_SALE = 4, // sales can have type
-//    	UNIQUE_BALANCE_CREATION = 5, // allows to specify in manage balance that balance should not be created if one for such asset and account exists
-//    	ASSET_PREISSUER_MIGRATION = 6,
-//    	ASSET_PREISSUER_MIGRATED = 7
+//    	UNIQUE_BALANCE_CREATION = 5 // allows to specify in manage balance that balance should not be created if one for such asset and account exists
 //    };
 //
 type LedgerVersion int32
@@ -22026,8 +22011,6 @@ const (
 	LedgerVersionNewSignerTypes                  LedgerVersion = 3
 	LedgerVersionTypedSale                       LedgerVersion = 4
 	LedgerVersionUniqueBalanceCreation           LedgerVersion = 5
-	LedgerVersionAssetPreissuerMigration         LedgerVersion = 6
-	LedgerVersionAssetPreissuerMigrated          LedgerVersion = 7
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -22037,8 +22020,6 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionNewSignerTypes,
 	LedgerVersionTypedSale,
 	LedgerVersionUniqueBalanceCreation,
-	LedgerVersionAssetPreissuerMigration,
-	LedgerVersionAssetPreissuerMigrated,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -22048,8 +22029,6 @@ var ledgerVersionMap = map[int32]string{
 	3: "LedgerVersionNewSignerTypes",
 	4: "LedgerVersionTypedSale",
 	5: "LedgerVersionUniqueBalanceCreation",
-	6: "LedgerVersionAssetPreissuerMigration",
-	7: "LedgerVersionAssetPreissuerMigrated",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -22059,8 +22038,6 @@ var ledgerVersionShortMap = map[int32]string{
 	3: "new_signer_types",
 	4: "typed_sale",
 	5: "unique_balance_creation",
-	6: "asset_preissuer_migration",
-	7: "asset_preissuer_migrated",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -22070,8 +22047,6 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionNewSignerTypes":                  3,
 	"LedgerVersionTypedSale":                       4,
 	"LedgerVersionUniqueBalanceCreation":           5,
-	"LedgerVersionAssetPreissuerMigration":         6,
-	"LedgerVersionAssetPreissuerMigrated":          7,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
