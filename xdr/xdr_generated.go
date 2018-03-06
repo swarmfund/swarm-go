@@ -13407,31 +13407,30 @@ type ManageOfferOp struct {
 //        SUCCESS = 0,
 //
 //        // codes considered as "failure" for the operation
-//        MALFORMED = -1,     // generated offer would be invalid
-//        PAIR_NOT_TRADED = -2, // it's not allowed to trage with this pair
-//        BALANCE_NOT_FOUND = -3,  // does not own balance for buying or selling
-//        UNDERFUNDED = -4,    // doesn't hold what it's trying to sell
-//        CROSS_SELF = -5,     // would cross an offer from the same user
-//    	OFFER_OVERFLOW = -6,
-//    	ASSET_PAIR_NOT_TRADABLE = -7,
+//        MALFORMED = -1,
+//        PAIR_NOT_TRADED = -2,
+//        BALANCE_NOT_FOUND = -3, // base or quote asset balance doesn't exist
+//        UNDERFUNDED = -4, // has not enough asset that's supposed to be sold
+//        CROSS_SELF = -5, // the account creating this offer would immediately cross itself
+//    	OFFER_OVERFLOW = -6, // fee or quote amount overflows UINT64_MAX
+//    	ASSET_PAIR_NOT_TRADABLE = -7, // it's not allowed to trade this asset pair
 //    	PHYSICAL_PRICE_RESTRICTION = -8, // offer price violates physical price restriction
 //    	CURRENT_PRICE_RESTRICTION = -9,
-//        NOT_FOUND = -10, // offerID does not match an existing offer
+//        OFFER_NOT_FOUND = -10, // offer doesn't exist
 //        INVALID_PERCENT_FEE = -11,
 //    	INSUFFICIENT_PRICE = -12,
-//    	ORDER_BOOK_DOES_NOT_EXISTS = -13, // specified order book does not exists
+//    	ORDER_BOOK_DOES_NOT_EXIST = -13, // specified order book does not exist
 //    	SALE_IS_NOT_STARTED_YET = -14, // sale is not started yet
 //    	SALE_ALREADY_ENDED = -15, // sale has already ended
-//    	ORDER_VIOLATES_HARD_CAP = -16, // currentcap + order will exceed hard cap
-//    	CANT_PARTICIPATE_OWN_SALE = -17, // it's not allowed to participate in own sale
+//    	ORDER_EXCEEDS_HARD_CAP = -16, // currentcap + order will exceed hard cap
+//    	CANNOT_PARTICIPATE_OWN_SALE = -17, // it's not allowed to participate in own sale
 //    	ASSET_MISMATCHED = -18, // sale assets does not match assets for specified balances
-//    	PRICE_DOES_NOT_MATCH = -19, // price does not match sale price
-//    	PRICE_IS_INVALID = -20, // price must be positive
-//    	UPDATE_IS_NOT_ALLOWED = -21, // update of the offer is not allowed
+//    	PRICE_MISMATCHED = -19, // price does not match sale price
+//    	INVALID_PRICE = -20, // price must be positive
+//    	OFFER_UPDATE_IS_NOT_ALLOWED = -21, // update of the offer is not allowed
 //    	INVALID_AMOUNT = -22, // amount must be positive
 //    	SALE_IS_NOT_ACTIVE = -23,
 //    	REQUIRES_KYC = -24 // source must have KYC in order to participate
-//
 //    };
 //
 type ManageOfferResultCode int32
@@ -13447,18 +13446,18 @@ const (
 	ManageOfferResultCodeAssetPairNotTradable     ManageOfferResultCode = -7
 	ManageOfferResultCodePhysicalPriceRestriction ManageOfferResultCode = -8
 	ManageOfferResultCodeCurrentPriceRestriction  ManageOfferResultCode = -9
-	ManageOfferResultCodeNotFound                 ManageOfferResultCode = -10
+	ManageOfferResultCodeOfferNotFound            ManageOfferResultCode = -10
 	ManageOfferResultCodeInvalidPercentFee        ManageOfferResultCode = -11
 	ManageOfferResultCodeInsufficientPrice        ManageOfferResultCode = -12
-	ManageOfferResultCodeOrderBookDoesNotExists   ManageOfferResultCode = -13
+	ManageOfferResultCodeOrderBookDoesNotExist    ManageOfferResultCode = -13
 	ManageOfferResultCodeSaleIsNotStartedYet      ManageOfferResultCode = -14
 	ManageOfferResultCodeSaleAlreadyEnded         ManageOfferResultCode = -15
-	ManageOfferResultCodeOrderViolatesHardCap     ManageOfferResultCode = -16
-	ManageOfferResultCodeCantParticipateOwnSale   ManageOfferResultCode = -17
+	ManageOfferResultCodeOrderExceedsHardCap      ManageOfferResultCode = -16
+	ManageOfferResultCodeCannotParticipateOwnSale ManageOfferResultCode = -17
 	ManageOfferResultCodeAssetMismatched          ManageOfferResultCode = -18
-	ManageOfferResultCodePriceDoesNotMatch        ManageOfferResultCode = -19
-	ManageOfferResultCodePriceIsInvalid           ManageOfferResultCode = -20
-	ManageOfferResultCodeUpdateIsNotAllowed       ManageOfferResultCode = -21
+	ManageOfferResultCodePriceMismatched          ManageOfferResultCode = -19
+	ManageOfferResultCodeInvalidPrice             ManageOfferResultCode = -20
+	ManageOfferResultCodeOfferUpdateIsNotAllowed  ManageOfferResultCode = -21
 	ManageOfferResultCodeInvalidAmount            ManageOfferResultCode = -22
 	ManageOfferResultCodeSaleIsNotActive          ManageOfferResultCode = -23
 	ManageOfferResultCodeRequiresKyc              ManageOfferResultCode = -24
@@ -13475,18 +13474,18 @@ var ManageOfferResultCodeAll = []ManageOfferResultCode{
 	ManageOfferResultCodeAssetPairNotTradable,
 	ManageOfferResultCodePhysicalPriceRestriction,
 	ManageOfferResultCodeCurrentPriceRestriction,
-	ManageOfferResultCodeNotFound,
+	ManageOfferResultCodeOfferNotFound,
 	ManageOfferResultCodeInvalidPercentFee,
 	ManageOfferResultCodeInsufficientPrice,
-	ManageOfferResultCodeOrderBookDoesNotExists,
+	ManageOfferResultCodeOrderBookDoesNotExist,
 	ManageOfferResultCodeSaleIsNotStartedYet,
 	ManageOfferResultCodeSaleAlreadyEnded,
-	ManageOfferResultCodeOrderViolatesHardCap,
-	ManageOfferResultCodeCantParticipateOwnSale,
+	ManageOfferResultCodeOrderExceedsHardCap,
+	ManageOfferResultCodeCannotParticipateOwnSale,
 	ManageOfferResultCodeAssetMismatched,
-	ManageOfferResultCodePriceDoesNotMatch,
-	ManageOfferResultCodePriceIsInvalid,
-	ManageOfferResultCodeUpdateIsNotAllowed,
+	ManageOfferResultCodePriceMismatched,
+	ManageOfferResultCodeInvalidPrice,
+	ManageOfferResultCodeOfferUpdateIsNotAllowed,
 	ManageOfferResultCodeInvalidAmount,
 	ManageOfferResultCodeSaleIsNotActive,
 	ManageOfferResultCodeRequiresKyc,
@@ -13503,18 +13502,18 @@ var manageOfferResultCodeMap = map[int32]string{
 	-7:  "ManageOfferResultCodeAssetPairNotTradable",
 	-8:  "ManageOfferResultCodePhysicalPriceRestriction",
 	-9:  "ManageOfferResultCodeCurrentPriceRestriction",
-	-10: "ManageOfferResultCodeNotFound",
+	-10: "ManageOfferResultCodeOfferNotFound",
 	-11: "ManageOfferResultCodeInvalidPercentFee",
 	-12: "ManageOfferResultCodeInsufficientPrice",
-	-13: "ManageOfferResultCodeOrderBookDoesNotExists",
+	-13: "ManageOfferResultCodeOrderBookDoesNotExist",
 	-14: "ManageOfferResultCodeSaleIsNotStartedYet",
 	-15: "ManageOfferResultCodeSaleAlreadyEnded",
-	-16: "ManageOfferResultCodeOrderViolatesHardCap",
-	-17: "ManageOfferResultCodeCantParticipateOwnSale",
+	-16: "ManageOfferResultCodeOrderExceedsHardCap",
+	-17: "ManageOfferResultCodeCannotParticipateOwnSale",
 	-18: "ManageOfferResultCodeAssetMismatched",
-	-19: "ManageOfferResultCodePriceDoesNotMatch",
-	-20: "ManageOfferResultCodePriceIsInvalid",
-	-21: "ManageOfferResultCodeUpdateIsNotAllowed",
+	-19: "ManageOfferResultCodePriceMismatched",
+	-20: "ManageOfferResultCodeInvalidPrice",
+	-21: "ManageOfferResultCodeOfferUpdateIsNotAllowed",
 	-22: "ManageOfferResultCodeInvalidAmount",
 	-23: "ManageOfferResultCodeSaleIsNotActive",
 	-24: "ManageOfferResultCodeRequiresKyc",
@@ -13531,18 +13530,18 @@ var manageOfferResultCodeShortMap = map[int32]string{
 	-7:  "asset_pair_not_tradable",
 	-8:  "physical_price_restriction",
 	-9:  "current_price_restriction",
-	-10: "not_found",
+	-10: "offer_not_found",
 	-11: "invalid_percent_fee",
 	-12: "insufficient_price",
-	-13: "order_book_does_not_exists",
+	-13: "order_book_does_not_exist",
 	-14: "sale_is_not_started_yet",
 	-15: "sale_already_ended",
-	-16: "order_violates_hard_cap",
-	-17: "cant_participate_own_sale",
+	-16: "order_exceeds_hard_cap",
+	-17: "cannot_participate_own_sale",
 	-18: "asset_mismatched",
-	-19: "price_does_not_match",
-	-20: "price_is_invalid",
-	-21: "update_is_not_allowed",
+	-19: "price_mismatched",
+	-20: "invalid_price",
+	-21: "offer_update_is_not_allowed",
 	-22: "invalid_amount",
 	-23: "sale_is_not_active",
 	-24: "requires_kyc",
@@ -13559,18 +13558,18 @@ var manageOfferResultCodeRevMap = map[string]int32{
 	"ManageOfferResultCodeAssetPairNotTradable":     -7,
 	"ManageOfferResultCodePhysicalPriceRestriction": -8,
 	"ManageOfferResultCodeCurrentPriceRestriction":  -9,
-	"ManageOfferResultCodeNotFound":                 -10,
+	"ManageOfferResultCodeOfferNotFound":            -10,
 	"ManageOfferResultCodeInvalidPercentFee":        -11,
 	"ManageOfferResultCodeInsufficientPrice":        -12,
-	"ManageOfferResultCodeOrderBookDoesNotExists":   -13,
+	"ManageOfferResultCodeOrderBookDoesNotExist":    -13,
 	"ManageOfferResultCodeSaleIsNotStartedYet":      -14,
 	"ManageOfferResultCodeSaleAlreadyEnded":         -15,
-	"ManageOfferResultCodeOrderViolatesHardCap":     -16,
-	"ManageOfferResultCodeCantParticipateOwnSale":   -17,
+	"ManageOfferResultCodeOrderExceedsHardCap":      -16,
+	"ManageOfferResultCodeCannotParticipateOwnSale": -17,
 	"ManageOfferResultCodeAssetMismatched":          -18,
-	"ManageOfferResultCodePriceDoesNotMatch":        -19,
-	"ManageOfferResultCodePriceIsInvalid":           -20,
-	"ManageOfferResultCodeUpdateIsNotAllowed":       -21,
+	"ManageOfferResultCodePriceMismatched":          -19,
+	"ManageOfferResultCodeInvalidPrice":             -20,
+	"ManageOfferResultCodeOfferUpdateIsNotAllowed":  -21,
 	"ManageOfferResultCodeInvalidAmount":            -22,
 	"ManageOfferResultCodeSaleIsNotActive":          -23,
 	"ManageOfferResultCodeRequiresKyc":              -24,
