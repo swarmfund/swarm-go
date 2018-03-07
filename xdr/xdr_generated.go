@@ -13481,7 +13481,8 @@ type ManageOfferOp struct {
 //    	OFFER_UPDATE_IS_NOT_ALLOWED = -21, // update of the offer is not allowed
 //    	INVALID_AMOUNT = -22, // amount must be positive
 //    	SALE_IS_NOT_ACTIVE = -23,
-//    	REQUIRES_KYC = -24 // source must have KYC in order to participate
+//    	REQUIRES_KYC = -24, // source must have KYC in order to participate
+//    	REQUIRES_IS_BUY = -25 //offers, related to sales must have isBuy set to true
 //    };
 //
 type ManageOfferResultCode int32
@@ -13512,6 +13513,7 @@ const (
 	ManageOfferResultCodeInvalidAmount            ManageOfferResultCode = -22
 	ManageOfferResultCodeSaleIsNotActive          ManageOfferResultCode = -23
 	ManageOfferResultCodeRequiresKyc              ManageOfferResultCode = -24
+	ManageOfferResultCodeRequiresIsBuy            ManageOfferResultCode = -25
 )
 
 var ManageOfferResultCodeAll = []ManageOfferResultCode{
@@ -13540,6 +13542,7 @@ var ManageOfferResultCodeAll = []ManageOfferResultCode{
 	ManageOfferResultCodeInvalidAmount,
 	ManageOfferResultCodeSaleIsNotActive,
 	ManageOfferResultCodeRequiresKyc,
+	ManageOfferResultCodeRequiresIsBuy,
 }
 
 var manageOfferResultCodeMap = map[int32]string{
@@ -13568,6 +13571,7 @@ var manageOfferResultCodeMap = map[int32]string{
 	-22: "ManageOfferResultCodeInvalidAmount",
 	-23: "ManageOfferResultCodeSaleIsNotActive",
 	-24: "ManageOfferResultCodeRequiresKyc",
+	-25: "ManageOfferResultCodeRequiresIsBuy",
 }
 
 var manageOfferResultCodeShortMap = map[int32]string{
@@ -13596,6 +13600,7 @@ var manageOfferResultCodeShortMap = map[int32]string{
 	-22: "invalid_amount",
 	-23: "sale_is_not_active",
 	-24: "requires_kyc",
+	-25: "requires_is_buy",
 }
 
 var manageOfferResultCodeRevMap = map[string]int32{
@@ -13624,6 +13629,7 @@ var manageOfferResultCodeRevMap = map[string]int32{
 	"ManageOfferResultCodeInvalidAmount":            -22,
 	"ManageOfferResultCodeSaleIsNotActive":          -23,
 	"ManageOfferResultCodeRequiresKyc":              -24,
+	"ManageOfferResultCodeRequiresIsBuy":            -25,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
