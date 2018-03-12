@@ -10,10 +10,12 @@ type CreateAccountOp struct {
 	Address     string
 	Recovery    string
 	AccountType xdr.AccountType
+	Referrer    *string
 }
 
 func (op CreateAccountOp) Validate() error {
 	return validation.ValidateStruct(&op,
+		// TODO validate address, recovery and referrer are addresses
 		validation.Field(&op.Address, validation.Required),
 		validation.Field(&op.Recovery, validation.Required),
 		validation.Field(&op.AccountType, validation.Required),
@@ -38,5 +40,12 @@ func (op CreateAccountOp) XDR() (*xdr.Operation, error) {
 			},
 		},
 	}
+
+	if op.Referrer != nil {
+		var referrer xdr.AccountId
+		referrer.SetAddress(*op.Referrer)
+		xdrop.Body.CreateAccountOp.Referrer = &referrer
+	}
+
 	return xdrop, nil
 }
