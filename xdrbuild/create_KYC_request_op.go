@@ -6,38 +6,51 @@ import (
 	"gitlab.com/swarmfund/go/xdr"
 )
 
-type CreateKYCRequestOp struct {
-	RequestID      uint64
-	AccountType    xdr.AccountType
-	KYCData        string
-	UpdatedAccount string
-	KYCLevel       uint32
+type CreateUpdateKYCRequestOp struct {
+	RequestID          uint64
+	AccountToUpdateKYC string
+	AccountTypeToSet   xdr.AccountType
+	KYCLevel           uint32
+	KYCData            string
+	AllTasks           *uint32
 }
 
-func (op CreateKYCRequestOp) Validate() error {
+func (op CreateUpdateKYCRequestOp) Validate() error {
 	return validation.ValidateStruct(&op,
-		validation.Field(&op.AccountType, validation.Required),
+		validation.Field(&op.AccountTypeToSet, validation.Required),
 		validation.Field(&op.KYCData, validation.Required),
-		validation.Field(&op.UpdatedAccount, validation.Required),
+		validation.Field(&op.AccountToUpdateKYC, validation.Required),
 		validation.Field(&op.KYCLevel, validation.Required),
 	)
 }
 
-func (op CreateKYCRequestOp) XDR() (*xdr.Operation, error) {
-	var updatedAccount xdr.AccountId
-	if err := updatedAccount.SetAddress(op.UpdatedAccount); err != nil {
+func (op CreateUpdateKYCRequestOp) XDR() (*xdr.Operation, error) {
+	var accountToUpdateKYC xdr.AccountId
+	if err := accountToUpdateKYC.SetAddress(op.AccountToUpdateKYC); err != nil {
 		return nil, errors.Wrap(err, "failed to set updated account")
 	}
+
+	var allTasksXDR xdr.Uint32
+	var allTasksXDRPointer *xdr.Uint32
+
+	if op.AllTasks != nil {
+		allTasksXDR = xdr.Uint32(*op.AllTasks)
+		allTasksXDRPointer = &allTasksXDR
+	} else {
+		allTasksXDRPointer = nil
+	}
+
 	xdrop := &xdr.Operation{
 		Body: xdr.OperationBody{
 			Type: xdr.OperationTypeCreateKycRequest,
-			CreateKycRequestOp: &xdr.CreateKycRequestOp{
+			CreateUpdateKycRequestOp: &xdr.CreateUpdateKycRequestOp{
 				RequestId: xdr.Uint64(op.RequestID),
-				ChangeKycRequest: xdr.ChangeKycRequest{
-					UpdatedAccount:   updatedAccount,
-					AccountTypeToSet: op.AccountType,
-					KycLevel:         xdr.Uint32(op.KYCLevel),
-					KycData:          xdr.Longstring(op.KYCData),
+				UpdateKycRequestData: xdr.UpdateKycRequestData{
+					AccountToUpdateKyc: accountToUpdateKYC,
+					AccountTypeToSet:   op.AccountTypeToSet,
+					KycLevel:           xdr.Uint32(op.KYCLevel),
+					KycData:            xdr.Longstring(op.KYCData),
+					AllTasks:           allTasksXDRPointer,
 				},
 			},
 		},
