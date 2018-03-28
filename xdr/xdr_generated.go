@@ -9837,7 +9837,8 @@ type CreateUpdateKycRequestOp struct {
 //    	REQUEST_DOES_NOT_EXIST = -4,
 //    	PENDING_REQUEST_UPDATE_NOT_ALLOWED = -5,
 //    	NOT_ALLOWED_TO_UPDATE_REQUEST = -6, // master account can update request only through review request operation
-//    	INVALID_UPDATE_KYC_REQUEST_DATA = -7
+//    	INVALID_UPDATE_KYC_REQUEST_DATA = -7,
+//    	INVALID_KYC_DATA = -8
 //    };
 //
 type CreateUpdateKycRequestResultCode int32
@@ -9851,6 +9852,7 @@ const (
 	CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed CreateUpdateKycRequestResultCode = -5
 	CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest      CreateUpdateKycRequestResultCode = -6
 	CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData    CreateUpdateKycRequestResultCode = -7
+	CreateUpdateKycRequestResultCodeInvalidKycData                 CreateUpdateKycRequestResultCode = -8
 )
 
 var CreateUpdateKycRequestResultCodeAll = []CreateUpdateKycRequestResultCode{
@@ -9862,6 +9864,7 @@ var CreateUpdateKycRequestResultCodeAll = []CreateUpdateKycRequestResultCode{
 	CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed,
 	CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest,
 	CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData,
+	CreateUpdateKycRequestResultCodeInvalidKycData,
 }
 
 var createUpdateKycRequestResultCodeMap = map[int32]string{
@@ -9873,6 +9876,7 @@ var createUpdateKycRequestResultCodeMap = map[int32]string{
 	-5: "CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed",
 	-6: "CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest",
 	-7: "CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData",
+	-8: "CreateUpdateKycRequestResultCodeInvalidKycData",
 }
 
 var createUpdateKycRequestResultCodeShortMap = map[int32]string{
@@ -9884,6 +9888,7 @@ var createUpdateKycRequestResultCodeShortMap = map[int32]string{
 	-5: "pending_request_update_not_allowed",
 	-6: "not_allowed_to_update_request",
 	-7: "invalid_update_kyc_request_data",
+	-8: "invalid_kyc_data",
 }
 
 var createUpdateKycRequestResultCodeRevMap = map[string]int32{
@@ -9895,6 +9900,7 @@ var createUpdateKycRequestResultCodeRevMap = map[string]int32{
 	"CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed": -5,
 	"CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest":      -6,
 	"CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData":    -7,
+	"CreateUpdateKycRequestResultCodeInvalidKycData":                 -8,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -16669,7 +16675,8 @@ func NewUpdateKycDetailsExt(v LedgerVersion, value interface{}) (result UpdateKy
 // UpdateKycDetails is an XDR Struct defines as:
 //
 //   struct UpdateKYCDetails {
-//        uint32 newTasks;
+//        uint32 tasksToAdd;
+//        uint32 tasksToRemove;
 //        string externalDetails<>;
 //        // Reserved for future use
 //        union switch (LedgerVersion v)
@@ -16681,7 +16688,8 @@ func NewUpdateKycDetailsExt(v LedgerVersion, value interface{}) (result UpdateKy
 //    };
 //
 type UpdateKycDetails struct {
-	NewTasks        Uint32              `json:"newTasks,omitempty"`
+	TasksToAdd      Uint32              `json:"tasksToAdd,omitempty"`
+	TasksToRemove   Uint32              `json:"tasksToRemove,omitempty"`
 	ExternalDetails string              `json:"externalDetails,omitempty"`
 	Ext             UpdateKycDetailsExt `json:"ext,omitempty"`
 }
