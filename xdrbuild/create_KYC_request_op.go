@@ -10,7 +10,7 @@ type CreateUpdateKYCRequestOp struct {
 	RequestID          uint64
 	AccountToUpdateKYC string
 	AccountTypeToSet   xdr.AccountType
-	KYCLevel           uint32
+	KYCLevelToSet      uint32
 	KYCData            string
 	AllTasks           *uint32
 }
@@ -20,7 +20,7 @@ func (op CreateUpdateKYCRequestOp) Validate() error {
 		validation.Field(&op.AccountTypeToSet, validation.Required),
 		validation.Field(&op.KYCData, validation.Required),
 		validation.Field(&op.AccountToUpdateKYC, validation.Required),
-		validation.Field(&op.KYCLevel, validation.Required),
+		validation.Field(&op.KYCLevelToSet, validation.Required),
 	)
 }
 
@@ -48,7 +48,7 @@ func (op CreateUpdateKYCRequestOp) XDR() (*xdr.Operation, error) {
 				UpdateKycRequestData: xdr.UpdateKycRequestData{
 					AccountToUpdateKyc: accountToUpdateKYC,
 					AccountTypeToSet:   op.AccountTypeToSet,
-					KycLevel:           xdr.Uint32(op.KYCLevel),
+					KycLevelToSet:      xdr.Uint32(op.KYCLevelToSet),
 					KycData:            xdr.Longstring(op.KYCData),
 					AllTasks:           allTasksXDRPointer,
 				},

@@ -9744,7 +9744,7 @@ func NewUpdateKycRequestDataExt(v LedgerVersion, value interface{}) (result Upda
 //   struct UpdateKYCRequestData {
 //        AccountID accountToUpdateKYC;
 //    	AccountType accountTypeToSet;
-//    	uint32 kycLevel;
+//    	uint32 kycLevelToSet;
 //        longstring kycData;
 //    	uint32* allTasks;
 //
@@ -9760,7 +9760,7 @@ func NewUpdateKycRequestDataExt(v LedgerVersion, value interface{}) (result Upda
 type UpdateKycRequestData struct {
 	AccountToUpdateKyc AccountId               `json:"accountToUpdateKYC,omitempty"`
 	AccountTypeToSet   AccountType             `json:"accountTypeToSet,omitempty"`
-	KycLevel           Uint32                  `json:"kycLevel,omitempty"`
+	KycLevelToSet      Uint32                  `json:"kycLevelToSet,omitempty"`
 	KycData            Longstring              `json:"kycData,omitempty"`
 	AllTasks           *Uint32                 `json:"allTasks,omitempty"`
 	Ext                UpdateKycRequestDataExt `json:"ext,omitempty"`
@@ -9835,7 +9835,9 @@ type CreateUpdateKycRequestOp struct {
 //        REQUEST_ALREADY_EXISTS = -2,
 //    	SAME_ACC_TYPE_TO_SET = -3,
 //    	REQUEST_DOES_NOT_EXIST = -4,
-//    	PENDING_REQUEST_UPDATE_NOT_ALLOWED = -5
+//    	PENDING_REQUEST_UPDATE_NOT_ALLOWED = -5,
+//    	NOT_ALLOWED_TO_UPDATE_REQUEST = -6, // master account can update request only through review request operation
+//    	INVALID_UPDATE_KYC_REQUEST_DATA = -7
 //    };
 //
 type CreateUpdateKycRequestResultCode int32
@@ -9847,6 +9849,8 @@ const (
 	CreateUpdateKycRequestResultCodeSameAccTypeToSet               CreateUpdateKycRequestResultCode = -3
 	CreateUpdateKycRequestResultCodeRequestDoesNotExist            CreateUpdateKycRequestResultCode = -4
 	CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed CreateUpdateKycRequestResultCode = -5
+	CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest      CreateUpdateKycRequestResultCode = -6
+	CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData    CreateUpdateKycRequestResultCode = -7
 )
 
 var CreateUpdateKycRequestResultCodeAll = []CreateUpdateKycRequestResultCode{
@@ -9856,6 +9860,8 @@ var CreateUpdateKycRequestResultCodeAll = []CreateUpdateKycRequestResultCode{
 	CreateUpdateKycRequestResultCodeSameAccTypeToSet,
 	CreateUpdateKycRequestResultCodeRequestDoesNotExist,
 	CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed,
+	CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest,
+	CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData,
 }
 
 var createUpdateKycRequestResultCodeMap = map[int32]string{
@@ -9865,6 +9871,8 @@ var createUpdateKycRequestResultCodeMap = map[int32]string{
 	-3: "CreateUpdateKycRequestResultCodeSameAccTypeToSet",
 	-4: "CreateUpdateKycRequestResultCodeRequestDoesNotExist",
 	-5: "CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed",
+	-6: "CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest",
+	-7: "CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData",
 }
 
 var createUpdateKycRequestResultCodeShortMap = map[int32]string{
@@ -9874,6 +9882,8 @@ var createUpdateKycRequestResultCodeShortMap = map[int32]string{
 	-3: "same_acc_type_to_set",
 	-4: "request_does_not_exist",
 	-5: "pending_request_update_not_allowed",
+	-6: "not_allowed_to_update_request",
+	-7: "invalid_update_kyc_request_data",
 }
 
 var createUpdateKycRequestResultCodeRevMap = map[string]int32{
@@ -9883,6 +9893,8 @@ var createUpdateKycRequestResultCodeRevMap = map[string]int32{
 	"CreateUpdateKycRequestResultCodeSameAccTypeToSet":               -3,
 	"CreateUpdateKycRequestResultCodeRequestDoesNotExist":            -4,
 	"CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed": -5,
+	"CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest":      -6,
+	"CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData":    -7,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
