@@ -47,8 +47,25 @@ type TwoStepWithdrawalDetails struct {
 
 func (d TwoStepWithdrawalDetails) ReviewRequestDetails() xdr.ReviewRequestOpRequestDetails {
 	return xdr.ReviewRequestOpRequestDetails{
-		RequestType:       xdr.ReviewableRequestTypeTwoStepWithdrawal,
+		RequestType: xdr.ReviewableRequestTypeTwoStepWithdrawal,
 		TwoStepWithdrawal: &xdr.WithdrawalDetails{
+			ExternalDetails: d.ExternalDetails,
+		},
+	}
+}
+
+type UpdateKYCDetails struct {
+	TasksToAdd      uint32
+	TasksToRemove   uint32
+	ExternalDetails string
+}
+
+func (d UpdateKYCDetails) ReviewRequestDetails() xdr.ReviewRequestOpRequestDetails {
+	return xdr.ReviewRequestOpRequestDetails{
+		RequestType: xdr.ReviewableRequestTypeUpdateKyc,
+		UpdateKyc: &xdr.UpdateKycDetails{
+			TasksToAdd:      xdr.Uint32(d.TasksToAdd),
+			TasksToRemove:   xdr.Uint32(d.TasksToRemove),
 			ExternalDetails: d.ExternalDetails,
 		},
 	}
