@@ -20,7 +20,6 @@ func (op CreateUpdateKYCRequestOp) Validate() error {
 		validation.Field(&op.AccountTypeToSet, validation.Required),
 		validation.Field(&op.KYCData, validation.Required),
 		validation.Field(&op.AccountToUpdateKYC, validation.Required),
-		validation.Field(&op.KYCLevelToSet, validation.Required),
 	)
 }
 
