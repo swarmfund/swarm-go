@@ -1,6 +1,7 @@
 // Package xdr is generated from:
 //
 //  xdr/raw/Stellar-SCP.x
+//  xdr/raw/Stellar-ledger-entries-account-KYC.x
 //  xdr/raw/Stellar-ledger-entries-account-limits.x
 //  xdr/raw/Stellar-ledger-entries-account-type-limits.x
 //  xdr/raw/Stellar-ledger-entries-account.x
@@ -19,6 +20,8 @@
 //  xdr/raw/Stellar-ledger-entries.x
 //  xdr/raw/Stellar-ledger.x
 //  xdr/raw/Stellar-operation-check-sale-state.x
+//  xdr/raw/Stellar-operation-create-AML-alert-request.x
+//  xdr/raw/Stellar-operation-create-KYC-request.x
 //  xdr/raw/Stellar-operation-create-account.x
 //  xdr/raw/Stellar-operation-create-issuance-request.x
 //  xdr/raw/Stellar-operation-create-preissuance-request.x
@@ -38,10 +41,12 @@
 //  xdr/raw/Stellar-operation-set-limits.x
 //  xdr/raw/Stellar-operation-set-options.x
 //  xdr/raw/Stellar-overlay.x
+//  xdr/raw/Stellar-reviewable-request-AML-alert.x
 //  xdr/raw/Stellar-reviewable-request-asset.x
 //  xdr/raw/Stellar-reviewable-request-issuance.x
 //  xdr/raw/Stellar-reviewable-request-limits-update.x
 //  xdr/raw/Stellar-reviewable-request-sale.x
+//  xdr/raw/Stellar-reviewable-request-update-KYC.x
 //  xdr/raw/Stellar-reviewable-request-withdrawal.x
 //  xdr/raw/Stellar-transaction.x
 //  xdr/raw/Stellar-types.x
@@ -541,6 +546,66 @@ type ScpQuorumSet struct {
 	InnerSets  []ScpQuorumSet `json:"innerSets,omitempty"`
 }
 
+// AccountKycEntryExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type AccountKycEntryExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u AccountKycEntryExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of AccountKycEntryExt
+func (u AccountKycEntryExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewAccountKycEntryExt creates a new  AccountKycEntryExt.
+func NewAccountKycEntryExt(v LedgerVersion, value interface{}) (result AccountKycEntryExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// AccountKycEntry is an XDR Struct defines as:
+//
+//   struct AccountKYCEntry
+//    {
+//        AccountID accountID;
+//        longstring KYCData;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type AccountKycEntry struct {
+	AccountId AccountId          `json:"accountID,omitempty"`
+	KycData   Longstring         `json:"KYCData,omitempty"`
+	Ext       AccountKycEntryExt `json:"ext,omitempty"`
+}
+
 // AccountLimitsEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -685,7 +750,11 @@ type AccountTypeLimitsEntry struct {
 //    	USER_ISSUANCE_MANAGER = 262144, // can review pre-issuance/issuance requests
 //    	WITHDRAW_MANAGER = 524288, // can review withdraw requests
 //    	FEES_MANAGER = 1048576, // can set fee
-//    	TX_SENDER = 2097152 // can send tx
+//    	TX_SENDER = 2097152, // can send tx
+//        AML_ALERT_MANAGER = 4194304, // can manage AML alert request
+//        AML_ALERT_REVIEWER = 8388608, // can review aml alert requests
+//    	KYC_ACC_MANAGER = 16777216, // can manage kyc
+//    	KYC_SUPER_ADMIN = 33554432
 //    };
 //
 type SignerType int32
@@ -713,6 +782,10 @@ const (
 	SignerTypeWithdrawManager           SignerType = 524288
 	SignerTypeFeesManager               SignerType = 1048576
 	SignerTypeTxSender                  SignerType = 2097152
+	SignerTypeAmlAlertManager           SignerType = 4194304
+	SignerTypeAmlAlertReviewer          SignerType = 8388608
+	SignerTypeKycAccManager             SignerType = 16777216
+	SignerTypeKycSuperAdmin             SignerType = 33554432
 )
 
 var SignerTypeAll = []SignerType{
@@ -738,56 +811,68 @@ var SignerTypeAll = []SignerType{
 	SignerTypeWithdrawManager,
 	SignerTypeFeesManager,
 	SignerTypeTxSender,
+	SignerTypeAmlAlertManager,
+	SignerTypeAmlAlertReviewer,
+	SignerTypeKycAccManager,
+	SignerTypeKycSuperAdmin,
 }
 
 var signerTypeMap = map[int32]string{
-	1:       "SignerTypeReader",
-	2:       "SignerTypeNotVerifiedAccManager",
-	4:       "SignerTypeGeneralAccManager",
-	8:       "SignerTypeDirectDebitOperator",
-	16:      "SignerTypeAssetManager",
-	32:      "SignerTypeAssetRateManager",
-	64:      "SignerTypeBalanceManager",
-	128:     "SignerTypeIssuanceManager",
-	256:     "SignerTypeInvoiceManager",
-	512:     "SignerTypePaymentOperator",
-	1024:    "SignerTypeLimitsManager",
-	2048:    "SignerTypeAccountManager",
-	4096:    "SignerTypeCommissionBalanceManager",
-	8192:    "SignerTypeOperationalBalanceManager",
-	16384:   "SignerTypeEventsChecker",
-	32768:   "SignerTypeExchangeAccManager",
-	65536:   "SignerTypeSyndicateAccManager",
-	131072:  "SignerTypeUserAssetManager",
-	262144:  "SignerTypeUserIssuanceManager",
-	524288:  "SignerTypeWithdrawManager",
-	1048576: "SignerTypeFeesManager",
-	2097152: "SignerTypeTxSender",
+	1:        "SignerTypeReader",
+	2:        "SignerTypeNotVerifiedAccManager",
+	4:        "SignerTypeGeneralAccManager",
+	8:        "SignerTypeDirectDebitOperator",
+	16:       "SignerTypeAssetManager",
+	32:       "SignerTypeAssetRateManager",
+	64:       "SignerTypeBalanceManager",
+	128:      "SignerTypeIssuanceManager",
+	256:      "SignerTypeInvoiceManager",
+	512:      "SignerTypePaymentOperator",
+	1024:     "SignerTypeLimitsManager",
+	2048:     "SignerTypeAccountManager",
+	4096:     "SignerTypeCommissionBalanceManager",
+	8192:     "SignerTypeOperationalBalanceManager",
+	16384:    "SignerTypeEventsChecker",
+	32768:    "SignerTypeExchangeAccManager",
+	65536:    "SignerTypeSyndicateAccManager",
+	131072:   "SignerTypeUserAssetManager",
+	262144:   "SignerTypeUserIssuanceManager",
+	524288:   "SignerTypeWithdrawManager",
+	1048576:  "SignerTypeFeesManager",
+	2097152:  "SignerTypeTxSender",
+	4194304:  "SignerTypeAmlAlertManager",
+	8388608:  "SignerTypeAmlAlertReviewer",
+	16777216: "SignerTypeKycAccManager",
+	33554432: "SignerTypeKycSuperAdmin",
 }
 
 var signerTypeShortMap = map[int32]string{
-	1:       "reader",
-	2:       "not_verified_acc_manager",
-	4:       "general_acc_manager",
-	8:       "direct_debit_operator",
-	16:      "asset_manager",
-	32:      "asset_rate_manager",
-	64:      "balance_manager",
-	128:     "issuance_manager",
-	256:     "invoice_manager",
-	512:     "payment_operator",
-	1024:    "limits_manager",
-	2048:    "account_manager",
-	4096:    "commission_balance_manager",
-	8192:    "operational_balance_manager",
-	16384:   "events_checker",
-	32768:   "exchange_acc_manager",
-	65536:   "syndicate_acc_manager",
-	131072:  "user_asset_manager",
-	262144:  "user_issuance_manager",
-	524288:  "withdraw_manager",
-	1048576: "fees_manager",
-	2097152: "tx_sender",
+	1:        "reader",
+	2:        "not_verified_acc_manager",
+	4:        "general_acc_manager",
+	8:        "direct_debit_operator",
+	16:       "asset_manager",
+	32:       "asset_rate_manager",
+	64:       "balance_manager",
+	128:      "issuance_manager",
+	256:      "invoice_manager",
+	512:      "payment_operator",
+	1024:     "limits_manager",
+	2048:     "account_manager",
+	4096:     "commission_balance_manager",
+	8192:     "operational_balance_manager",
+	16384:    "events_checker",
+	32768:    "exchange_acc_manager",
+	65536:    "syndicate_acc_manager",
+	131072:   "user_asset_manager",
+	262144:   "user_issuance_manager",
+	524288:   "withdraw_manager",
+	1048576:  "fees_manager",
+	2097152:  "tx_sender",
+	4194304:  "aml_alert_manager",
+	8388608:  "aml_alert_reviewer",
+	16777216: "kyc_acc_manager",
+	33554432: "kyc_super_admin",
 }
 
 var signerTypeRevMap = map[string]int32{
@@ -813,6 +898,10 @@ var signerTypeRevMap = map[string]int32{
 	"SignerTypeWithdrawManager":           524288,
 	"SignerTypeFeesManager":               1048576,
 	"SignerTypeTxSender":                  2097152,
+	"SignerTypeAmlAlertManager":           4194304,
+	"SignerTypeAmlAlertReviewer":          8388608,
+	"SignerTypeKycAccManager":             16777216,
+	"SignerTypeKycSuperAdmin":             33554432,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -1295,39 +1384,45 @@ func (e *AccountType) UnmarshalJSON(data []byte) error {
 //    {
 //    	RECOVERY_REQUEST = 1,
 //    	KYC_UPDATE = 2,
-//    	SUSPICIOUS_BEHAVIOR = 4
+//    	SUSPICIOUS_BEHAVIOR = 4,
+//    	TOO_MANY_KYC_UPDATE_REQUESTS = 8
 //    };
 //
 type BlockReasons int32
 
 const (
-	BlockReasonsRecoveryRequest    BlockReasons = 1
-	BlockReasonsKycUpdate          BlockReasons = 2
-	BlockReasonsSuspiciousBehavior BlockReasons = 4
+	BlockReasonsRecoveryRequest          BlockReasons = 1
+	BlockReasonsKycUpdate                BlockReasons = 2
+	BlockReasonsSuspiciousBehavior       BlockReasons = 4
+	BlockReasonsTooManyKycUpdateRequests BlockReasons = 8
 )
 
 var BlockReasonsAll = []BlockReasons{
 	BlockReasonsRecoveryRequest,
 	BlockReasonsKycUpdate,
 	BlockReasonsSuspiciousBehavior,
+	BlockReasonsTooManyKycUpdateRequests,
 }
 
 var blockReasonsMap = map[int32]string{
 	1: "BlockReasonsRecoveryRequest",
 	2: "BlockReasonsKycUpdate",
 	4: "BlockReasonsSuspiciousBehavior",
+	8: "BlockReasonsTooManyKycUpdateRequests",
 }
 
 var blockReasonsShortMap = map[int32]string{
 	1: "recovery_request",
 	2: "kyc_update",
 	4: "suspicious_behavior",
+	8: "too_many_kyc_update_requests",
 }
 
 var blockReasonsRevMap = map[string]int32{
-	"BlockReasonsRecoveryRequest":    1,
-	"BlockReasonsKycUpdate":          2,
-	"BlockReasonsSuspiciousBehavior": 4,
+	"BlockReasonsRecoveryRequest":          1,
+	"BlockReasonsKycUpdate":                2,
+	"BlockReasonsSuspiciousBehavior":       4,
+	"BlockReasonsTooManyKycUpdateRequests": 8,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -1397,10 +1492,13 @@ func (e *BlockReasons) UnmarshalJSON(data []byte) error {
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//    	case USE_KYC_LEVEL:
+//    		uint32 kycLevel;
 //        }
 //
 type AccountEntryExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V        LedgerVersion `json:"v,omitempty"`
+	KycLevel *Uint32       `json:"kycLevel,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -1415,6 +1513,8 @@ func (u AccountEntryExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionUseKycLevel:
+		return "KycLevel", true
 	}
 	return "-", false
 }
@@ -1425,7 +1525,39 @@ func NewAccountEntryExt(v LedgerVersion, value interface{}) (result AccountEntry
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionUseKycLevel:
+		tv, ok := value.(Uint32)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be Uint32")
+			return
+		}
+		result.KycLevel = &tv
 	}
+	return
+}
+
+// MustKycLevel retrieves the KycLevel value from the union,
+// panicing if the value is not set.
+func (u AccountEntryExt) MustKycLevel() Uint32 {
+	val, ok := u.GetKycLevel()
+
+	if !ok {
+		panic("arm KycLevel is not set")
+	}
+
+	return val
+}
+
+// GetKycLevel retrieves the KycLevel value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u AccountEntryExt) GetKycLevel() (result Uint32, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "KycLevel" {
+		result = *u.KycLevel
+		ok = true
+	}
+
 	return
 }
 
@@ -1456,7 +1588,10 @@ func NewAccountEntryExt(v LedgerVersion, value interface{}) (result AccountEntry
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//    	case USE_KYC_LEVEL:
+//    		uint32 kycLevel;
 //        }
+//
 //        ext;
 //    };
 //
@@ -2958,7 +3093,9 @@ type ReferenceEntry struct {
 //    	WITHDRAW = 4,
 //    	SALE = 5,
 //    	LIMITS_UPDATE = 6,
-//    	TWO_STEP_WITHDRAWAL = 7
+//    	TWO_STEP_WITHDRAWAL = 7,
+//        AML_ALERT = 8,
+//    	UPDATE_KYC = 9
 //    };
 //
 type ReviewableRequestType int32
@@ -2972,6 +3109,8 @@ const (
 	ReviewableRequestTypeSale              ReviewableRequestType = 5
 	ReviewableRequestTypeLimitsUpdate      ReviewableRequestType = 6
 	ReviewableRequestTypeTwoStepWithdrawal ReviewableRequestType = 7
+	ReviewableRequestTypeAmlAlert          ReviewableRequestType = 8
+	ReviewableRequestTypeUpdateKyc         ReviewableRequestType = 9
 )
 
 var ReviewableRequestTypeAll = []ReviewableRequestType{
@@ -2983,6 +3122,8 @@ var ReviewableRequestTypeAll = []ReviewableRequestType{
 	ReviewableRequestTypeSale,
 	ReviewableRequestTypeLimitsUpdate,
 	ReviewableRequestTypeTwoStepWithdrawal,
+	ReviewableRequestTypeAmlAlert,
+	ReviewableRequestTypeUpdateKyc,
 }
 
 var reviewableRequestTypeMap = map[int32]string{
@@ -2994,6 +3135,8 @@ var reviewableRequestTypeMap = map[int32]string{
 	5: "ReviewableRequestTypeSale",
 	6: "ReviewableRequestTypeLimitsUpdate",
 	7: "ReviewableRequestTypeTwoStepWithdrawal",
+	8: "ReviewableRequestTypeAmlAlert",
+	9: "ReviewableRequestTypeUpdateKyc",
 }
 
 var reviewableRequestTypeShortMap = map[int32]string{
@@ -3005,6 +3148,8 @@ var reviewableRequestTypeShortMap = map[int32]string{
 	5: "sale",
 	6: "limits_update",
 	7: "two_step_withdrawal",
+	8: "aml_alert",
+	9: "update_kyc",
 }
 
 var reviewableRequestTypeRevMap = map[string]int32{
@@ -3016,6 +3161,8 @@ var reviewableRequestTypeRevMap = map[string]int32{
 	"ReviewableRequestTypeSale":              5,
 	"ReviewableRequestTypeLimitsUpdate":      6,
 	"ReviewableRequestTypeTwoStepWithdrawal": 7,
+	"ReviewableRequestTypeAmlAlert":          8,
+	"ReviewableRequestTypeUpdateKyc":         9,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -3098,6 +3245,10 @@ func (e *ReviewableRequestType) UnmarshalJSON(data []byte) error {
 //                LimitsUpdateRequest limitsUpdateRequest;
 //    		case TWO_STEP_WITHDRAWAL:
 //    			WithdrawalRequest twoStepWithdrawalRequest;
+//            case AML_ALERT:
+//                AMLAlertRequest amlAlertRequest;
+//            case UPDATE_KYC:
+//                UpdateKYCRequest updateKYCRequest;
 //    	}
 //
 type ReviewableRequestEntryBody struct {
@@ -3110,6 +3261,8 @@ type ReviewableRequestEntryBody struct {
 	SaleCreationRequest      *SaleCreationRequest  `json:"saleCreationRequest,omitempty"`
 	LimitsUpdateRequest      *LimitsUpdateRequest  `json:"limitsUpdateRequest,omitempty"`
 	TwoStepWithdrawalRequest *WithdrawalRequest    `json:"twoStepWithdrawalRequest,omitempty"`
+	AmlAlertRequest          *AmlAlertRequest      `json:"amlAlertRequest,omitempty"`
+	UpdateKycRequest         *UpdateKycRequest     `json:"updateKYCRequest,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -3138,6 +3291,10 @@ func (u ReviewableRequestEntryBody) ArmForSwitch(sw int32) (string, bool) {
 		return "LimitsUpdateRequest", true
 	case ReviewableRequestTypeTwoStepWithdrawal:
 		return "TwoStepWithdrawalRequest", true
+	case ReviewableRequestTypeAmlAlert:
+		return "AmlAlertRequest", true
+	case ReviewableRequestTypeUpdateKyc:
+		return "UpdateKycRequest", true
 	}
 	return "-", false
 }
@@ -3202,6 +3359,20 @@ func NewReviewableRequestEntryBody(aType ReviewableRequestType, value interface{
 			return
 		}
 		result.TwoStepWithdrawalRequest = &tv
+	case ReviewableRequestTypeAmlAlert:
+		tv, ok := value.(AmlAlertRequest)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be AmlAlertRequest")
+			return
+		}
+		result.AmlAlertRequest = &tv
+	case ReviewableRequestTypeUpdateKyc:
+		tv, ok := value.(UpdateKycRequest)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be UpdateKycRequest")
+			return
+		}
+		result.UpdateKycRequest = &tv
 	}
 	return
 }
@@ -3406,6 +3577,56 @@ func (u ReviewableRequestEntryBody) GetTwoStepWithdrawalRequest() (result Withdr
 	return
 }
 
+// MustAmlAlertRequest retrieves the AmlAlertRequest value from the union,
+// panicing if the value is not set.
+func (u ReviewableRequestEntryBody) MustAmlAlertRequest() AmlAlertRequest {
+	val, ok := u.GetAmlAlertRequest()
+
+	if !ok {
+		panic("arm AmlAlertRequest is not set")
+	}
+
+	return val
+}
+
+// GetAmlAlertRequest retrieves the AmlAlertRequest value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewableRequestEntryBody) GetAmlAlertRequest() (result AmlAlertRequest, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "AmlAlertRequest" {
+		result = *u.AmlAlertRequest
+		ok = true
+	}
+
+	return
+}
+
+// MustUpdateKycRequest retrieves the UpdateKycRequest value from the union,
+// panicing if the value is not set.
+func (u ReviewableRequestEntryBody) MustUpdateKycRequest() UpdateKycRequest {
+	val, ok := u.GetUpdateKycRequest()
+
+	if !ok {
+		panic("arm UpdateKycRequest is not set")
+	}
+
+	return val
+}
+
+// GetUpdateKycRequest retrieves the UpdateKycRequest value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewableRequestEntryBody) GetUpdateKycRequest() (result UpdateKycRequest, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "UpdateKycRequest" {
+		result = *u.UpdateKycRequest
+		ok = true
+	}
+
+	return
+}
+
 // ReviewableRequestEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -3472,6 +3693,10 @@ func NewReviewableRequestEntryExt(v LedgerVersion, value interface{}) (result Re
 //                LimitsUpdateRequest limitsUpdateRequest;
 //    		case TWO_STEP_WITHDRAWAL:
 //    			WithdrawalRequest twoStepWithdrawalRequest;
+//            case AML_ALERT:
+//                AMLAlertRequest amlAlertRequest;
+//            case UPDATE_KYC:
+//                UpdateKYCRequest updateKYCRequest;
 //    	} body;
 //
 //    	// reserved for future use
@@ -4199,7 +4424,8 @@ func (e *ThresholdIndexes) UnmarshalJSON(data []byte) error {
 //        INVOICE = 14,
 //    	REVIEWABLE_REQUEST = 15,
 //    	EXTERNAL_SYSTEM_ACCOUNT_ID = 16,
-//    	SALE = 17
+//    	SALE = 17,
+//    	ACCOUNT_KYC = 18
 //    };
 //
 type LedgerEntryType int32
@@ -4221,6 +4447,7 @@ const (
 	LedgerEntryTypeReviewableRequest       LedgerEntryType = 15
 	LedgerEntryTypeExternalSystemAccountId LedgerEntryType = 16
 	LedgerEntryTypeSale                    LedgerEntryType = 17
+	LedgerEntryTypeAccountKyc              LedgerEntryType = 18
 )
 
 var LedgerEntryTypeAll = []LedgerEntryType{
@@ -4240,6 +4467,7 @@ var LedgerEntryTypeAll = []LedgerEntryType{
 	LedgerEntryTypeReviewableRequest,
 	LedgerEntryTypeExternalSystemAccountId,
 	LedgerEntryTypeSale,
+	LedgerEntryTypeAccountKyc,
 }
 
 var ledgerEntryTypeMap = map[int32]string{
@@ -4259,6 +4487,7 @@ var ledgerEntryTypeMap = map[int32]string{
 	15: "LedgerEntryTypeReviewableRequest",
 	16: "LedgerEntryTypeExternalSystemAccountId",
 	17: "LedgerEntryTypeSale",
+	18: "LedgerEntryTypeAccountKyc",
 }
 
 var ledgerEntryTypeShortMap = map[int32]string{
@@ -4278,6 +4507,7 @@ var ledgerEntryTypeShortMap = map[int32]string{
 	15: "reviewable_request",
 	16: "external_system_account_id",
 	17: "sale",
+	18: "account_kyc",
 }
 
 var ledgerEntryTypeRevMap = map[string]int32{
@@ -4297,6 +4527,7 @@ var ledgerEntryTypeRevMap = map[string]int32{
 	"LedgerEntryTypeReviewableRequest":       15,
 	"LedgerEntryTypeExternalSystemAccountId": 16,
 	"LedgerEntryTypeSale":                    17,
+	"LedgerEntryTypeAccountKyc":              18,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -4396,6 +4627,8 @@ func (e *LedgerEntryType) UnmarshalJSON(data []byte) error {
 //    		ExternalSystemAccountID externalSystemAccountID;
 //    	case SALE:
 //    		SaleEntry sale;
+//    	case ACCOUNT_KYC:
+//            AccountKYCEntry accountKYC;
 //        }
 //
 type LedgerEntryData struct {
@@ -4416,6 +4649,7 @@ type LedgerEntryData struct {
 	ReviewableRequest       *ReviewableRequestEntry  `json:"reviewableRequest,omitempty"`
 	ExternalSystemAccountId *ExternalSystemAccountId `json:"externalSystemAccountID,omitempty"`
 	Sale                    *SaleEntry               `json:"sale,omitempty"`
+	AccountKyc              *AccountKycEntry         `json:"accountKYC,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -4460,6 +4694,8 @@ func (u LedgerEntryData) ArmForSwitch(sw int32) (string, bool) {
 		return "ExternalSystemAccountId", true
 	case LedgerEntryTypeSale:
 		return "Sale", true
+	case LedgerEntryTypeAccountKyc:
+		return "AccountKyc", true
 	}
 	return "-", false
 }
@@ -4580,6 +4816,13 @@ func NewLedgerEntryData(aType LedgerEntryType, value interface{}) (result Ledger
 			return
 		}
 		result.Sale = &tv
+	case LedgerEntryTypeAccountKyc:
+		tv, ok := value.(AccountKycEntry)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be AccountKycEntry")
+			return
+		}
+		result.AccountKyc = &tv
 	}
 	return
 }
@@ -4984,6 +5227,31 @@ func (u LedgerEntryData) GetSale() (result SaleEntry, ok bool) {
 	return
 }
 
+// MustAccountKyc retrieves the AccountKyc value from the union,
+// panicing if the value is not set.
+func (u LedgerEntryData) MustAccountKyc() AccountKycEntry {
+	val, ok := u.GetAccountKyc()
+
+	if !ok {
+		panic("arm AccountKyc is not set")
+	}
+
+	return val
+}
+
+// GetAccountKyc retrieves the AccountKyc value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u LedgerEntryData) GetAccountKyc() (result AccountKycEntry, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "AccountKyc" {
+		result = *u.AccountKyc
+		ok = true
+	}
+
+	return
+}
+
 // LedgerEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -5062,6 +5330,8 @@ func NewLedgerEntryExt(v LedgerVersion, value interface{}) (result LedgerEntryEx
 //    		ExternalSystemAccountID externalSystemAccountID;
 //    	case SALE:
 //    		SaleEntry sale;
+//    	case ACCOUNT_KYC:
+//            AccountKYCEntry accountKYC;
 //        }
 //        data;
 //
@@ -6597,6 +6867,61 @@ type LedgerKeySale struct {
 	Ext    LedgerKeySaleExt `json:"ext,omitempty"`
 }
 
+// LedgerKeyAccountKycExt is an XDR NestedUnion defines as:
+//
+//   union switch(LedgerVersion v)
+//            {
+//            case EMPTY_VERSION:
+//                void;
+//            }
+//
+type LedgerKeyAccountKycExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u LedgerKeyAccountKycExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of LedgerKeyAccountKycExt
+func (u LedgerKeyAccountKycExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewLedgerKeyAccountKycExt creates a new  LedgerKeyAccountKycExt.
+func NewLedgerKeyAccountKycExt(v LedgerVersion, value interface{}) (result LedgerKeyAccountKycExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// LedgerKeyAccountKyc is an XDR NestedStruct defines as:
+//
+//   struct {
+//            AccountID accountID;
+//            union switch(LedgerVersion v)
+//            {
+//            case EMPTY_VERSION:
+//                void;
+//            }
+//            ext;
+//        }
+//
+type LedgerKeyAccountKyc struct {
+	AccountId AccountId              `json:"accountID,omitempty"`
+	Ext       LedgerKeyAccountKycExt `json:"ext,omitempty"`
+}
+
 // LedgerKey is an XDR Union defines as:
 //
 //   union LedgerKey switch (LedgerEntryType type)
@@ -6767,6 +7092,16 @@ type LedgerKeySale struct {
 //    		}
 //    		ext;
 //    	} sale;
+//    case ACCOUNT_KYC:
+//        struct {
+//            AccountID accountID;
+//            union switch(LedgerVersion v)
+//            {
+//            case EMPTY_VERSION:
+//                void;
+//            }
+//            ext;
+//        } accountKYC;
 //    };
 //
 type LedgerKey struct {
@@ -6787,6 +7122,7 @@ type LedgerKey struct {
 	ReviewableRequest       *LedgerKeyReviewableRequest       `json:"reviewableRequest,omitempty"`
 	ExternalSystemAccountId *LedgerKeyExternalSystemAccountId `json:"externalSystemAccountID,omitempty"`
 	Sale                    *LedgerKeySale                    `json:"sale,omitempty"`
+	AccountKyc              *LedgerKeyAccountKyc              `json:"accountKYC,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -6831,6 +7167,8 @@ func (u LedgerKey) ArmForSwitch(sw int32) (string, bool) {
 		return "ExternalSystemAccountId", true
 	case LedgerEntryTypeSale:
 		return "Sale", true
+	case LedgerEntryTypeAccountKyc:
+		return "AccountKyc", true
 	}
 	return "-", false
 }
@@ -6951,6 +7289,13 @@ func NewLedgerKey(aType LedgerEntryType, value interface{}) (result LedgerKey, e
 			return
 		}
 		result.Sale = &tv
+	case LedgerEntryTypeAccountKyc:
+		tv, ok := value.(LedgerKeyAccountKyc)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be LedgerKeyAccountKyc")
+			return
+		}
+		result.AccountKyc = &tv
 	}
 	return
 }
@@ -7349,6 +7694,31 @@ func (u LedgerKey) GetSale() (result LedgerKeySale, ok bool) {
 
 	if armName == "Sale" {
 		result = *u.Sale
+		ok = true
+	}
+
+	return
+}
+
+// MustAccountKyc retrieves the AccountKyc value from the union,
+// panicing if the value is not set.
+func (u LedgerKey) MustAccountKyc() LedgerKeyAccountKyc {
+	val, ok := u.GetAccountKyc()
+
+	if !ok {
+		panic("arm AccountKyc is not set")
+	}
+
+	return val
+}
+
+// GetAccountKyc retrieves the AccountKyc value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u LedgerKey) GetAccountKyc() (result LedgerKeyAccountKyc, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "AccountKyc" {
+		result = *u.AccountKyc
 		ok = true
 	}
 
@@ -9008,6 +9378,724 @@ func (u CheckSaleStateResult) MustSuccess() CheckSaleStateSuccess {
 // GetSuccess retrieves the Success value from the union,
 // returning ok if the union's switch indicated the value is valid.
 func (u CheckSaleStateResult) GetSuccess() (result CheckSaleStateSuccess, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Code))
+
+	if armName == "Success" {
+		result = *u.Success
+		ok = true
+	}
+
+	return
+}
+
+// CreateAmlAlertRequestOpExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type CreateAmlAlertRequestOpExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CreateAmlAlertRequestOpExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CreateAmlAlertRequestOpExt
+func (u CreateAmlAlertRequestOpExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewCreateAmlAlertRequestOpExt creates a new  CreateAmlAlertRequestOpExt.
+func NewCreateAmlAlertRequestOpExt(v LedgerVersion, value interface{}) (result CreateAmlAlertRequestOpExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// CreateAmlAlertRequestOp is an XDR Struct defines as:
+//
+//   struct CreateAMLAlertRequestOp
+//    {
+//        string64 reference;
+//        AMLAlertRequest amlAlertRequest;
+//
+//    	union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//
+//    };
+//
+type CreateAmlAlertRequestOp struct {
+	Reference       String64                   `json:"reference,omitempty"`
+	AmlAlertRequest AmlAlertRequest            `json:"amlAlertRequest,omitempty"`
+	Ext             CreateAmlAlertRequestOpExt `json:"ext,omitempty"`
+}
+
+// CreateAmlAlertRequestResultCode is an XDR Enum defines as:
+//
+//   enum CreateAMLAlertRequestResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        SUCCESS = 0,
+//        BALANCE_NOT_EXIST = 1, // balance doesn't exist
+//        INVALID_REASON = 2, //invalid reason for request
+//        UNDERFUNDED = 3, //when couldn't lock balance
+//    	REFERENCE_DUPLICATION = 4, // reference already exists
+//    	INVALID_AMOUNT = 5 // amount must be positive
+//
+//
+//    };
+//
+type CreateAmlAlertRequestResultCode int32
+
+const (
+	CreateAmlAlertRequestResultCodeSuccess              CreateAmlAlertRequestResultCode = 0
+	CreateAmlAlertRequestResultCodeBalanceNotExist      CreateAmlAlertRequestResultCode = 1
+	CreateAmlAlertRequestResultCodeInvalidReason        CreateAmlAlertRequestResultCode = 2
+	CreateAmlAlertRequestResultCodeUnderfunded          CreateAmlAlertRequestResultCode = 3
+	CreateAmlAlertRequestResultCodeReferenceDuplication CreateAmlAlertRequestResultCode = 4
+	CreateAmlAlertRequestResultCodeInvalidAmount        CreateAmlAlertRequestResultCode = 5
+)
+
+var CreateAmlAlertRequestResultCodeAll = []CreateAmlAlertRequestResultCode{
+	CreateAmlAlertRequestResultCodeSuccess,
+	CreateAmlAlertRequestResultCodeBalanceNotExist,
+	CreateAmlAlertRequestResultCodeInvalidReason,
+	CreateAmlAlertRequestResultCodeUnderfunded,
+	CreateAmlAlertRequestResultCodeReferenceDuplication,
+	CreateAmlAlertRequestResultCodeInvalidAmount,
+}
+
+var createAmlAlertRequestResultCodeMap = map[int32]string{
+	0: "CreateAmlAlertRequestResultCodeSuccess",
+	1: "CreateAmlAlertRequestResultCodeBalanceNotExist",
+	2: "CreateAmlAlertRequestResultCodeInvalidReason",
+	3: "CreateAmlAlertRequestResultCodeUnderfunded",
+	4: "CreateAmlAlertRequestResultCodeReferenceDuplication",
+	5: "CreateAmlAlertRequestResultCodeInvalidAmount",
+}
+
+var createAmlAlertRequestResultCodeShortMap = map[int32]string{
+	0: "success",
+	1: "balance_not_exist",
+	2: "invalid_reason",
+	3: "underfunded",
+	4: "reference_duplication",
+	5: "invalid_amount",
+}
+
+var createAmlAlertRequestResultCodeRevMap = map[string]int32{
+	"CreateAmlAlertRequestResultCodeSuccess":              0,
+	"CreateAmlAlertRequestResultCodeBalanceNotExist":      1,
+	"CreateAmlAlertRequestResultCodeInvalidReason":        2,
+	"CreateAmlAlertRequestResultCodeUnderfunded":          3,
+	"CreateAmlAlertRequestResultCodeReferenceDuplication": 4,
+	"CreateAmlAlertRequestResultCodeInvalidAmount":        5,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for CreateAmlAlertRequestResultCode
+func (e CreateAmlAlertRequestResultCode) ValidEnum(v int32) bool {
+	_, ok := createAmlAlertRequestResultCodeMap[v]
+	return ok
+}
+func (e CreateAmlAlertRequestResultCode) isFlag() bool {
+	for i := len(CreateAmlAlertRequestResultCodeAll) - 1; i >= 0; i-- {
+		expected := CreateAmlAlertRequestResultCode(2) << uint64(len(CreateAmlAlertRequestResultCodeAll)-1) >> uint64(len(CreateAmlAlertRequestResultCodeAll)-i)
+		if expected != CreateAmlAlertRequestResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e CreateAmlAlertRequestResultCode) String() string {
+	name, _ := createAmlAlertRequestResultCodeMap[int32(e)]
+	return name
+}
+
+func (e CreateAmlAlertRequestResultCode) ShortString() string {
+	name, _ := createAmlAlertRequestResultCodeShortMap[int32(e)]
+	return name
+}
+
+func (e CreateAmlAlertRequestResultCode) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range CreateAmlAlertRequestResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *CreateAmlAlertRequestResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = CreateAmlAlertRequestResultCode(t.Value)
+	return nil
+}
+
+// CreateAmlAlertRequestSuccessExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type CreateAmlAlertRequestSuccessExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CreateAmlAlertRequestSuccessExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CreateAmlAlertRequestSuccessExt
+func (u CreateAmlAlertRequestSuccessExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewCreateAmlAlertRequestSuccessExt creates a new  CreateAmlAlertRequestSuccessExt.
+func NewCreateAmlAlertRequestSuccessExt(v LedgerVersion, value interface{}) (result CreateAmlAlertRequestSuccessExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// CreateAmlAlertRequestSuccess is an XDR Struct defines as:
+//
+//   struct CreateAMLAlertRequestSuccess {
+//    	uint64 requestID;
+//
+//    	union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type CreateAmlAlertRequestSuccess struct {
+	RequestId Uint64                          `json:"requestID,omitempty"`
+	Ext       CreateAmlAlertRequestSuccessExt `json:"ext,omitempty"`
+}
+
+// CreateAmlAlertRequestResult is an XDR Union defines as:
+//
+//   union CreateAMLAlertRequestResult switch (CreateAMLAlertRequestResultCode code)
+//    {
+//        case SUCCESS:
+//            CreateAMLAlertRequestSuccess success;
+//        default:
+//            void;
+//    };
+//
+type CreateAmlAlertRequestResult struct {
+	Code    CreateAmlAlertRequestResultCode `json:"code,omitempty"`
+	Success *CreateAmlAlertRequestSuccess   `json:"success,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CreateAmlAlertRequestResult) SwitchFieldName() string {
+	return "Code"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CreateAmlAlertRequestResult
+func (u CreateAmlAlertRequestResult) ArmForSwitch(sw int32) (string, bool) {
+	switch CreateAmlAlertRequestResultCode(sw) {
+	case CreateAmlAlertRequestResultCodeSuccess:
+		return "Success", true
+	default:
+		return "", true
+	}
+}
+
+// NewCreateAmlAlertRequestResult creates a new  CreateAmlAlertRequestResult.
+func NewCreateAmlAlertRequestResult(code CreateAmlAlertRequestResultCode, value interface{}) (result CreateAmlAlertRequestResult, err error) {
+	result.Code = code
+	switch CreateAmlAlertRequestResultCode(code) {
+	case CreateAmlAlertRequestResultCodeSuccess:
+		tv, ok := value.(CreateAmlAlertRequestSuccess)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CreateAmlAlertRequestSuccess")
+			return
+		}
+		result.Success = &tv
+	default:
+		// void
+	}
+	return
+}
+
+// MustSuccess retrieves the Success value from the union,
+// panicing if the value is not set.
+func (u CreateAmlAlertRequestResult) MustSuccess() CreateAmlAlertRequestSuccess {
+	val, ok := u.GetSuccess()
+
+	if !ok {
+		panic("arm Success is not set")
+	}
+
+	return val
+}
+
+// GetSuccess retrieves the Success value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u CreateAmlAlertRequestResult) GetSuccess() (result CreateAmlAlertRequestSuccess, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Code))
+
+	if armName == "Success" {
+		result = *u.Success
+		ok = true
+	}
+
+	return
+}
+
+// UpdateKycRequestDataExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type UpdateKycRequestDataExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u UpdateKycRequestDataExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of UpdateKycRequestDataExt
+func (u UpdateKycRequestDataExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewUpdateKycRequestDataExt creates a new  UpdateKycRequestDataExt.
+func NewUpdateKycRequestDataExt(v LedgerVersion, value interface{}) (result UpdateKycRequestDataExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// UpdateKycRequestData is an XDR Struct defines as:
+//
+//   struct UpdateKYCRequestData {
+//        AccountID accountToUpdateKYC;
+//    	AccountType accountTypeToSet;
+//    	uint32 kycLevelToSet;
+//        longstring kycData;
+//    	uint32* allTasks;
+//
+//    	// Reserved for future use
+//    	union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type UpdateKycRequestData struct {
+	AccountToUpdateKyc AccountId               `json:"accountToUpdateKYC,omitempty"`
+	AccountTypeToSet   AccountType             `json:"accountTypeToSet,omitempty"`
+	KycLevelToSet      Uint32                  `json:"kycLevelToSet,omitempty"`
+	KycData            Longstring              `json:"kycData,omitempty"`
+	AllTasks           *Uint32                 `json:"allTasks,omitempty"`
+	Ext                UpdateKycRequestDataExt `json:"ext,omitempty"`
+}
+
+// CreateUpdateKycRequestOpExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type CreateUpdateKycRequestOpExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CreateUpdateKycRequestOpExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CreateUpdateKycRequestOpExt
+func (u CreateUpdateKycRequestOpExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewCreateUpdateKycRequestOpExt creates a new  CreateUpdateKycRequestOpExt.
+func NewCreateUpdateKycRequestOpExt(v LedgerVersion, value interface{}) (result CreateUpdateKycRequestOpExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// CreateUpdateKycRequestOp is an XDR Struct defines as:
+//
+//   struct CreateUpdateKYCRequestOp {
+//        uint64 requestID;
+//        UpdateKYCRequestData updateKYCRequestData;
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type CreateUpdateKycRequestOp struct {
+	RequestId            Uint64                      `json:"requestID,omitempty"`
+	UpdateKycRequestData UpdateKycRequestData        `json:"updateKYCRequestData,omitempty"`
+	Ext                  CreateUpdateKycRequestOpExt `json:"ext,omitempty"`
+}
+
+// CreateUpdateKycRequestResultCode is an XDR Enum defines as:
+//
+//   enum CreateUpdateKYCRequestResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        ACC_TO_UPDATE_DOES_NOT_EXIST = -1, // account to update does not exist
+//        REQUEST_ALREADY_EXISTS = -2,
+//    	SAME_ACC_TYPE_TO_SET = -3,
+//    	REQUEST_DOES_NOT_EXIST = -4,
+//    	PENDING_REQUEST_UPDATE_NOT_ALLOWED = -5,
+//    	NOT_ALLOWED_TO_UPDATE_REQUEST = -6, // master account can update request only through review request operation
+//    	INVALID_UPDATE_KYC_REQUEST_DATA = -7,
+//    	INVALID_KYC_DATA = -8
+//    };
+//
+type CreateUpdateKycRequestResultCode int32
+
+const (
+	CreateUpdateKycRequestResultCodeSuccess                        CreateUpdateKycRequestResultCode = 0
+	CreateUpdateKycRequestResultCodeAccToUpdateDoesNotExist        CreateUpdateKycRequestResultCode = -1
+	CreateUpdateKycRequestResultCodeRequestAlreadyExists           CreateUpdateKycRequestResultCode = -2
+	CreateUpdateKycRequestResultCodeSameAccTypeToSet               CreateUpdateKycRequestResultCode = -3
+	CreateUpdateKycRequestResultCodeRequestDoesNotExist            CreateUpdateKycRequestResultCode = -4
+	CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed CreateUpdateKycRequestResultCode = -5
+	CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest      CreateUpdateKycRequestResultCode = -6
+	CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData    CreateUpdateKycRequestResultCode = -7
+	CreateUpdateKycRequestResultCodeInvalidKycData                 CreateUpdateKycRequestResultCode = -8
+)
+
+var CreateUpdateKycRequestResultCodeAll = []CreateUpdateKycRequestResultCode{
+	CreateUpdateKycRequestResultCodeSuccess,
+	CreateUpdateKycRequestResultCodeAccToUpdateDoesNotExist,
+	CreateUpdateKycRequestResultCodeRequestAlreadyExists,
+	CreateUpdateKycRequestResultCodeSameAccTypeToSet,
+	CreateUpdateKycRequestResultCodeRequestDoesNotExist,
+	CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed,
+	CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest,
+	CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData,
+	CreateUpdateKycRequestResultCodeInvalidKycData,
+}
+
+var createUpdateKycRequestResultCodeMap = map[int32]string{
+	0:  "CreateUpdateKycRequestResultCodeSuccess",
+	-1: "CreateUpdateKycRequestResultCodeAccToUpdateDoesNotExist",
+	-2: "CreateUpdateKycRequestResultCodeRequestAlreadyExists",
+	-3: "CreateUpdateKycRequestResultCodeSameAccTypeToSet",
+	-4: "CreateUpdateKycRequestResultCodeRequestDoesNotExist",
+	-5: "CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed",
+	-6: "CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest",
+	-7: "CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData",
+	-8: "CreateUpdateKycRequestResultCodeInvalidKycData",
+}
+
+var createUpdateKycRequestResultCodeShortMap = map[int32]string{
+	0:  "success",
+	-1: "acc_to_update_does_not_exist",
+	-2: "request_already_exists",
+	-3: "same_acc_type_to_set",
+	-4: "request_does_not_exist",
+	-5: "pending_request_update_not_allowed",
+	-6: "not_allowed_to_update_request",
+	-7: "invalid_update_kyc_request_data",
+	-8: "invalid_kyc_data",
+}
+
+var createUpdateKycRequestResultCodeRevMap = map[string]int32{
+	"CreateUpdateKycRequestResultCodeSuccess":                        0,
+	"CreateUpdateKycRequestResultCodeAccToUpdateDoesNotExist":        -1,
+	"CreateUpdateKycRequestResultCodeRequestAlreadyExists":           -2,
+	"CreateUpdateKycRequestResultCodeSameAccTypeToSet":               -3,
+	"CreateUpdateKycRequestResultCodeRequestDoesNotExist":            -4,
+	"CreateUpdateKycRequestResultCodePendingRequestUpdateNotAllowed": -5,
+	"CreateUpdateKycRequestResultCodeNotAllowedToUpdateRequest":      -6,
+	"CreateUpdateKycRequestResultCodeInvalidUpdateKycRequestData":    -7,
+	"CreateUpdateKycRequestResultCodeInvalidKycData":                 -8,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for CreateUpdateKycRequestResultCode
+func (e CreateUpdateKycRequestResultCode) ValidEnum(v int32) bool {
+	_, ok := createUpdateKycRequestResultCodeMap[v]
+	return ok
+}
+func (e CreateUpdateKycRequestResultCode) isFlag() bool {
+	for i := len(CreateUpdateKycRequestResultCodeAll) - 1; i >= 0; i-- {
+		expected := CreateUpdateKycRequestResultCode(2) << uint64(len(CreateUpdateKycRequestResultCodeAll)-1) >> uint64(len(CreateUpdateKycRequestResultCodeAll)-i)
+		if expected != CreateUpdateKycRequestResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e CreateUpdateKycRequestResultCode) String() string {
+	name, _ := createUpdateKycRequestResultCodeMap[int32(e)]
+	return name
+}
+
+func (e CreateUpdateKycRequestResultCode) ShortString() string {
+	name, _ := createUpdateKycRequestResultCodeShortMap[int32(e)]
+	return name
+}
+
+func (e CreateUpdateKycRequestResultCode) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range CreateUpdateKycRequestResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *CreateUpdateKycRequestResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = CreateUpdateKycRequestResultCode(t.Value)
+	return nil
+}
+
+// CreateUpdateKycRequestResultSuccessExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//
+type CreateUpdateKycRequestResultSuccessExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CreateUpdateKycRequestResultSuccessExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CreateUpdateKycRequestResultSuccessExt
+func (u CreateUpdateKycRequestResultSuccessExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewCreateUpdateKycRequestResultSuccessExt creates a new  CreateUpdateKycRequestResultSuccessExt.
+func NewCreateUpdateKycRequestResultSuccessExt(v LedgerVersion, value interface{}) (result CreateUpdateKycRequestResultSuccessExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// CreateUpdateKycRequestResultSuccess is an XDR NestedStruct defines as:
+//
+//   struct {
+//    		uint64 requestID;
+//    		bool fulfilled;
+//    		// Reserved for future use
+//    		union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//    		ext;
+//    	}
+//
+type CreateUpdateKycRequestResultSuccess struct {
+	RequestId Uint64                                 `json:"requestID,omitempty"`
+	Fulfilled bool                                   `json:"fulfilled,omitempty"`
+	Ext       CreateUpdateKycRequestResultSuccessExt `json:"ext,omitempty"`
+}
+
+// CreateUpdateKycRequestResult is an XDR Union defines as:
+//
+//   union CreateUpdateKYCRequestResult switch (CreateUpdateKYCRequestResultCode code)
+//    {
+//    case SUCCESS:
+//        struct {
+//    		uint64 requestID;
+//    		bool fulfilled;
+//    		// Reserved for future use
+//    		union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//    		ext;
+//    	} success;
+//    default:
+//        void;
+//    };
+//
+type CreateUpdateKycRequestResult struct {
+	Code    CreateUpdateKycRequestResultCode     `json:"code,omitempty"`
+	Success *CreateUpdateKycRequestResultSuccess `json:"success,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CreateUpdateKycRequestResult) SwitchFieldName() string {
+	return "Code"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CreateUpdateKycRequestResult
+func (u CreateUpdateKycRequestResult) ArmForSwitch(sw int32) (string, bool) {
+	switch CreateUpdateKycRequestResultCode(sw) {
+	case CreateUpdateKycRequestResultCodeSuccess:
+		return "Success", true
+	default:
+		return "", true
+	}
+}
+
+// NewCreateUpdateKycRequestResult creates a new  CreateUpdateKycRequestResult.
+func NewCreateUpdateKycRequestResult(code CreateUpdateKycRequestResultCode, value interface{}) (result CreateUpdateKycRequestResult, err error) {
+	result.Code = code
+	switch CreateUpdateKycRequestResultCode(code) {
+	case CreateUpdateKycRequestResultCodeSuccess:
+		tv, ok := value.(CreateUpdateKycRequestResultSuccess)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CreateUpdateKycRequestResultSuccess")
+			return
+		}
+		result.Success = &tv
+	default:
+		// void
+	}
+	return
+}
+
+// MustSuccess retrieves the Success value from the union,
+// panicing if the value is not set.
+func (u CreateUpdateKycRequestResult) MustSuccess() CreateUpdateKycRequestResultSuccess {
+	val, ok := u.GetSuccess()
+
+	if !ok {
+		panic("arm Success is not set")
+	}
+
+	return val
+}
+
+// GetSuccess retrieves the Success value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u CreateUpdateKycRequestResult) GetSuccess() (result CreateUpdateKycRequestResultSuccess, ok bool) {
 	armName, _ := u.ArmForSwitch(int32(u.Code))
 
 	if armName == "Success" {
@@ -15591,6 +16679,122 @@ type WithdrawalDetails struct {
 	Ext             WithdrawalDetailsExt `json:"ext,omitempty"`
 }
 
+// AmlAlertDetailsExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type AmlAlertDetailsExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u AmlAlertDetailsExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of AmlAlertDetailsExt
+func (u AmlAlertDetailsExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewAmlAlertDetailsExt creates a new  AmlAlertDetailsExt.
+func NewAmlAlertDetailsExt(v LedgerVersion, value interface{}) (result AmlAlertDetailsExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// AmlAlertDetails is an XDR Struct defines as:
+//
+//   struct AMLAlertDetails {
+//    	string comment<>;
+//    	// reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type AmlAlertDetails struct {
+	Comment string             `json:"comment,omitempty"`
+	Ext     AmlAlertDetailsExt `json:"ext,omitempty"`
+}
+
+// UpdateKycDetailsExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type UpdateKycDetailsExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u UpdateKycDetailsExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of UpdateKycDetailsExt
+func (u UpdateKycDetailsExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewUpdateKycDetailsExt creates a new  UpdateKycDetailsExt.
+func NewUpdateKycDetailsExt(v LedgerVersion, value interface{}) (result UpdateKycDetailsExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// UpdateKycDetails is an XDR Struct defines as:
+//
+//   struct UpdateKYCDetails {
+//        uint32 tasksToAdd;
+//        uint32 tasksToRemove;
+//        string externalDetails<>;
+//        // Reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type UpdateKycDetails struct {
+	TasksToAdd      Uint32              `json:"tasksToAdd,omitempty"`
+	TasksToRemove   Uint32              `json:"tasksToRemove,omitempty"`
+	ExternalDetails string              `json:"externalDetails,omitempty"`
+	Ext             UpdateKycDetailsExt `json:"ext,omitempty"`
+}
+
 // ReviewRequestOpRequestDetails is an XDR NestedUnion defines as:
 //
 //   union switch(ReviewableRequestType requestType) {
@@ -15600,6 +16804,10 @@ type WithdrawalDetails struct {
 //            LimitsUpdateDetails limitsUpdate;
 //    	case TWO_STEP_WITHDRAWAL:
 //    		WithdrawalDetails twoStepWithdrawal;
+//        case AML_ALERT:
+//            AMLAlertDetails amlAlertDetails;
+//        case UPDATE_KYC:
+//            UpdateKYCDetails updateKYC;
 //    	default:
 //    		void;
 //    	}
@@ -15609,6 +16817,8 @@ type ReviewRequestOpRequestDetails struct {
 	Withdrawal        *WithdrawalDetails    `json:"withdrawal,omitempty"`
 	LimitsUpdate      *LimitsUpdateDetails  `json:"limitsUpdate,omitempty"`
 	TwoStepWithdrawal *WithdrawalDetails    `json:"twoStepWithdrawal,omitempty"`
+	AmlAlertDetails   *AmlAlertDetails      `json:"amlAlertDetails,omitempty"`
+	UpdateKyc         *UpdateKycDetails     `json:"updateKYC,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -15627,6 +16837,10 @@ func (u ReviewRequestOpRequestDetails) ArmForSwitch(sw int32) (string, bool) {
 		return "LimitsUpdate", true
 	case ReviewableRequestTypeTwoStepWithdrawal:
 		return "TwoStepWithdrawal", true
+	case ReviewableRequestTypeAmlAlert:
+		return "AmlAlertDetails", true
+	case ReviewableRequestTypeUpdateKyc:
+		return "UpdateKyc", true
 	default:
 		return "", true
 	}
@@ -15657,6 +16871,20 @@ func NewReviewRequestOpRequestDetails(requestType ReviewableRequestType, value i
 			return
 		}
 		result.TwoStepWithdrawal = &tv
+	case ReviewableRequestTypeAmlAlert:
+		tv, ok := value.(AmlAlertDetails)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be AmlAlertDetails")
+			return
+		}
+		result.AmlAlertDetails = &tv
+	case ReviewableRequestTypeUpdateKyc:
+		tv, ok := value.(UpdateKycDetails)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be UpdateKycDetails")
+			return
+		}
+		result.UpdateKyc = &tv
 	default:
 		// void
 	}
@@ -15738,6 +16966,56 @@ func (u ReviewRequestOpRequestDetails) GetTwoStepWithdrawal() (result Withdrawal
 	return
 }
 
+// MustAmlAlertDetails retrieves the AmlAlertDetails value from the union,
+// panicing if the value is not set.
+func (u ReviewRequestOpRequestDetails) MustAmlAlertDetails() AmlAlertDetails {
+	val, ok := u.GetAmlAlertDetails()
+
+	if !ok {
+		panic("arm AmlAlertDetails is not set")
+	}
+
+	return val
+}
+
+// GetAmlAlertDetails retrieves the AmlAlertDetails value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewRequestOpRequestDetails) GetAmlAlertDetails() (result AmlAlertDetails, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.RequestType))
+
+	if armName == "AmlAlertDetails" {
+		result = *u.AmlAlertDetails
+		ok = true
+	}
+
+	return
+}
+
+// MustUpdateKyc retrieves the UpdateKyc value from the union,
+// panicing if the value is not set.
+func (u ReviewRequestOpRequestDetails) MustUpdateKyc() UpdateKycDetails {
+	val, ok := u.GetUpdateKyc()
+
+	if !ok {
+		panic("arm UpdateKyc is not set")
+	}
+
+	return val
+}
+
+// GetUpdateKyc retrieves the UpdateKyc value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewRequestOpRequestDetails) GetUpdateKyc() (result UpdateKycDetails, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.RequestType))
+
+	if armName == "UpdateKyc" {
+		result = *u.UpdateKyc
+		ok = true
+	}
+
+	return
+}
+
 // ReviewRequestOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -15789,6 +17067,10 @@ func NewReviewRequestOpExt(v LedgerVersion, value interface{}) (result ReviewReq
 //            LimitsUpdateDetails limitsUpdate;
 //    	case TWO_STEP_WITHDRAWAL:
 //    		WithdrawalDetails twoStepWithdrawal;
+//        case AML_ALERT:
+//            AMLAlertDetails amlAlertDetails;
+//        case UPDATE_KYC:
+//            UpdateKYCDetails updateKYC;
 //    	default:
 //    		void;
 //    	} requestDetails;
@@ -15816,10 +17098,10 @@ type ReviewRequestOp struct {
 //
 //   enum ReviewRequestResultCode
 //    {
-//        // codes considered as "success" for the operation
+//        // Codes considered as "success" for the operation
 //        SUCCESS = 0,
 //
-//        // codes considered as "failure" for the operation
+//        // Codes considered as "failure" for the operation
 //        INVALID_REASON = -1,        // reason must be empty if approving and not empty if rejecting
 //    	INVALID_ACTION = -2,
 //    	HASH_MISMATCHED = -3,
@@ -15828,6 +17110,7 @@ type ReviewRequestOp struct {
 //    	REJECT_NOT_ALLOWED = -6, // reject not allowed, use permanent reject
 //    	INVALID_EXTERNAL_DETAILS = -7,
 //    	REQUESTOR_IS_BLOCKED = -8,
+//    	PERMANENT_REJECT_NOT_ALLOWED = -9, // permanent reject not allowed, use reject
 //
 //    	// Asset requests
 //    	ASSET_ALREADY_EXISTS = -20,
@@ -15838,7 +17121,7 @@ type ReviewRequestOp struct {
 //    	INSUFFICIENT_AVAILABLE_FOR_ISSUANCE_AMOUNT = -41,
 //    	FULL_LINE = -42, // can't fund balance - total funds exceed UINT64_MAX
 //
-//    	// sale creation requests
+//    	// Sale creation requests
 //    	BASE_ASSET_DOES_NOT_EXISTS = -50,
 //    	HARD_CAP_WILL_EXCEED_MAX_ISSUANCE = -51,
 //    	INSUFFICIENT_PREISSUED_FOR_HARD_CAP = -52
@@ -15856,6 +17139,7 @@ const (
 	ReviewRequestResultCodeRejectNotAllowed                       ReviewRequestResultCode = -6
 	ReviewRequestResultCodeInvalidExternalDetails                 ReviewRequestResultCode = -7
 	ReviewRequestResultCodeRequestorIsBlocked                     ReviewRequestResultCode = -8
+	ReviewRequestResultCodePermanentRejectNotAllowed              ReviewRequestResultCode = -9
 	ReviewRequestResultCodeAssetAlreadyExists                     ReviewRequestResultCode = -20
 	ReviewRequestResultCodeAssetDoesNotExists                     ReviewRequestResultCode = -21
 	ReviewRequestResultCodeMaxIssuanceAmountExceeded              ReviewRequestResultCode = -40
@@ -15876,6 +17160,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeRejectNotAllowed,
 	ReviewRequestResultCodeInvalidExternalDetails,
 	ReviewRequestResultCodeRequestorIsBlocked,
+	ReviewRequestResultCodePermanentRejectNotAllowed,
 	ReviewRequestResultCodeAssetAlreadyExists,
 	ReviewRequestResultCodeAssetDoesNotExists,
 	ReviewRequestResultCodeMaxIssuanceAmountExceeded,
@@ -15896,6 +17181,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-6:  "ReviewRequestResultCodeRejectNotAllowed",
 	-7:  "ReviewRequestResultCodeInvalidExternalDetails",
 	-8:  "ReviewRequestResultCodeRequestorIsBlocked",
+	-9:  "ReviewRequestResultCodePermanentRejectNotAllowed",
 	-20: "ReviewRequestResultCodeAssetAlreadyExists",
 	-21: "ReviewRequestResultCodeAssetDoesNotExists",
 	-40: "ReviewRequestResultCodeMaxIssuanceAmountExceeded",
@@ -15916,6 +17202,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-6:  "reject_not_allowed",
 	-7:  "invalid_external_details",
 	-8:  "requestor_is_blocked",
+	-9:  "permanent_reject_not_allowed",
 	-20: "asset_already_exists",
 	-21: "asset_does_not_exists",
 	-40: "max_issuance_amount_exceeded",
@@ -15936,6 +17223,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeRejectNotAllowed":                       -6,
 	"ReviewRequestResultCodeInvalidExternalDetails":                 -7,
 	"ReviewRequestResultCodeRequestorIsBlocked":                     -8,
+	"ReviewRequestResultCodePermanentRejectNotAllowed":              -9,
 	"ReviewRequestResultCodeAssetAlreadyExists":                     -20,
 	"ReviewRequestResultCodeAssetDoesNotExists":                     -21,
 	"ReviewRequestResultCodeMaxIssuanceAmountExceeded":              -40,
@@ -18510,6 +19798,65 @@ func (u AuthenticatedMessage) GetV0() (result AuthenticatedMessageV0, ok bool) {
 	return
 }
 
+// AmlAlertRequestExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type AmlAlertRequestExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u AmlAlertRequestExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of AmlAlertRequestExt
+func (u AmlAlertRequestExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewAmlAlertRequestExt creates a new  AmlAlertRequestExt.
+func NewAmlAlertRequestExt(v LedgerVersion, value interface{}) (result AmlAlertRequestExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// AmlAlertRequest is an XDR Struct defines as:
+//
+//   struct AMLAlertRequest {
+//        BalanceID balanceID;
+//        uint64 amount;
+//        string256 reason;
+//    	union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type AmlAlertRequest struct {
+	BalanceId BalanceId          `json:"balanceID,omitempty"`
+	Amount    Uint64             `json:"amount,omitempty"`
+	Reason    String256          `json:"reason,omitempty"`
+	Ext       AmlAlertRequestExt `json:"ext,omitempty"`
+}
+
 // AssetCreationRequestExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -19048,6 +20395,83 @@ type SaleCreationRequest struct {
 	Ext               SaleCreationRequestExt          `json:"ext,omitempty"`
 }
 
+// UpdateKycRequestExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type UpdateKycRequestExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u UpdateKycRequestExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of UpdateKycRequestExt
+func (u UpdateKycRequestExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewUpdateKycRequestExt creates a new  UpdateKycRequestExt.
+func NewUpdateKycRequestExt(v LedgerVersion, value interface{}) (result UpdateKycRequestExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// UpdateKycRequest is an XDR Struct defines as:
+//
+//   struct UpdateKYCRequest {
+//    	AccountID accountToUpdateKYC;
+//    	AccountType accountTypeToSet;
+//    	uint32 kycLevel;
+//    	longstring kycData;
+//
+//    	// Tasks are represented by a bit mask. Each flag(task) in mask refers to specific KYC data validity checker
+//    	uint32 allTasks;
+//    	uint32 pendingTasks;
+//
+//    	// Sequence number increases when request is rejected
+//    	uint32 sequenceNumber;
+//
+//    	// External details vector consists of comments written by KYC data validity checkers
+//    	longstring externalDetails<>;
+//
+//    	// Reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type UpdateKycRequest struct {
+	AccountToUpdateKyc AccountId           `json:"accountToUpdateKYC,omitempty"`
+	AccountTypeToSet   AccountType         `json:"accountTypeToSet,omitempty"`
+	KycLevel           Uint32              `json:"kycLevel,omitempty"`
+	KycData            Longstring          `json:"kycData,omitempty"`
+	AllTasks           Uint32              `json:"allTasks,omitempty"`
+	PendingTasks       Uint32              `json:"pendingTasks,omitempty"`
+	SequenceNumber     Uint32              `json:"sequenceNumber,omitempty"`
+	ExternalDetails    []Longstring        `json:"externalDetails,omitempty"`
+	Ext                UpdateKycRequestExt `json:"ext,omitempty"`
+}
+
 // WithdrawalType is an XDR Enum defines as:
 //
 //   enum WithdrawalType {
@@ -19376,6 +20800,10 @@ type WithdrawalRequest struct {
 //    		CreateSaleCreationRequestOp createSaleCreationRequestOp;
 //    	case CHECK_SALE_STATE:
 //    		CheckSaleStateOp checkSaleStateOp;
+//    	case CREATE_AML_ALERT:
+//    	    CreateAMLAlertRequestOp createAMLAlertRequestOp;
+//    	case CREATE_KYC_REQUEST:
+//    		CreateUpdateKYCRequestOp createUpdateKYCRequestOp;
 //        }
 //
 type OperationBody struct {
@@ -19399,6 +20827,8 @@ type OperationBody struct {
 	ReviewRequestOp             *ReviewRequestOp             `json:"reviewRequestOp,omitempty"`
 	CreateSaleCreationRequestOp *CreateSaleCreationRequestOp `json:"createSaleCreationRequestOp,omitempty"`
 	CheckSaleStateOp            *CheckSaleStateOp            `json:"checkSaleStateOp,omitempty"`
+	CreateAmlAlertRequestOp     *CreateAmlAlertRequestOp     `json:"createAMLAlertRequestOp,omitempty"`
+	CreateUpdateKycRequestOp    *CreateUpdateKycRequestOp    `json:"createUpdateKYCRequestOp,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -19449,6 +20879,10 @@ func (u OperationBody) ArmForSwitch(sw int32) (string, bool) {
 		return "CreateSaleCreationRequestOp", true
 	case OperationTypeCheckSaleState:
 		return "CheckSaleStateOp", true
+	case OperationTypeCreateAmlAlert:
+		return "CreateAmlAlertRequestOp", true
+	case OperationTypeCreateKycRequest:
+		return "CreateUpdateKycRequestOp", true
 	}
 	return "-", false
 }
@@ -19590,6 +21024,20 @@ func NewOperationBody(aType OperationType, value interface{}) (result OperationB
 			return
 		}
 		result.CheckSaleStateOp = &tv
+	case OperationTypeCreateAmlAlert:
+		tv, ok := value.(CreateAmlAlertRequestOp)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CreateAmlAlertRequestOp")
+			return
+		}
+		result.CreateAmlAlertRequestOp = &tv
+	case OperationTypeCreateKycRequest:
+		tv, ok := value.(CreateUpdateKycRequestOp)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CreateUpdateKycRequestOp")
+			return
+		}
+		result.CreateUpdateKycRequestOp = &tv
 	}
 	return
 }
@@ -20069,6 +21517,56 @@ func (u OperationBody) GetCheckSaleStateOp() (result CheckSaleStateOp, ok bool) 
 	return
 }
 
+// MustCreateAmlAlertRequestOp retrieves the CreateAmlAlertRequestOp value from the union,
+// panicing if the value is not set.
+func (u OperationBody) MustCreateAmlAlertRequestOp() CreateAmlAlertRequestOp {
+	val, ok := u.GetCreateAmlAlertRequestOp()
+
+	if !ok {
+		panic("arm CreateAmlAlertRequestOp is not set")
+	}
+
+	return val
+}
+
+// GetCreateAmlAlertRequestOp retrieves the CreateAmlAlertRequestOp value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationBody) GetCreateAmlAlertRequestOp() (result CreateAmlAlertRequestOp, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "CreateAmlAlertRequestOp" {
+		result = *u.CreateAmlAlertRequestOp
+		ok = true
+	}
+
+	return
+}
+
+// MustCreateUpdateKycRequestOp retrieves the CreateUpdateKycRequestOp value from the union,
+// panicing if the value is not set.
+func (u OperationBody) MustCreateUpdateKycRequestOp() CreateUpdateKycRequestOp {
+	val, ok := u.GetCreateUpdateKycRequestOp()
+
+	if !ok {
+		panic("arm CreateUpdateKycRequestOp is not set")
+	}
+
+	return val
+}
+
+// GetCreateUpdateKycRequestOp retrieves the CreateUpdateKycRequestOp value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationBody) GetCreateUpdateKycRequestOp() (result CreateUpdateKycRequestOp, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "CreateUpdateKycRequestOp" {
+		result = *u.CreateUpdateKycRequestOp
+		ok = true
+	}
+
+	return
+}
+
 // Operation is an XDR Struct defines as:
 //
 //   struct Operation
@@ -20118,6 +21616,10 @@ func (u OperationBody) GetCheckSaleStateOp() (result CheckSaleStateOp, ok bool) 
 //    		CreateSaleCreationRequestOp createSaleCreationRequestOp;
 //    	case CHECK_SALE_STATE:
 //    		CheckSaleStateOp checkSaleStateOp;
+//    	case CREATE_AML_ALERT:
+//    	    CreateAMLAlertRequestOp createAMLAlertRequestOp;
+//    	case CREATE_KYC_REQUEST:
+//    		CreateUpdateKYCRequestOp createUpdateKYCRequestOp;
 //        }
 //        body;
 //    };
@@ -20706,6 +22208,10 @@ func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
 //    		CreateSaleCreationRequestResult createSaleCreationRequestResult;
 //    	case CHECK_SALE_STATE:
 //    		CheckSaleStateResult checkSaleStateResult;
+//        case CREATE_AML_ALERT:
+//            CreateAMLAlertRequestResult createAMLAlertRequestResult;
+//    	case CREATE_KYC_REQUEST:
+//    	    CreateUpdateKYCRequestResult createUpdateKYCRequestResult;
 //        }
 //
 type OperationResultTr struct {
@@ -20729,6 +22235,8 @@ type OperationResultTr struct {
 	ReviewRequestResult             *ReviewRequestResult             `json:"reviewRequestResult,omitempty"`
 	CreateSaleCreationRequestResult *CreateSaleCreationRequestResult `json:"createSaleCreationRequestResult,omitempty"`
 	CheckSaleStateResult            *CheckSaleStateResult            `json:"checkSaleStateResult,omitempty"`
+	CreateAmlAlertRequestResult     *CreateAmlAlertRequestResult     `json:"createAMLAlertRequestResult,omitempty"`
+	CreateUpdateKycRequestResult    *CreateUpdateKycRequestResult    `json:"createUpdateKYCRequestResult,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -20779,6 +22287,10 @@ func (u OperationResultTr) ArmForSwitch(sw int32) (string, bool) {
 		return "CreateSaleCreationRequestResult", true
 	case OperationTypeCheckSaleState:
 		return "CheckSaleStateResult", true
+	case OperationTypeCreateAmlAlert:
+		return "CreateAmlAlertRequestResult", true
+	case OperationTypeCreateKycRequest:
+		return "CreateUpdateKycRequestResult", true
 	}
 	return "-", false
 }
@@ -20920,6 +22432,20 @@ func NewOperationResultTr(aType OperationType, value interface{}) (result Operat
 			return
 		}
 		result.CheckSaleStateResult = &tv
+	case OperationTypeCreateAmlAlert:
+		tv, ok := value.(CreateAmlAlertRequestResult)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CreateAmlAlertRequestResult")
+			return
+		}
+		result.CreateAmlAlertRequestResult = &tv
+	case OperationTypeCreateKycRequest:
+		tv, ok := value.(CreateUpdateKycRequestResult)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CreateUpdateKycRequestResult")
+			return
+		}
+		result.CreateUpdateKycRequestResult = &tv
 	}
 	return
 }
@@ -21399,6 +22925,56 @@ func (u OperationResultTr) GetCheckSaleStateResult() (result CheckSaleStateResul
 	return
 }
 
+// MustCreateAmlAlertRequestResult retrieves the CreateAmlAlertRequestResult value from the union,
+// panicing if the value is not set.
+func (u OperationResultTr) MustCreateAmlAlertRequestResult() CreateAmlAlertRequestResult {
+	val, ok := u.GetCreateAmlAlertRequestResult()
+
+	if !ok {
+		panic("arm CreateAmlAlertRequestResult is not set")
+	}
+
+	return val
+}
+
+// GetCreateAmlAlertRequestResult retrieves the CreateAmlAlertRequestResult value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationResultTr) GetCreateAmlAlertRequestResult() (result CreateAmlAlertRequestResult, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "CreateAmlAlertRequestResult" {
+		result = *u.CreateAmlAlertRequestResult
+		ok = true
+	}
+
+	return
+}
+
+// MustCreateUpdateKycRequestResult retrieves the CreateUpdateKycRequestResult value from the union,
+// panicing if the value is not set.
+func (u OperationResultTr) MustCreateUpdateKycRequestResult() CreateUpdateKycRequestResult {
+	val, ok := u.GetCreateUpdateKycRequestResult()
+
+	if !ok {
+		panic("arm CreateUpdateKycRequestResult is not set")
+	}
+
+	return val
+}
+
+// GetCreateUpdateKycRequestResult retrieves the CreateUpdateKycRequestResult value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationResultTr) GetCreateUpdateKycRequestResult() (result CreateUpdateKycRequestResult, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "CreateUpdateKycRequestResult" {
+		result = *u.CreateUpdateKycRequestResult
+		ok = true
+	}
+
+	return
+}
+
 // OperationResult is an XDR Union defines as:
 //
 //   union OperationResult switch (OperationResultCode code)
@@ -21444,6 +23020,10 @@ func (u OperationResultTr) GetCheckSaleStateResult() (result CheckSaleStateResul
 //    		CreateSaleCreationRequestResult createSaleCreationRequestResult;
 //    	case CHECK_SALE_STATE:
 //    		CheckSaleStateResult checkSaleStateResult;
+//        case CREATE_AML_ALERT:
+//            CreateAMLAlertRequestResult createAMLAlertRequestResult;
+//    	case CREATE_KYC_REQUEST:
+//    	    CreateUpdateKYCRequestResult createUpdateKYCRequestResult;
 //        }
 //        tr;
 //    default:
@@ -22115,7 +23695,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	TYPED_SALE = 4, // sales can have type
 //    	UNIQUE_BALANCE_CREATION = 5, // allows to specify in manage balance that balance should not be created if one for such asset and account exists
 //    	ASSET_PREISSUER_MIGRATION = 6,
-//    	ASSET_PREISSUER_MIGRATED = 7
+//    	ASSET_PREISSUER_MIGRATED = 7,
+//    	USE_KYC_LEVEL = 8
 //    };
 //
 type LedgerVersion int32
@@ -22129,6 +23710,7 @@ const (
 	LedgerVersionUniqueBalanceCreation           LedgerVersion = 5
 	LedgerVersionAssetPreissuerMigration         LedgerVersion = 6
 	LedgerVersionAssetPreissuerMigrated          LedgerVersion = 7
+	LedgerVersionUseKycLevel                     LedgerVersion = 8
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -22140,6 +23722,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionUniqueBalanceCreation,
 	LedgerVersionAssetPreissuerMigration,
 	LedgerVersionAssetPreissuerMigrated,
+	LedgerVersionUseKycLevel,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -22151,6 +23734,7 @@ var ledgerVersionMap = map[int32]string{
 	5: "LedgerVersionUniqueBalanceCreation",
 	6: "LedgerVersionAssetPreissuerMigration",
 	7: "LedgerVersionAssetPreissuerMigrated",
+	8: "LedgerVersionUseKycLevel",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -22162,6 +23746,7 @@ var ledgerVersionShortMap = map[int32]string{
 	5: "unique_balance_creation",
 	6: "asset_preissuer_migration",
 	7: "asset_preissuer_migrated",
+	8: "use_kyc_level",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -22173,6 +23758,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionUniqueBalanceCreation":           5,
 	"LedgerVersionAssetPreissuerMigration":         6,
 	"LedgerVersionAssetPreissuerMigrated":          7,
+	"LedgerVersionUseKycLevel":                     8,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -22552,7 +24138,9 @@ type Fee struct {
 //        MANAGE_INVOICE = 17,
 //    	REVIEW_REQUEST = 18,
 //    	CREATE_SALE_REQUEST = 19,
-//    	CHECK_SALE_STATE = 20
+//    	CHECK_SALE_STATE = 20,
+//        CREATE_AML_ALERT = 21,
+//        CREATE_KYC_REQUEST = 22
 //    };
 //
 type OperationType int32
@@ -22577,6 +24165,8 @@ const (
 	OperationTypeReviewRequest            OperationType = 18
 	OperationTypeCreateSaleRequest        OperationType = 19
 	OperationTypeCheckSaleState           OperationType = 20
+	OperationTypeCreateAmlAlert           OperationType = 21
+	OperationTypeCreateKycRequest         OperationType = 22
 )
 
 var OperationTypeAll = []OperationType{
@@ -22599,6 +24189,8 @@ var OperationTypeAll = []OperationType{
 	OperationTypeReviewRequest,
 	OperationTypeCreateSaleRequest,
 	OperationTypeCheckSaleState,
+	OperationTypeCreateAmlAlert,
+	OperationTypeCreateKycRequest,
 }
 
 var operationTypeMap = map[int32]string{
@@ -22621,6 +24213,8 @@ var operationTypeMap = map[int32]string{
 	18: "OperationTypeReviewRequest",
 	19: "OperationTypeCreateSaleRequest",
 	20: "OperationTypeCheckSaleState",
+	21: "OperationTypeCreateAmlAlert",
+	22: "OperationTypeCreateKycRequest",
 }
 
 var operationTypeShortMap = map[int32]string{
@@ -22643,6 +24237,8 @@ var operationTypeShortMap = map[int32]string{
 	18: "review_request",
 	19: "create_sale_request",
 	20: "check_sale_state",
+	21: "create_aml_alert",
+	22: "create_kyc_request",
 }
 
 var operationTypeRevMap = map[string]int32{
@@ -22665,6 +24261,8 @@ var operationTypeRevMap = map[string]int32{
 	"OperationTypeReviewRequest":            18,
 	"OperationTypeCreateSaleRequest":        19,
 	"OperationTypeCheckSaleState":           20,
+	"OperationTypeCreateAmlAlert":           21,
+	"OperationTypeCreateKycRequest":         22,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
