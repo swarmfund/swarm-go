@@ -14570,7 +14570,7 @@ type ManageOfferOp struct {
 //    	INVALID_AMOUNT = -22, // amount must be positive
 //    	SALE_IS_NOT_ACTIVE = -23,
 //    	REQUIRES_KYC = -24, // source must have KYC in order to participate
-//    	REQUIRES_IS_BUY = -25 //offers, related to sales must have isBuy set to true
+//    	SELLING_NOT_ALLOWED = -25 // cannot create selling offers for participation in sale
 //    };
 //
 type ManageOfferResultCode int32
@@ -14601,7 +14601,7 @@ const (
 	ManageOfferResultCodeInvalidAmount            ManageOfferResultCode = -22
 	ManageOfferResultCodeSaleIsNotActive          ManageOfferResultCode = -23
 	ManageOfferResultCodeRequiresKyc              ManageOfferResultCode = -24
-	ManageOfferResultCodeRequiresIsBuy            ManageOfferResultCode = -25
+	ManageOfferResultCodeSellingNotAllowed        ManageOfferResultCode = -25
 )
 
 var ManageOfferResultCodeAll = []ManageOfferResultCode{
@@ -14630,7 +14630,7 @@ var ManageOfferResultCodeAll = []ManageOfferResultCode{
 	ManageOfferResultCodeInvalidAmount,
 	ManageOfferResultCodeSaleIsNotActive,
 	ManageOfferResultCodeRequiresKyc,
-	ManageOfferResultCodeRequiresIsBuy,
+	ManageOfferResultCodeSellingNotAllowed,
 }
 
 var manageOfferResultCodeMap = map[int32]string{
@@ -14659,7 +14659,7 @@ var manageOfferResultCodeMap = map[int32]string{
 	-22: "ManageOfferResultCodeInvalidAmount",
 	-23: "ManageOfferResultCodeSaleIsNotActive",
 	-24: "ManageOfferResultCodeRequiresKyc",
-	-25: "ManageOfferResultCodeRequiresIsBuy",
+	-25: "ManageOfferResultCodeSellingNotAllowed",
 }
 
 var manageOfferResultCodeShortMap = map[int32]string{
@@ -14688,7 +14688,7 @@ var manageOfferResultCodeShortMap = map[int32]string{
 	-22: "invalid_amount",
 	-23: "sale_is_not_active",
 	-24: "requires_kyc",
-	-25: "requires_is_buy",
+	-25: "selling_not_allowed",
 }
 
 var manageOfferResultCodeRevMap = map[string]int32{
@@ -14717,7 +14717,7 @@ var manageOfferResultCodeRevMap = map[string]int32{
 	"ManageOfferResultCodeInvalidAmount":            -22,
 	"ManageOfferResultCodeSaleIsNotActive":          -23,
 	"ManageOfferResultCodeRequiresKyc":              -24,
-	"ManageOfferResultCodeRequiresIsBuy":            -25,
+	"ManageOfferResultCodeSellingNotAllowed":        -25,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -17124,7 +17124,10 @@ type ReviewRequestOp struct {
 //    	// Sale creation requests
 //    	BASE_ASSET_DOES_NOT_EXISTS = -50,
 //    	HARD_CAP_WILL_EXCEED_MAX_ISSUANCE = -51,
-//    	INSUFFICIENT_PREISSUED_FOR_HARD_CAP = -52
+//    	INSUFFICIENT_PREISSUED_FOR_HARD_CAP = -52,
+//
+//    	// Update KYC requests
+//    	NON_ZERO_TASKS_TO_REMOVE_NOT_ALLOWED = -60
 //    };
 //
 type ReviewRequestResultCode int32
@@ -17148,6 +17151,7 @@ const (
 	ReviewRequestResultCodeBaseAssetDoesNotExists                 ReviewRequestResultCode = -50
 	ReviewRequestResultCodeHardCapWillExceedMaxIssuance           ReviewRequestResultCode = -51
 	ReviewRequestResultCodeInsufficientPreissuedForHardCap        ReviewRequestResultCode = -52
+	ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed         ReviewRequestResultCode = -60
 )
 
 var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
@@ -17169,6 +17173,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeBaseAssetDoesNotExists,
 	ReviewRequestResultCodeHardCapWillExceedMaxIssuance,
 	ReviewRequestResultCodeInsufficientPreissuedForHardCap,
+	ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed,
 }
 
 var reviewRequestResultCodeMap = map[int32]string{
@@ -17190,6 +17195,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-50: "ReviewRequestResultCodeBaseAssetDoesNotExists",
 	-51: "ReviewRequestResultCodeHardCapWillExceedMaxIssuance",
 	-52: "ReviewRequestResultCodeInsufficientPreissuedForHardCap",
+	-60: "ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed",
 }
 
 var reviewRequestResultCodeShortMap = map[int32]string{
@@ -17211,6 +17217,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-50: "base_asset_does_not_exists",
 	-51: "hard_cap_will_exceed_max_issuance",
 	-52: "insufficient_preissued_for_hard_cap",
+	-60: "non_zero_tasks_to_remove_not_allowed",
 }
 
 var reviewRequestResultCodeRevMap = map[string]int32{
@@ -17232,6 +17239,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeBaseAssetDoesNotExists":                 -50,
 	"ReviewRequestResultCodeHardCapWillExceedMaxIssuance":           -51,
 	"ReviewRequestResultCodeInsufficientPreissuedForHardCap":        -52,
+	"ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed":         -60,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -23696,21 +23704,27 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	UNIQUE_BALANCE_CREATION = 5, // allows to specify in manage balance that balance should not be created if one for such asset and account exists
 //    	ASSET_PREISSUER_MIGRATION = 6,
 //    	ASSET_PREISSUER_MIGRATED = 7,
-//    	USE_KYC_LEVEL = 8
+//    	USE_KYC_LEVEL = 8,
+//    	ERROR_ON_NON_ZERO_TASKS_TO_REMOVE_IN_REJECT_KYC = 9,
+//    	ALLOW_ACCOUNT_MANAGER_TO_CHANGE_KYC = 10,
+//    	ALLOW_UPDATE_OFFERS = 11
 //    };
 //
 type LedgerVersion int32
 
 const (
-	LedgerVersionEmptyVersion                    LedgerVersion = 0
-	LedgerVersionPassExternalSysAccIdInCreateAcc LedgerVersion = 1
-	LedgerVersionDetailedLedgerChanges           LedgerVersion = 2
-	LedgerVersionNewSignerTypes                  LedgerVersion = 3
-	LedgerVersionTypedSale                       LedgerVersion = 4
-	LedgerVersionUniqueBalanceCreation           LedgerVersion = 5
-	LedgerVersionAssetPreissuerMigration         LedgerVersion = 6
-	LedgerVersionAssetPreissuerMigrated          LedgerVersion = 7
-	LedgerVersionUseKycLevel                     LedgerVersion = 8
+	LedgerVersionEmptyVersion                           LedgerVersion = 0
+	LedgerVersionPassExternalSysAccIdInCreateAcc        LedgerVersion = 1
+	LedgerVersionDetailedLedgerChanges                  LedgerVersion = 2
+	LedgerVersionNewSignerTypes                         LedgerVersion = 3
+	LedgerVersionTypedSale                              LedgerVersion = 4
+	LedgerVersionUniqueBalanceCreation                  LedgerVersion = 5
+	LedgerVersionAssetPreissuerMigration                LedgerVersion = 6
+	LedgerVersionAssetPreissuerMigrated                 LedgerVersion = 7
+	LedgerVersionUseKycLevel                            LedgerVersion = 8
+	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc LedgerVersion = 9
+	LedgerVersionAllowAccountManagerToChangeKyc         LedgerVersion = 10
+	LedgerVersionAllowUpdateOffers                      LedgerVersion = 11
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -23723,42 +23737,54 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAssetPreissuerMigration,
 	LedgerVersionAssetPreissuerMigrated,
 	LedgerVersionUseKycLevel,
+	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc,
+	LedgerVersionAllowAccountManagerToChangeKyc,
+	LedgerVersionAllowUpdateOffers,
 }
 
 var ledgerVersionMap = map[int32]string{
-	0: "LedgerVersionEmptyVersion",
-	1: "LedgerVersionPassExternalSysAccIdInCreateAcc",
-	2: "LedgerVersionDetailedLedgerChanges",
-	3: "LedgerVersionNewSignerTypes",
-	4: "LedgerVersionTypedSale",
-	5: "LedgerVersionUniqueBalanceCreation",
-	6: "LedgerVersionAssetPreissuerMigration",
-	7: "LedgerVersionAssetPreissuerMigrated",
-	8: "LedgerVersionUseKycLevel",
+	0:  "LedgerVersionEmptyVersion",
+	1:  "LedgerVersionPassExternalSysAccIdInCreateAcc",
+	2:  "LedgerVersionDetailedLedgerChanges",
+	3:  "LedgerVersionNewSignerTypes",
+	4:  "LedgerVersionTypedSale",
+	5:  "LedgerVersionUniqueBalanceCreation",
+	6:  "LedgerVersionAssetPreissuerMigration",
+	7:  "LedgerVersionAssetPreissuerMigrated",
+	8:  "LedgerVersionUseKycLevel",
+	9:  "LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc",
+	10: "LedgerVersionAllowAccountManagerToChangeKyc",
+	11: "LedgerVersionAllowUpdateOffers",
 }
 
 var ledgerVersionShortMap = map[int32]string{
-	0: "empty_version",
-	1: "pass_external_sys_acc_id_in_create_acc",
-	2: "detailed_ledger_changes",
-	3: "new_signer_types",
-	4: "typed_sale",
-	5: "unique_balance_creation",
-	6: "asset_preissuer_migration",
-	7: "asset_preissuer_migrated",
-	8: "use_kyc_level",
+	0:  "empty_version",
+	1:  "pass_external_sys_acc_id_in_create_acc",
+	2:  "detailed_ledger_changes",
+	3:  "new_signer_types",
+	4:  "typed_sale",
+	5:  "unique_balance_creation",
+	6:  "asset_preissuer_migration",
+	7:  "asset_preissuer_migrated",
+	8:  "use_kyc_level",
+	9:  "error_on_non_zero_tasks_to_remove_in_reject_kyc",
+	10: "allow_account_manager_to_change_kyc",
+	11: "allow_update_offers",
 }
 
 var ledgerVersionRevMap = map[string]int32{
-	"LedgerVersionEmptyVersion":                    0,
-	"LedgerVersionPassExternalSysAccIdInCreateAcc": 1,
-	"LedgerVersionDetailedLedgerChanges":           2,
-	"LedgerVersionNewSignerTypes":                  3,
-	"LedgerVersionTypedSale":                       4,
-	"LedgerVersionUniqueBalanceCreation":           5,
-	"LedgerVersionAssetPreissuerMigration":         6,
-	"LedgerVersionAssetPreissuerMigrated":          7,
-	"LedgerVersionUseKycLevel":                     8,
+	"LedgerVersionEmptyVersion":                           0,
+	"LedgerVersionPassExternalSysAccIdInCreateAcc":        1,
+	"LedgerVersionDetailedLedgerChanges":                  2,
+	"LedgerVersionNewSignerTypes":                         3,
+	"LedgerVersionTypedSale":                              4,
+	"LedgerVersionUniqueBalanceCreation":                  5,
+	"LedgerVersionAssetPreissuerMigration":                6,
+	"LedgerVersionAssetPreissuerMigrated":                 7,
+	"LedgerVersionUseKycLevel":                            8,
+	"LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc": 9,
+	"LedgerVersionAllowAccountManagerToChangeKyc":         10,
+	"LedgerVersionAllowUpdateOffers":                      11,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
