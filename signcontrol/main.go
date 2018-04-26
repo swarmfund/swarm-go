@@ -1,13 +1,14 @@
 package signcontrol
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"gitlab.com/tokend/go/hash"
 	"gitlab.com/tokend/go/keypair"
+	"gitlab.com/tokend/go/signcontrol/internal/httpsignatures"
 	"gitlab.com/tokend/go/xdr"
 )
 
@@ -15,7 +16,6 @@ const (
 	SignatureHeader  = "x-authsignature"
 	PublicKeyHeader  = "x-authpublickey"
 	ValidUntilHeader = "x-authvaliduntilltimestamp"
-	ValidUntilOffset = 60
 )
 
 type Signature struct {
@@ -39,32 +39,20 @@ func IsSigned(request *http.Request) (*Signature, bool) {
 }
 
 func SignRequest(request *http.Request, kp keypair.KP) error {
-	// TODO check if request is nil
-	// TODO check if kp is nil
-
-	validUntil := fmt.Sprintf("%d", time.Now().Unix()+ValidUntilOffset)
-
-	request.Header.Set(ValidUntilHeader, validUntil)
-	request.Header.Set(PublicKeyHeader, kp.Address())
-
-	base := fmt.Sprintf("{ uri: '%s', valid_untill: '%s'}", request.URL.RequestURI(), validUntil)
-	hashBase := hash.Hash([]byte(base))
-
-	decorated, err := kp.SignDecorated(hashBase[:])
+	signer := httpsignatures.NewSigner(httpsignatures.KeypairAlgorithm{}, "date", httpsignatures.RequestTarget)
+	err := signer.SignRequest(kp.Address(), kp, request)
 	if err != nil {
 		return err
 	}
-
-	encodedSign, err := xdr.MarshalBase64(decorated)
-	if err != nil {
-		return err
-	}
-
-	request.Header.Set(SignatureHeader, encodedSign)
 	return nil
 }
 
 func CheckSignature(request *http.Request) (string, error) {
+	// check if it v2 signature
+	if request.Header.Get("signature") != "" || request.Header.Get("authorization") != "" {
+		return checkV2(request)
+	}
+
 	// TODO cache results to request.Context()
 	sig, ok := IsSigned(request)
 	if !ok {
@@ -98,4 +86,15 @@ func CheckSignature(request *http.Request) (string, error) {
 	}
 
 	return sig.Signer, nil
+}
+
+func checkV2(request *http.Request) (string, error) {
+	signature, err := httpsignatures.FromRequest(request)
+	if err != nil {
+		return "", err
+	}
+	if ok := signature.IsValid(request); !ok {
+		return "", errors.New("invalid signature")
+	}
+	return signature.KeyID, nil
 }

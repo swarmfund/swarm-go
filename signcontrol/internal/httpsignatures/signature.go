@@ -3,8 +3,6 @@
 package httpsignatures
 
 import (
-	"crypto/ecdsa"
-	"crypto/rsa"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -136,7 +134,7 @@ func (s *Signature) sign(key interface{}, r *http.Request) error {
 }
 
 // IsValid validates this signature for the given key
-func (s Signature) IsValid(key interface{}, r *http.Request) bool {
+func (s Signature) IsValid(r *http.Request) bool {
 	if !s.Headers.hasDate() {
 		return false
 	}
@@ -147,18 +145,6 @@ func (s Signature) IsValid(key interface{}, r *http.Request) bool {
 	}
 
 	return s.Algorithm.Verify(s, []byte(signingString))
-}
-
-// IsValidRSA validates that the request was signed by an RSA private key, using
-// the public key for verification.
-func (s Signature) IsValidRSA(key *rsa.PublicKey, r *http.Request) bool {
-	return s.IsValid(key, r)
-}
-
-// IsValidECDSA validates that the request was signed by an ECDSA private key,
-// using the public key for verification.
-func (s Signature) IsValidECDSA(key *ecdsa.PublicKey, r *http.Request) bool {
-	return s.IsValid(key, r)
 }
 
 type HeaderList []string
