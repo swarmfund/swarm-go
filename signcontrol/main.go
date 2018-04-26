@@ -1,33 +1,21 @@
 package signcontrol
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
-
-	"fmt"
-
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 
 	"gitlab.com/tokend/go/hash"
 	"gitlab.com/tokend/go/keypair"
 	"gitlab.com/tokend/go/xdr"
 )
 
-type ctxKey int
-
 const (
-	SkipValidation ctxKey = iota
-)
-
-const (
-	SignatureHeader     = "x-authsignature"
-	HMACSignatureHeader = "x-hmac-signature"
-	PublicKeyHeader     = "x-authpublickey"
-	ValidUntilHeader    = "x-authvaliduntilltimestamp"
-	ValidUntilOffset    = 60
+	SignatureHeader  = "x-authsignature"
+	PublicKeyHeader  = "x-authpublickey"
+	ValidUntilHeader = "x-authvaliduntilltimestamp"
+	ValidUntilOffset = 60
 )
 
 type Signature struct {
@@ -110,24 +98,4 @@ func CheckSignature(request *http.Request) (string, error) {
 	}
 
 	return sig.Signer, nil
-}
-
-func CheckHMACSignature(request *http.Request, key string) error {
-	signature := request.Header.Get(HMACSignatureHeader)
-	rawValidUntil := request.Header.Get(ValidUntilHeader)
-	signer := request.Header.Get(PublicKeyHeader)
-
-	if signature == "" || signer == "" || rawValidUntil == "" {
-		return ErrNotSigned
-	}
-
-	base := fmt.Sprintf("%s:%s:%s", request.Method, request.URL.RequestURI(), rawValidUntil)
-	h := hmac.New(sha256.New, []byte(key))
-	h.Write([]byte(base))
-	sign := h.Sum(nil)
-	encodedSign := hex.EncodeToString(sign)
-	if encodedSign != signature {
-		return ErrNotAllowed
-	}
-	return nil
 }
