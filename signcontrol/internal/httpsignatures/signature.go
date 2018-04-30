@@ -98,7 +98,7 @@ func (s Signature) String() string {
 		`keyId="%s",algorithm="%s",signature="%s"`,
 		s.KeyID,
 		s.Algorithm.Name(),
-		s.Signature,
+		base64.StdEncoding.EncodeToString(s.Signature),
 	)
 
 	if len(s.Headers) > 0 {
