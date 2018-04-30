@@ -8,7 +8,7 @@ import (
 var (
 	mutex              = sync.Mutex{}
 	algorithms         = map[string]Algorithm{}
-	ErrNoSuchAlgorithm = errors.New("not such algorithm")
+	ErrNoSuchAlgorithm = errors.New("no such algorithm")
 	ErrUnexpectedKey   = errors.New("unexpected key")
 )
 
@@ -18,7 +18,7 @@ func RegisterAlgorithm(algo Algorithm) {
 	algorithms[algo.Name()] = algo
 }
 
-func getAlgorithm(name string) (Algorithm, error) {
+func GetAlgorithm(name string) (Algorithm, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	algorithm, ok := algorithms[name]

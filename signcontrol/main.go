@@ -1,11 +1,11 @@
 package signcontrol
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
 	"gitlab.com/tokend/go/hash"
 	"gitlab.com/tokend/go/keypair"
 	"gitlab.com/tokend/go/signcontrol/internal/httpsignatures"
@@ -16,6 +16,9 @@ const (
 	SignatureHeader  = "x-authsignature"
 	PublicKeyHeader  = "x-authpublickey"
 	ValidUntilHeader = "x-authvaliduntilltimestamp"
+
+	// SignatureAlgorithm default algorithm used to sign requests
+	SignatureAlgorithm = "ed25519-sha256"
 )
 
 type Signature struct {
@@ -39,9 +42,12 @@ func IsSigned(request *http.Request) (*Signature, bool) {
 }
 
 func SignRequest(request *http.Request, kp keypair.KP) error {
-	signer := httpsignatures.NewSigner(httpsignatures.KeypairAlgorithm{}, "date", httpsignatures.RequestTarget)
-	err := signer.SignRequest(kp.Address(), kp, request)
+	algorithm, err := httpsignatures.GetAlgorithm(SignatureAlgorithm)
 	if err != nil {
+		return errors.Wrap(err, "failed to get signature algorithm")
+	}
+	signer := httpsignatures.NewSigner(algorithm, "date", httpsignatures.RequestTarget)
+	if err = signer.SignRequest(kp.Address(), kp, request); err != nil {
 		return err
 	}
 	return nil
@@ -91,6 +97,7 @@ func CheckSignature(request *http.Request) (string, error) {
 func checkV2(request *http.Request) (string, error) {
 	signature, err := httpsignatures.FromRequest(request)
 	if err != nil {
+		// TODO check for no such algorithm
 		return "", err
 	}
 	if ok := signature.IsValid(request); !ok {

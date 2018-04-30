@@ -37,7 +37,7 @@ func (a KeypairAlgorithm) Verify(signature Signature, digest []byte) bool {
 }
 
 func (a KeypairAlgorithm) Name() string {
-	return "ED25519-SHA256"
+	return "ed25519-sha256"
 }
 
 func init() {

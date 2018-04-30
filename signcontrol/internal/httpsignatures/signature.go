@@ -59,7 +59,7 @@ func FromString(in string) (*Signature, error) {
 		if key == "keyId" {
 			res.KeyID = value
 		} else if key == "algorithm" {
-			alg, err := getAlgorithm(value)
+			alg, err := GetAlgorithm(value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to get algorithm")
 			}
