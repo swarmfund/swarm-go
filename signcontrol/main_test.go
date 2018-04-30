@@ -17,13 +17,12 @@ const (
 
 func TestSignRequest(t *testing.T) {
 	kp, _ := keypair.Parse(seed)
-	request, _ := http.NewRequest("GET", "http://example.com/users", nil)
+	request, _ := http.NewRequest("GET", "http://example.com/fo?ob=ar", nil)
 	request.Header.Set("date", "Sun, 05 Jan 2014 21:31:40 GMT")
-
 	err := SignRequest(request, kp)
 	assert.NoError(t, err)
 	assert.Equal(t,
-		fmt.Sprintf(`keyId="%s",algorithm="%s",signature="gg0tjYeo/wicZVKpR/NRCUoIgJSLZdb4s5RXAQ1jNF1VYs4W3wDGg1JWQM1U3tCQscIzfYlTNRsgW1JA2ax5Ag==",headers="date (request-target)"`, kp.Address(), SignatureAlgorithm),
+		fmt.Sprintf(`keyId="%s",algorithm="%s",signature="b3nmxe6bTCIlKh4+YAP11i2i5CRkACsNlXS+LKdzGTHKG3puuCHRGlvUmfF/RMgQUPep6YC/5Bu/ZmD9egy5Dg==",headers="date (request-target)"`, kp.Address(), SignatureAlgorithm),
 		request.Header.Get("signature"),
 	)
 }

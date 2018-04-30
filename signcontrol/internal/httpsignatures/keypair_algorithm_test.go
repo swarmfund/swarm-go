@@ -24,7 +24,7 @@ func TestKeypairAlgorithm(t *testing.T) {
 	msg := []byte("hello")
 
 	t.Run("name", func(t *testing.T) {
-		assert.Equal(t, "ED25519-SHA256", algorithm.Name())
+		assert.Equal(t, "ed25519-sha256", algorithm.Name())
 	})
 
 	t.Run("sign", func(t *testing.T) {
