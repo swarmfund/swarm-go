@@ -8,6 +8,7 @@
 //  xdr/raw/Stellar-ledger-entries-asset-pair.x
 //  xdr/raw/Stellar-ledger-entries-asset.x
 //  xdr/raw/Stellar-ledger-entries-balance.x
+//  xdr/raw/Stellar-ledger-entries-external-system-id-pool-entry.x
 //  xdr/raw/Stellar-ledger-entries-external-system-id.x
 //  xdr/raw/Stellar-ledger-entries-fee.x
 //  xdr/raw/Stellar-ledger-entries-invoice.x
@@ -19,6 +20,7 @@
 //  xdr/raw/Stellar-ledger-entries-statistics.x
 //  xdr/raw/Stellar-ledger-entries.x
 //  xdr/raw/Stellar-ledger.x
+//  xdr/raw/Stellar-operation-bind-external-system-id.x
 //  xdr/raw/Stellar-operation-check-sale-state.x
 //  xdr/raw/Stellar-operation-create-AML-alert-request.x
 //  xdr/raw/Stellar-operation-create-KYC-request.x
@@ -32,6 +34,7 @@
 //  xdr/raw/Stellar-operation-manage-asset-pair.x
 //  xdr/raw/Stellar-operation-manage-asset.x
 //  xdr/raw/Stellar-operation-manage-balance.x
+//  xdr/raw/Stellar-operation-manage-external-system-id-pool-entry.x
 //  xdr/raw/Stellar-operation-manage-invoice.x
 //  xdr/raw/Stellar-operation-manage-offer.x
 //  xdr/raw/Stellar-operation-payment.x
@@ -754,38 +757,40 @@ type AccountTypeLimitsEntry struct {
 //        AML_ALERT_MANAGER = 4194304, // can manage AML alert request
 //        AML_ALERT_REVIEWER = 8388608, // can review aml alert requests
 //    	KYC_ACC_MANAGER = 16777216, // can manage kyc
-//    	KYC_SUPER_ADMIN = 33554432
+//    	KYC_SUPER_ADMIN = 33554432,
+//    	EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_MANAGER = 67108864
 //    };
 //
 type SignerType int32
 
 const (
-	SignerTypeReader                    SignerType = 1
-	SignerTypeNotVerifiedAccManager     SignerType = 2
-	SignerTypeGeneralAccManager         SignerType = 4
-	SignerTypeDirectDebitOperator       SignerType = 8
-	SignerTypeAssetManager              SignerType = 16
-	SignerTypeAssetRateManager          SignerType = 32
-	SignerTypeBalanceManager            SignerType = 64
-	SignerTypeIssuanceManager           SignerType = 128
-	SignerTypeInvoiceManager            SignerType = 256
-	SignerTypePaymentOperator           SignerType = 512
-	SignerTypeLimitsManager             SignerType = 1024
-	SignerTypeAccountManager            SignerType = 2048
-	SignerTypeCommissionBalanceManager  SignerType = 4096
-	SignerTypeOperationalBalanceManager SignerType = 8192
-	SignerTypeEventsChecker             SignerType = 16384
-	SignerTypeExchangeAccManager        SignerType = 32768
-	SignerTypeSyndicateAccManager       SignerType = 65536
-	SignerTypeUserAssetManager          SignerType = 131072
-	SignerTypeUserIssuanceManager       SignerType = 262144
-	SignerTypeWithdrawManager           SignerType = 524288
-	SignerTypeFeesManager               SignerType = 1048576
-	SignerTypeTxSender                  SignerType = 2097152
-	SignerTypeAmlAlertManager           SignerType = 4194304
-	SignerTypeAmlAlertReviewer          SignerType = 8388608
-	SignerTypeKycAccManager             SignerType = 16777216
-	SignerTypeKycSuperAdmin             SignerType = 33554432
+	SignerTypeReader                             SignerType = 1
+	SignerTypeNotVerifiedAccManager              SignerType = 2
+	SignerTypeGeneralAccManager                  SignerType = 4
+	SignerTypeDirectDebitOperator                SignerType = 8
+	SignerTypeAssetManager                       SignerType = 16
+	SignerTypeAssetRateManager                   SignerType = 32
+	SignerTypeBalanceManager                     SignerType = 64
+	SignerTypeIssuanceManager                    SignerType = 128
+	SignerTypeInvoiceManager                     SignerType = 256
+	SignerTypePaymentOperator                    SignerType = 512
+	SignerTypeLimitsManager                      SignerType = 1024
+	SignerTypeAccountManager                     SignerType = 2048
+	SignerTypeCommissionBalanceManager           SignerType = 4096
+	SignerTypeOperationalBalanceManager          SignerType = 8192
+	SignerTypeEventsChecker                      SignerType = 16384
+	SignerTypeExchangeAccManager                 SignerType = 32768
+	SignerTypeSyndicateAccManager                SignerType = 65536
+	SignerTypeUserAssetManager                   SignerType = 131072
+	SignerTypeUserIssuanceManager                SignerType = 262144
+	SignerTypeWithdrawManager                    SignerType = 524288
+	SignerTypeFeesManager                        SignerType = 1048576
+	SignerTypeTxSender                           SignerType = 2097152
+	SignerTypeAmlAlertManager                    SignerType = 4194304
+	SignerTypeAmlAlertReviewer                   SignerType = 8388608
+	SignerTypeKycAccManager                      SignerType = 16777216
+	SignerTypeKycSuperAdmin                      SignerType = 33554432
+	SignerTypeExternalSystemAccountIdPoolManager SignerType = 67108864
 )
 
 var SignerTypeAll = []SignerType{
@@ -815,6 +820,7 @@ var SignerTypeAll = []SignerType{
 	SignerTypeAmlAlertReviewer,
 	SignerTypeKycAccManager,
 	SignerTypeKycSuperAdmin,
+	SignerTypeExternalSystemAccountIdPoolManager,
 }
 
 var signerTypeMap = map[int32]string{
@@ -844,6 +850,7 @@ var signerTypeMap = map[int32]string{
 	8388608:  "SignerTypeAmlAlertReviewer",
 	16777216: "SignerTypeKycAccManager",
 	33554432: "SignerTypeKycSuperAdmin",
+	67108864: "SignerTypeExternalSystemAccountIdPoolManager",
 }
 
 var signerTypeShortMap = map[int32]string{
@@ -873,35 +880,37 @@ var signerTypeShortMap = map[int32]string{
 	8388608:  "aml_alert_reviewer",
 	16777216: "kyc_acc_manager",
 	33554432: "kyc_super_admin",
+	67108864: "external_system_account_id_pool_manager",
 }
 
 var signerTypeRevMap = map[string]int32{
-	"SignerTypeReader":                    1,
-	"SignerTypeNotVerifiedAccManager":     2,
-	"SignerTypeGeneralAccManager":         4,
-	"SignerTypeDirectDebitOperator":       8,
-	"SignerTypeAssetManager":              16,
-	"SignerTypeAssetRateManager":          32,
-	"SignerTypeBalanceManager":            64,
-	"SignerTypeIssuanceManager":           128,
-	"SignerTypeInvoiceManager":            256,
-	"SignerTypePaymentOperator":           512,
-	"SignerTypeLimitsManager":             1024,
-	"SignerTypeAccountManager":            2048,
-	"SignerTypeCommissionBalanceManager":  4096,
-	"SignerTypeOperationalBalanceManager": 8192,
-	"SignerTypeEventsChecker":             16384,
-	"SignerTypeExchangeAccManager":        32768,
-	"SignerTypeSyndicateAccManager":       65536,
-	"SignerTypeUserAssetManager":          131072,
-	"SignerTypeUserIssuanceManager":       262144,
-	"SignerTypeWithdrawManager":           524288,
-	"SignerTypeFeesManager":               1048576,
-	"SignerTypeTxSender":                  2097152,
-	"SignerTypeAmlAlertManager":           4194304,
-	"SignerTypeAmlAlertReviewer":          8388608,
-	"SignerTypeKycAccManager":             16777216,
-	"SignerTypeKycSuperAdmin":             33554432,
+	"SignerTypeReader":                             1,
+	"SignerTypeNotVerifiedAccManager":              2,
+	"SignerTypeGeneralAccManager":                  4,
+	"SignerTypeDirectDebitOperator":                8,
+	"SignerTypeAssetManager":                       16,
+	"SignerTypeAssetRateManager":                   32,
+	"SignerTypeBalanceManager":                     64,
+	"SignerTypeIssuanceManager":                    128,
+	"SignerTypeInvoiceManager":                     256,
+	"SignerTypePaymentOperator":                    512,
+	"SignerTypeLimitsManager":                      1024,
+	"SignerTypeAccountManager":                     2048,
+	"SignerTypeCommissionBalanceManager":           4096,
+	"SignerTypeOperationalBalanceManager":          8192,
+	"SignerTypeEventsChecker":                      16384,
+	"SignerTypeExchangeAccManager":                 32768,
+	"SignerTypeSyndicateAccManager":                65536,
+	"SignerTypeUserAssetManager":                   131072,
+	"SignerTypeUserIssuanceManager":                262144,
+	"SignerTypeWithdrawManager":                    524288,
+	"SignerTypeFeesManager":                        1048576,
+	"SignerTypeTxSender":                           2097152,
+	"SignerTypeAmlAlertManager":                    4194304,
+	"SignerTypeAmlAlertReviewer":                   8388608,
+	"SignerTypeKycAccManager":                      16777216,
+	"SignerTypeKycSuperAdmin":                      33554432,
+	"SignerTypeExternalSystemAccountIdPoolManager": 67108864,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -2140,106 +2149,77 @@ type BalanceEntry struct {
 	Ext       BalanceEntryExt `json:"ext,omitempty"`
 }
 
-// ExternalSystemType is an XDR Enum defines as:
+// ExternalSystemAccountIdPoolEntryExt is an XDR NestedUnion defines as:
 //
-//   enum ExternalSystemType
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//           void;
+//        }
+//
+type ExternalSystemAccountIdPoolEntryExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ExternalSystemAccountIdPoolEntryExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ExternalSystemAccountIdPoolEntryExt
+func (u ExternalSystemAccountIdPoolEntryExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewExternalSystemAccountIdPoolEntryExt creates a new  ExternalSystemAccountIdPoolEntryExt.
+func NewExternalSystemAccountIdPoolEntryExt(v LedgerVersion, value interface{}) (result ExternalSystemAccountIdPoolEntryExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// ExternalSystemAccountIdPoolEntry is an XDR Struct defines as:
+//
+//   struct ExternalSystemAccountIDPoolEntry
 //    {
-//    	BITCOIN = 1,
-//    	ETHEREUM = 2,
-//    	SECURE_VOTE = 3
+//        uint64 poolEntryID;
+//        int32 externalSystemType;
+//        longstring data;
+//        AccountID* accountID;
+//        uint64 expiresAt;
+//        uint64 bindedAt;
+//        uint64 parent;
+//        int32 isDeleted;
+//
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//           void;
+//        }
+//        ext;
 //    };
 //
-type ExternalSystemType int32
-
-const (
-	ExternalSystemTypeBitcoin    ExternalSystemType = 1
-	ExternalSystemTypeEthereum   ExternalSystemType = 2
-	ExternalSystemTypeSecureVote ExternalSystemType = 3
-)
-
-var ExternalSystemTypeAll = []ExternalSystemType{
-	ExternalSystemTypeBitcoin,
-	ExternalSystemTypeEthereum,
-	ExternalSystemTypeSecureVote,
-}
-
-var externalSystemTypeMap = map[int32]string{
-	1: "ExternalSystemTypeBitcoin",
-	2: "ExternalSystemTypeEthereum",
-	3: "ExternalSystemTypeSecureVote",
-}
-
-var externalSystemTypeShortMap = map[int32]string{
-	1: "bitcoin",
-	2: "ethereum",
-	3: "secure_vote",
-}
-
-var externalSystemTypeRevMap = map[string]int32{
-	"ExternalSystemTypeBitcoin":    1,
-	"ExternalSystemTypeEthereum":   2,
-	"ExternalSystemTypeSecureVote": 3,
-}
-
-// ValidEnum validates a proposed value for this enum.  Implements
-// the Enum interface for ExternalSystemType
-func (e ExternalSystemType) ValidEnum(v int32) bool {
-	_, ok := externalSystemTypeMap[v]
-	return ok
-}
-func (e ExternalSystemType) isFlag() bool {
-	for i := len(ExternalSystemTypeAll) - 1; i >= 0; i-- {
-		expected := ExternalSystemType(2) << uint64(len(ExternalSystemTypeAll)-1) >> uint64(len(ExternalSystemTypeAll)-i)
-		if expected != ExternalSystemTypeAll[i] {
-			return false
-		}
-	}
-	return true
-}
-
-// String returns the name of `e`
-func (e ExternalSystemType) String() string {
-	name, _ := externalSystemTypeMap[int32(e)]
-	return name
-}
-
-func (e ExternalSystemType) ShortString() string {
-	name, _ := externalSystemTypeShortMap[int32(e)]
-	return name
-}
-
-func (e ExternalSystemType) MarshalJSON() ([]byte, error) {
-	if e.isFlag() {
-		// marshal as mask
-		result := flag{
-			Value: int32(e),
-		}
-		for _, value := range ExternalSystemTypeAll {
-			if (value & e) == value {
-				result.Flags = append(result.Flags, flagValue{
-					Value: int32(value),
-					Name:  value.ShortString(),
-				})
-			}
-		}
-		return json.Marshal(&result)
-	} else {
-		// marshal as enum
-		result := enum{
-			Value:  int32(e),
-			String: e.ShortString(),
-		}
-		return json.Marshal(&result)
-	}
-}
-
-func (e *ExternalSystemType) UnmarshalJSON(data []byte) error {
-	var t value
-	if err := json.Unmarshal(data, &t); err != nil {
-		return err
-	}
-	*e = ExternalSystemType(t.Value)
-	return nil
+type ExternalSystemAccountIdPoolEntry struct {
+	PoolEntryId        Uint64                              `json:"poolEntryID,omitempty"`
+	ExternalSystemType Int32                               `json:"externalSystemType,omitempty"`
+	Data               Longstring                          `json:"data,omitempty"`
+	AccountId          *AccountId                          `json:"accountID,omitempty"`
+	ExpiresAt          Uint64                              `json:"expiresAt,omitempty"`
+	BindedAt           Uint64                              `json:"bindedAt,omitempty"`
+	Parent             Uint64                              `json:"parent,omitempty"`
+	IsDeleted          Int32                               `json:"isDeleted,omitempty"`
+	Ext                ExternalSystemAccountIdPoolEntryExt `json:"ext,omitempty"`
 }
 
 // ExternalSystemAccountIdExt is an XDR NestedUnion defines as:
@@ -2285,7 +2265,7 @@ func NewExternalSystemAccountIdExt(v LedgerVersion, value interface{}) (result E
 //   struct ExternalSystemAccountID
 //    {
 //        AccountID accountID;
-//        ExternalSystemType externalSystemType;
+//        int32 externalSystemType;
 //    	longstring data;
 //
 //    	 // reserved for future use
@@ -2299,7 +2279,7 @@ func NewExternalSystemAccountIdExt(v LedgerVersion, value interface{}) (result E
 //
 type ExternalSystemAccountId struct {
 	AccountId          AccountId                  `json:"accountID,omitempty"`
-	ExternalSystemType ExternalSystemType         `json:"externalSystemType,omitempty"`
+	ExternalSystemType Int32                      `json:"externalSystemType,omitempty"`
 	Data               Longstring                 `json:"data,omitempty"`
 	Ext                ExternalSystemAccountIdExt `json:"ext,omitempty"`
 }
@@ -4425,29 +4405,31 @@ func (e *ThresholdIndexes) UnmarshalJSON(data []byte) error {
 //    	REVIEWABLE_REQUEST = 15,
 //    	EXTERNAL_SYSTEM_ACCOUNT_ID = 16,
 //    	SALE = 17,
-//    	ACCOUNT_KYC = 18
+//    	ACCOUNT_KYC = 18,
+//    	EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY = 19
 //    };
 //
 type LedgerEntryType int32
 
 const (
-	LedgerEntryTypeAccount                 LedgerEntryType = 0
-	LedgerEntryTypeFee                     LedgerEntryType = 2
-	LedgerEntryTypeBalance                 LedgerEntryType = 4
-	LedgerEntryTypePaymentRequest          LedgerEntryType = 5
-	LedgerEntryTypeAsset                   LedgerEntryType = 6
-	LedgerEntryTypeReferenceEntry          LedgerEntryType = 7
-	LedgerEntryTypeAccountTypeLimits       LedgerEntryType = 8
-	LedgerEntryTypeStatistics              LedgerEntryType = 9
-	LedgerEntryTypeTrust                   LedgerEntryType = 10
-	LedgerEntryTypeAccountLimits           LedgerEntryType = 11
-	LedgerEntryTypeAssetPair               LedgerEntryType = 12
-	LedgerEntryTypeOfferEntry              LedgerEntryType = 13
-	LedgerEntryTypeInvoice                 LedgerEntryType = 14
-	LedgerEntryTypeReviewableRequest       LedgerEntryType = 15
-	LedgerEntryTypeExternalSystemAccountId LedgerEntryType = 16
-	LedgerEntryTypeSale                    LedgerEntryType = 17
-	LedgerEntryTypeAccountKyc              LedgerEntryType = 18
+	LedgerEntryTypeAccount                          LedgerEntryType = 0
+	LedgerEntryTypeFee                              LedgerEntryType = 2
+	LedgerEntryTypeBalance                          LedgerEntryType = 4
+	LedgerEntryTypePaymentRequest                   LedgerEntryType = 5
+	LedgerEntryTypeAsset                            LedgerEntryType = 6
+	LedgerEntryTypeReferenceEntry                   LedgerEntryType = 7
+	LedgerEntryTypeAccountTypeLimits                LedgerEntryType = 8
+	LedgerEntryTypeStatistics                       LedgerEntryType = 9
+	LedgerEntryTypeTrust                            LedgerEntryType = 10
+	LedgerEntryTypeAccountLimits                    LedgerEntryType = 11
+	LedgerEntryTypeAssetPair                        LedgerEntryType = 12
+	LedgerEntryTypeOfferEntry                       LedgerEntryType = 13
+	LedgerEntryTypeInvoice                          LedgerEntryType = 14
+	LedgerEntryTypeReviewableRequest                LedgerEntryType = 15
+	LedgerEntryTypeExternalSystemAccountId          LedgerEntryType = 16
+	LedgerEntryTypeSale                             LedgerEntryType = 17
+	LedgerEntryTypeAccountKyc                       LedgerEntryType = 18
+	LedgerEntryTypeExternalSystemAccountIdPoolEntry LedgerEntryType = 19
 )
 
 var LedgerEntryTypeAll = []LedgerEntryType{
@@ -4468,6 +4450,7 @@ var LedgerEntryTypeAll = []LedgerEntryType{
 	LedgerEntryTypeExternalSystemAccountId,
 	LedgerEntryTypeSale,
 	LedgerEntryTypeAccountKyc,
+	LedgerEntryTypeExternalSystemAccountIdPoolEntry,
 }
 
 var ledgerEntryTypeMap = map[int32]string{
@@ -4488,6 +4471,7 @@ var ledgerEntryTypeMap = map[int32]string{
 	16: "LedgerEntryTypeExternalSystemAccountId",
 	17: "LedgerEntryTypeSale",
 	18: "LedgerEntryTypeAccountKyc",
+	19: "LedgerEntryTypeExternalSystemAccountIdPoolEntry",
 }
 
 var ledgerEntryTypeShortMap = map[int32]string{
@@ -4508,26 +4492,28 @@ var ledgerEntryTypeShortMap = map[int32]string{
 	16: "external_system_account_id",
 	17: "sale",
 	18: "account_kyc",
+	19: "external_system_account_id_pool_entry",
 }
 
 var ledgerEntryTypeRevMap = map[string]int32{
-	"LedgerEntryTypeAccount":                 0,
-	"LedgerEntryTypeFee":                     2,
-	"LedgerEntryTypeBalance":                 4,
-	"LedgerEntryTypePaymentRequest":          5,
-	"LedgerEntryTypeAsset":                   6,
-	"LedgerEntryTypeReferenceEntry":          7,
-	"LedgerEntryTypeAccountTypeLimits":       8,
-	"LedgerEntryTypeStatistics":              9,
-	"LedgerEntryTypeTrust":                   10,
-	"LedgerEntryTypeAccountLimits":           11,
-	"LedgerEntryTypeAssetPair":               12,
-	"LedgerEntryTypeOfferEntry":              13,
-	"LedgerEntryTypeInvoice":                 14,
-	"LedgerEntryTypeReviewableRequest":       15,
-	"LedgerEntryTypeExternalSystemAccountId": 16,
-	"LedgerEntryTypeSale":                    17,
-	"LedgerEntryTypeAccountKyc":              18,
+	"LedgerEntryTypeAccount":                          0,
+	"LedgerEntryTypeFee":                              2,
+	"LedgerEntryTypeBalance":                          4,
+	"LedgerEntryTypePaymentRequest":                   5,
+	"LedgerEntryTypeAsset":                            6,
+	"LedgerEntryTypeReferenceEntry":                   7,
+	"LedgerEntryTypeAccountTypeLimits":                8,
+	"LedgerEntryTypeStatistics":                       9,
+	"LedgerEntryTypeTrust":                            10,
+	"LedgerEntryTypeAccountLimits":                    11,
+	"LedgerEntryTypeAssetPair":                        12,
+	"LedgerEntryTypeOfferEntry":                       13,
+	"LedgerEntryTypeInvoice":                          14,
+	"LedgerEntryTypeReviewableRequest":                15,
+	"LedgerEntryTypeExternalSystemAccountId":          16,
+	"LedgerEntryTypeSale":                             17,
+	"LedgerEntryTypeAccountKyc":                       18,
+	"LedgerEntryTypeExternalSystemAccountIdPoolEntry": 19,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -4629,27 +4615,30 @@ func (e *LedgerEntryType) UnmarshalJSON(data []byte) error {
 //    		SaleEntry sale;
 //    	case ACCOUNT_KYC:
 //            AccountKYCEntry accountKYC;
+//        case EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
+//            ExternalSystemAccountIDPoolEntry externalSystemAccountIDPoolEntry;
 //        }
 //
 type LedgerEntryData struct {
-	Type                    LedgerEntryType          `json:"type,omitempty"`
-	Account                 *AccountEntry            `json:"account,omitempty"`
-	FeeState                *FeeEntry                `json:"feeState,omitempty"`
-	Balance                 *BalanceEntry            `json:"balance,omitempty"`
-	PaymentRequest          *PaymentRequestEntry     `json:"paymentRequest,omitempty"`
-	Asset                   *AssetEntry              `json:"asset,omitempty"`
-	Reference               *ReferenceEntry          `json:"reference,omitempty"`
-	AccountTypeLimits       *AccountTypeLimitsEntry  `json:"accountTypeLimits,omitempty"`
-	Stats                   *StatisticsEntry         `json:"stats,omitempty"`
-	Trust                   *TrustEntry              `json:"trust,omitempty"`
-	AccountLimits           *AccountLimitsEntry      `json:"accountLimits,omitempty"`
-	AssetPair               *AssetPairEntry          `json:"assetPair,omitempty"`
-	Offer                   *OfferEntry              `json:"offer,omitempty"`
-	Invoice                 *InvoiceEntry            `json:"invoice,omitempty"`
-	ReviewableRequest       *ReviewableRequestEntry  `json:"reviewableRequest,omitempty"`
-	ExternalSystemAccountId *ExternalSystemAccountId `json:"externalSystemAccountID,omitempty"`
-	Sale                    *SaleEntry               `json:"sale,omitempty"`
-	AccountKyc              *AccountKycEntry         `json:"accountKYC,omitempty"`
+	Type                             LedgerEntryType                   `json:"type,omitempty"`
+	Account                          *AccountEntry                     `json:"account,omitempty"`
+	FeeState                         *FeeEntry                         `json:"feeState,omitempty"`
+	Balance                          *BalanceEntry                     `json:"balance,omitempty"`
+	PaymentRequest                   *PaymentRequestEntry              `json:"paymentRequest,omitempty"`
+	Asset                            *AssetEntry                       `json:"asset,omitempty"`
+	Reference                        *ReferenceEntry                   `json:"reference,omitempty"`
+	AccountTypeLimits                *AccountTypeLimitsEntry           `json:"accountTypeLimits,omitempty"`
+	Stats                            *StatisticsEntry                  `json:"stats,omitempty"`
+	Trust                            *TrustEntry                       `json:"trust,omitempty"`
+	AccountLimits                    *AccountLimitsEntry               `json:"accountLimits,omitempty"`
+	AssetPair                        *AssetPairEntry                   `json:"assetPair,omitempty"`
+	Offer                            *OfferEntry                       `json:"offer,omitempty"`
+	Invoice                          *InvoiceEntry                     `json:"invoice,omitempty"`
+	ReviewableRequest                *ReviewableRequestEntry           `json:"reviewableRequest,omitempty"`
+	ExternalSystemAccountId          *ExternalSystemAccountId          `json:"externalSystemAccountID,omitempty"`
+	Sale                             *SaleEntry                        `json:"sale,omitempty"`
+	AccountKyc                       *AccountKycEntry                  `json:"accountKYC,omitempty"`
+	ExternalSystemAccountIdPoolEntry *ExternalSystemAccountIdPoolEntry `json:"externalSystemAccountIDPoolEntry,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -4696,6 +4685,8 @@ func (u LedgerEntryData) ArmForSwitch(sw int32) (string, bool) {
 		return "Sale", true
 	case LedgerEntryTypeAccountKyc:
 		return "AccountKyc", true
+	case LedgerEntryTypeExternalSystemAccountIdPoolEntry:
+		return "ExternalSystemAccountIdPoolEntry", true
 	}
 	return "-", false
 }
@@ -4823,6 +4814,13 @@ func NewLedgerEntryData(aType LedgerEntryType, value interface{}) (result Ledger
 			return
 		}
 		result.AccountKyc = &tv
+	case LedgerEntryTypeExternalSystemAccountIdPoolEntry:
+		tv, ok := value.(ExternalSystemAccountIdPoolEntry)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ExternalSystemAccountIdPoolEntry")
+			return
+		}
+		result.ExternalSystemAccountIdPoolEntry = &tv
 	}
 	return
 }
@@ -5252,6 +5250,31 @@ func (u LedgerEntryData) GetAccountKyc() (result AccountKycEntry, ok bool) {
 	return
 }
 
+// MustExternalSystemAccountIdPoolEntry retrieves the ExternalSystemAccountIdPoolEntry value from the union,
+// panicing if the value is not set.
+func (u LedgerEntryData) MustExternalSystemAccountIdPoolEntry() ExternalSystemAccountIdPoolEntry {
+	val, ok := u.GetExternalSystemAccountIdPoolEntry()
+
+	if !ok {
+		panic("arm ExternalSystemAccountIdPoolEntry is not set")
+	}
+
+	return val
+}
+
+// GetExternalSystemAccountIdPoolEntry retrieves the ExternalSystemAccountIdPoolEntry value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u LedgerEntryData) GetExternalSystemAccountIdPoolEntry() (result ExternalSystemAccountIdPoolEntry, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "ExternalSystemAccountIdPoolEntry" {
+		result = *u.ExternalSystemAccountIdPoolEntry
+		ok = true
+	}
+
+	return
+}
+
 // LedgerEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -5332,6 +5355,8 @@ func NewLedgerEntryExt(v LedgerVersion, value interface{}) (result LedgerEntryEx
 //    		SaleEntry sale;
 //    	case ACCOUNT_KYC:
 //            AccountKYCEntry accountKYC;
+//        case EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
+//            ExternalSystemAccountIDPoolEntry externalSystemAccountIDPoolEntry;
 //        }
 //        data;
 //
@@ -6797,7 +6822,7 @@ func NewLedgerKeyExternalSystemAccountIdExt(v LedgerVersion, value interface{}) 
 //
 //   struct {
 //    		AccountID accountID;
-//    		ExternalSystemType externalSystemType;
+//    		int32 externalSystemType;
 //    		union switch (LedgerVersion v)
 //    		{
 //    		case EMPTY_VERSION:
@@ -6808,7 +6833,7 @@ func NewLedgerKeyExternalSystemAccountIdExt(v LedgerVersion, value interface{}) 
 //
 type LedgerKeyExternalSystemAccountId struct {
 	AccountId          AccountId                           `json:"accountID,omitempty"`
-	ExternalSystemType ExternalSystemType                  `json:"externalSystemType,omitempty"`
+	ExternalSystemType Int32                               `json:"externalSystemType,omitempty"`
 	Ext                LedgerKeyExternalSystemAccountIdExt `json:"ext,omitempty"`
 }
 
@@ -6920,6 +6945,63 @@ func NewLedgerKeyAccountKycExt(v LedgerVersion, value interface{}) (result Ledge
 type LedgerKeyAccountKyc struct {
 	AccountId AccountId              `json:"accountID,omitempty"`
 	Ext       LedgerKeyAccountKycExt `json:"ext,omitempty"`
+}
+
+// LedgerKeyExternalSystemAccountIdPoolEntryExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//
+type LedgerKeyExternalSystemAccountIdPoolEntryExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u LedgerKeyExternalSystemAccountIdPoolEntryExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of LedgerKeyExternalSystemAccountIdPoolEntryExt
+func (u LedgerKeyExternalSystemAccountIdPoolEntryExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewLedgerKeyExternalSystemAccountIdPoolEntryExt creates a new  LedgerKeyExternalSystemAccountIdPoolEntryExt.
+func NewLedgerKeyExternalSystemAccountIdPoolEntryExt(v LedgerVersion, value interface{}) (result LedgerKeyExternalSystemAccountIdPoolEntryExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// LedgerKeyExternalSystemAccountIdPoolEntry is an XDR NestedStruct defines as:
+//
+//   struct {
+//    		uint64 poolEntryID;
+//    		int32 externalSystemType;
+//    		union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//    		ext;
+//    	}
+//
+type LedgerKeyExternalSystemAccountIdPoolEntry struct {
+	PoolEntryId        Uint64                                       `json:"poolEntryID,omitempty"`
+	ExternalSystemType Int32                                        `json:"externalSystemType,omitempty"`
+	Ext                LedgerKeyExternalSystemAccountIdPoolEntryExt `json:"ext,omitempty"`
 }
 
 // LedgerKey is an XDR Union defines as:
@@ -7074,7 +7156,7 @@ type LedgerKeyAccountKyc struct {
 //    case EXTERNAL_SYSTEM_ACCOUNT_ID:
 //    	struct {
 //    		AccountID accountID;
-//    		ExternalSystemType externalSystemType;
+//    		int32 externalSystemType;
 //    		union switch (LedgerVersion v)
 //    		{
 //    		case EMPTY_VERSION:
@@ -7102,27 +7184,39 @@ type LedgerKeyAccountKyc struct {
 //            }
 //            ext;
 //        } accountKYC;
+//    case EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
+//        struct {
+//    		uint64 poolEntryID;
+//    		int32 externalSystemType;
+//    		union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//    		ext;
+//    	} externalSystemAccountIDPoolEntry;
 //    };
 //
 type LedgerKey struct {
-	Type                    LedgerEntryType                   `json:"type,omitempty"`
-	Account                 *LedgerKeyAccount                 `json:"account,omitempty"`
-	FeeState                *LedgerKeyFeeState                `json:"feeState,omitempty"`
-	Balance                 *LedgerKeyBalance                 `json:"balance,omitempty"`
-	PaymentRequest          *LedgerKeyPaymentRequest          `json:"paymentRequest,omitempty"`
-	Asset                   *LedgerKeyAsset                   `json:"asset,omitempty"`
-	Reference               *LedgerKeyReference               `json:"reference,omitempty"`
-	AccountTypeLimits       *LedgerKeyAccountTypeLimits       `json:"accountTypeLimits,omitempty"`
-	Stats                   *LedgerKeyStats                   `json:"stats,omitempty"`
-	Trust                   *LedgerKeyTrust                   `json:"trust,omitempty"`
-	AccountLimits           *LedgerKeyAccountLimits           `json:"accountLimits,omitempty"`
-	AssetPair               *LedgerKeyAssetPair               `json:"assetPair,omitempty"`
-	Offer                   *LedgerKeyOffer                   `json:"offer,omitempty"`
-	Invoice                 *LedgerKeyInvoice                 `json:"invoice,omitempty"`
-	ReviewableRequest       *LedgerKeyReviewableRequest       `json:"reviewableRequest,omitempty"`
-	ExternalSystemAccountId *LedgerKeyExternalSystemAccountId `json:"externalSystemAccountID,omitempty"`
-	Sale                    *LedgerKeySale                    `json:"sale,omitempty"`
-	AccountKyc              *LedgerKeyAccountKyc              `json:"accountKYC,omitempty"`
+	Type                             LedgerEntryType                            `json:"type,omitempty"`
+	Account                          *LedgerKeyAccount                          `json:"account,omitempty"`
+	FeeState                         *LedgerKeyFeeState                         `json:"feeState,omitempty"`
+	Balance                          *LedgerKeyBalance                          `json:"balance,omitempty"`
+	PaymentRequest                   *LedgerKeyPaymentRequest                   `json:"paymentRequest,omitempty"`
+	Asset                            *LedgerKeyAsset                            `json:"asset,omitempty"`
+	Reference                        *LedgerKeyReference                        `json:"reference,omitempty"`
+	AccountTypeLimits                *LedgerKeyAccountTypeLimits                `json:"accountTypeLimits,omitempty"`
+	Stats                            *LedgerKeyStats                            `json:"stats,omitempty"`
+	Trust                            *LedgerKeyTrust                            `json:"trust,omitempty"`
+	AccountLimits                    *LedgerKeyAccountLimits                    `json:"accountLimits,omitempty"`
+	AssetPair                        *LedgerKeyAssetPair                        `json:"assetPair,omitempty"`
+	Offer                            *LedgerKeyOffer                            `json:"offer,omitempty"`
+	Invoice                          *LedgerKeyInvoice                          `json:"invoice,omitempty"`
+	ReviewableRequest                *LedgerKeyReviewableRequest                `json:"reviewableRequest,omitempty"`
+	ExternalSystemAccountId          *LedgerKeyExternalSystemAccountId          `json:"externalSystemAccountID,omitempty"`
+	Sale                             *LedgerKeySale                             `json:"sale,omitempty"`
+	AccountKyc                       *LedgerKeyAccountKyc                       `json:"accountKYC,omitempty"`
+	ExternalSystemAccountIdPoolEntry *LedgerKeyExternalSystemAccountIdPoolEntry `json:"externalSystemAccountIDPoolEntry,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -7169,6 +7263,8 @@ func (u LedgerKey) ArmForSwitch(sw int32) (string, bool) {
 		return "Sale", true
 	case LedgerEntryTypeAccountKyc:
 		return "AccountKyc", true
+	case LedgerEntryTypeExternalSystemAccountIdPoolEntry:
+		return "ExternalSystemAccountIdPoolEntry", true
 	}
 	return "-", false
 }
@@ -7296,6 +7392,13 @@ func NewLedgerKey(aType LedgerEntryType, value interface{}) (result LedgerKey, e
 			return
 		}
 		result.AccountKyc = &tv
+	case LedgerEntryTypeExternalSystemAccountIdPoolEntry:
+		tv, ok := value.(LedgerKeyExternalSystemAccountIdPoolEntry)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be LedgerKeyExternalSystemAccountIdPoolEntry")
+			return
+		}
+		result.ExternalSystemAccountIdPoolEntry = &tv
 	}
 	return
 }
@@ -7719,6 +7822,31 @@ func (u LedgerKey) GetAccountKyc() (result LedgerKeyAccountKyc, ok bool) {
 
 	if armName == "AccountKyc" {
 		result = *u.AccountKyc
+		ok = true
+	}
+
+	return
+}
+
+// MustExternalSystemAccountIdPoolEntry retrieves the ExternalSystemAccountIdPoolEntry value from the union,
+// panicing if the value is not set.
+func (u LedgerKey) MustExternalSystemAccountIdPoolEntry() LedgerKeyExternalSystemAccountIdPoolEntry {
+	val, ok := u.GetExternalSystemAccountIdPoolEntry()
+
+	if !ok {
+		panic("arm ExternalSystemAccountIdPoolEntry is not set")
+	}
+
+	return val
+}
+
+// GetExternalSystemAccountIdPoolEntry retrieves the ExternalSystemAccountIdPoolEntry value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u LedgerKey) GetExternalSystemAccountIdPoolEntry() (result LedgerKeyExternalSystemAccountIdPoolEntry, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "ExternalSystemAccountIdPoolEntry" {
+		result = *u.ExternalSystemAccountIdPoolEntry
 		ok = true
 	}
 
@@ -8608,6 +8736,304 @@ func (u TransactionMeta) GetOperations() (result []OperationMeta, ok bool) {
 
 	if armName == "Operations" {
 		result = *u.Operations
+		ok = true
+	}
+
+	return
+}
+
+// BindExternalSystemAccountIdOpExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type BindExternalSystemAccountIdOpExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u BindExternalSystemAccountIdOpExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of BindExternalSystemAccountIdOpExt
+func (u BindExternalSystemAccountIdOpExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewBindExternalSystemAccountIdOpExt creates a new  BindExternalSystemAccountIdOpExt.
+func NewBindExternalSystemAccountIdOpExt(v LedgerVersion, value interface{}) (result BindExternalSystemAccountIdOpExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// BindExternalSystemAccountIdOp is an XDR Struct defines as:
+//
+//   struct BindExternalSystemAccountIdOp
+//    {
+//        int32 externalSystemType;
+//
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type BindExternalSystemAccountIdOp struct {
+	ExternalSystemType Int32                            `json:"externalSystemType,omitempty"`
+	Ext                BindExternalSystemAccountIdOpExt `json:"ext,omitempty"`
+}
+
+// BindExternalSystemAccountIdResultCode is an XDR Enum defines as:
+//
+//   enum BindExternalSystemAccountIdResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        MALFORMED = -1,
+//        NO_AVAILABLE_ID = -2,
+//        AUTO_GENERATED_TYPE_NOT_ALLOWED = -3
+//    };
+//
+type BindExternalSystemAccountIdResultCode int32
+
+const (
+	BindExternalSystemAccountIdResultCodeSuccess                     BindExternalSystemAccountIdResultCode = 0
+	BindExternalSystemAccountIdResultCodeMalformed                   BindExternalSystemAccountIdResultCode = -1
+	BindExternalSystemAccountIdResultCodeNoAvailableId               BindExternalSystemAccountIdResultCode = -2
+	BindExternalSystemAccountIdResultCodeAutoGeneratedTypeNotAllowed BindExternalSystemAccountIdResultCode = -3
+)
+
+var BindExternalSystemAccountIdResultCodeAll = []BindExternalSystemAccountIdResultCode{
+	BindExternalSystemAccountIdResultCodeSuccess,
+	BindExternalSystemAccountIdResultCodeMalformed,
+	BindExternalSystemAccountIdResultCodeNoAvailableId,
+	BindExternalSystemAccountIdResultCodeAutoGeneratedTypeNotAllowed,
+}
+
+var bindExternalSystemAccountIdResultCodeMap = map[int32]string{
+	0:  "BindExternalSystemAccountIdResultCodeSuccess",
+	-1: "BindExternalSystemAccountIdResultCodeMalformed",
+	-2: "BindExternalSystemAccountIdResultCodeNoAvailableId",
+	-3: "BindExternalSystemAccountIdResultCodeAutoGeneratedTypeNotAllowed",
+}
+
+var bindExternalSystemAccountIdResultCodeShortMap = map[int32]string{
+	0:  "success",
+	-1: "malformed",
+	-2: "no_available_id",
+	-3: "auto_generated_type_not_allowed",
+}
+
+var bindExternalSystemAccountIdResultCodeRevMap = map[string]int32{
+	"BindExternalSystemAccountIdResultCodeSuccess":                     0,
+	"BindExternalSystemAccountIdResultCodeMalformed":                   -1,
+	"BindExternalSystemAccountIdResultCodeNoAvailableId":               -2,
+	"BindExternalSystemAccountIdResultCodeAutoGeneratedTypeNotAllowed": -3,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for BindExternalSystemAccountIdResultCode
+func (e BindExternalSystemAccountIdResultCode) ValidEnum(v int32) bool {
+	_, ok := bindExternalSystemAccountIdResultCodeMap[v]
+	return ok
+}
+func (e BindExternalSystemAccountIdResultCode) isFlag() bool {
+	for i := len(BindExternalSystemAccountIdResultCodeAll) - 1; i >= 0; i-- {
+		expected := BindExternalSystemAccountIdResultCode(2) << uint64(len(BindExternalSystemAccountIdResultCodeAll)-1) >> uint64(len(BindExternalSystemAccountIdResultCodeAll)-i)
+		if expected != BindExternalSystemAccountIdResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e BindExternalSystemAccountIdResultCode) String() string {
+	name, _ := bindExternalSystemAccountIdResultCodeMap[int32(e)]
+	return name
+}
+
+func (e BindExternalSystemAccountIdResultCode) ShortString() string {
+	name, _ := bindExternalSystemAccountIdResultCodeShortMap[int32(e)]
+	return name
+}
+
+func (e BindExternalSystemAccountIdResultCode) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range BindExternalSystemAccountIdResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *BindExternalSystemAccountIdResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = BindExternalSystemAccountIdResultCode(t.Value)
+	return nil
+}
+
+// BindExternalSystemAccountIdSuccessExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type BindExternalSystemAccountIdSuccessExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u BindExternalSystemAccountIdSuccessExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of BindExternalSystemAccountIdSuccessExt
+func (u BindExternalSystemAccountIdSuccessExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewBindExternalSystemAccountIdSuccessExt creates a new  BindExternalSystemAccountIdSuccessExt.
+func NewBindExternalSystemAccountIdSuccessExt(v LedgerVersion, value interface{}) (result BindExternalSystemAccountIdSuccessExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// BindExternalSystemAccountIdSuccess is an XDR Struct defines as:
+//
+//   struct BindExternalSystemAccountIdSuccess {
+//        longstring data;
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type BindExternalSystemAccountIdSuccess struct {
+	Data Longstring                            `json:"data,omitempty"`
+	Ext  BindExternalSystemAccountIdSuccessExt `json:"ext,omitempty"`
+}
+
+// BindExternalSystemAccountIdResult is an XDR Union defines as:
+//
+//   union BindExternalSystemAccountIdResult switch (BindExternalSystemAccountIdResultCode code)
+//    {
+//    case SUCCESS:
+//        BindExternalSystemAccountIdSuccess success;
+//    default:
+//        void;
+//    };
+//
+type BindExternalSystemAccountIdResult struct {
+	Code    BindExternalSystemAccountIdResultCode `json:"code,omitempty"`
+	Success *BindExternalSystemAccountIdSuccess   `json:"success,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u BindExternalSystemAccountIdResult) SwitchFieldName() string {
+	return "Code"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of BindExternalSystemAccountIdResult
+func (u BindExternalSystemAccountIdResult) ArmForSwitch(sw int32) (string, bool) {
+	switch BindExternalSystemAccountIdResultCode(sw) {
+	case BindExternalSystemAccountIdResultCodeSuccess:
+		return "Success", true
+	default:
+		return "", true
+	}
+}
+
+// NewBindExternalSystemAccountIdResult creates a new  BindExternalSystemAccountIdResult.
+func NewBindExternalSystemAccountIdResult(code BindExternalSystemAccountIdResultCode, value interface{}) (result BindExternalSystemAccountIdResult, err error) {
+	result.Code = code
+	switch BindExternalSystemAccountIdResultCode(code) {
+	case BindExternalSystemAccountIdResultCodeSuccess:
+		tv, ok := value.(BindExternalSystemAccountIdSuccess)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be BindExternalSystemAccountIdSuccess")
+			return
+		}
+		result.Success = &tv
+	default:
+		// void
+	}
+	return
+}
+
+// MustSuccess retrieves the Success value from the union,
+// panicing if the value is not set.
+func (u BindExternalSystemAccountIdResult) MustSuccess() BindExternalSystemAccountIdSuccess {
+	val, ok := u.GetSuccess()
+
+	if !ok {
+		panic("arm Success is not set")
+	}
+
+	return val
+}
+
+// GetSuccess retrieves the Success value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u BindExternalSystemAccountIdResult) GetSuccess() (result BindExternalSystemAccountIdSuccess, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Code))
+
+	if armName == "Success" {
+		result = *u.Success
 		ok = true
 	}
 
@@ -14123,6 +14549,636 @@ func (u ManageBalanceResult) MustSuccess() ManageBalanceSuccess {
 // GetSuccess retrieves the Success value from the union,
 // returning ok if the union's switch indicated the value is valid.
 func (u ManageBalanceResult) GetSuccess() (result ManageBalanceSuccess, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Code))
+
+	if armName == "Success" {
+		result = *u.Success
+		ok = true
+	}
+
+	return
+}
+
+// ManageExternalSystemAccountIdPoolEntryAction is an XDR Enum defines as:
+//
+//   enum ManageExternalSystemAccountIdPoolEntryAction
+//    {
+//        CREATE = 0,
+//        DELETE = 1
+//    };
+//
+type ManageExternalSystemAccountIdPoolEntryAction int32
+
+const (
+	ManageExternalSystemAccountIdPoolEntryActionCreate ManageExternalSystemAccountIdPoolEntryAction = 0
+	ManageExternalSystemAccountIdPoolEntryActionDelete ManageExternalSystemAccountIdPoolEntryAction = 1
+)
+
+var ManageExternalSystemAccountIdPoolEntryActionAll = []ManageExternalSystemAccountIdPoolEntryAction{
+	ManageExternalSystemAccountIdPoolEntryActionCreate,
+	ManageExternalSystemAccountIdPoolEntryActionDelete,
+}
+
+var manageExternalSystemAccountIdPoolEntryActionMap = map[int32]string{
+	0: "ManageExternalSystemAccountIdPoolEntryActionCreate",
+	1: "ManageExternalSystemAccountIdPoolEntryActionDelete",
+}
+
+var manageExternalSystemAccountIdPoolEntryActionShortMap = map[int32]string{
+	0: "create",
+	1: "delete",
+}
+
+var manageExternalSystemAccountIdPoolEntryActionRevMap = map[string]int32{
+	"ManageExternalSystemAccountIdPoolEntryActionCreate": 0,
+	"ManageExternalSystemAccountIdPoolEntryActionDelete": 1,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for ManageExternalSystemAccountIdPoolEntryAction
+func (e ManageExternalSystemAccountIdPoolEntryAction) ValidEnum(v int32) bool {
+	_, ok := manageExternalSystemAccountIdPoolEntryActionMap[v]
+	return ok
+}
+func (e ManageExternalSystemAccountIdPoolEntryAction) isFlag() bool {
+	for i := len(ManageExternalSystemAccountIdPoolEntryActionAll) - 1; i >= 0; i-- {
+		expected := ManageExternalSystemAccountIdPoolEntryAction(2) << uint64(len(ManageExternalSystemAccountIdPoolEntryActionAll)-1) >> uint64(len(ManageExternalSystemAccountIdPoolEntryActionAll)-i)
+		if expected != ManageExternalSystemAccountIdPoolEntryActionAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e ManageExternalSystemAccountIdPoolEntryAction) String() string {
+	name, _ := manageExternalSystemAccountIdPoolEntryActionMap[int32(e)]
+	return name
+}
+
+func (e ManageExternalSystemAccountIdPoolEntryAction) ShortString() string {
+	name, _ := manageExternalSystemAccountIdPoolEntryActionShortMap[int32(e)]
+	return name
+}
+
+func (e ManageExternalSystemAccountIdPoolEntryAction) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageExternalSystemAccountIdPoolEntryActionAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *ManageExternalSystemAccountIdPoolEntryAction) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = ManageExternalSystemAccountIdPoolEntryAction(t.Value)
+	return nil
+}
+
+// CreateExternalSystemAccountIdPoolEntryActionInputExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type CreateExternalSystemAccountIdPoolEntryActionInputExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CreateExternalSystemAccountIdPoolEntryActionInputExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CreateExternalSystemAccountIdPoolEntryActionInputExt
+func (u CreateExternalSystemAccountIdPoolEntryActionInputExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewCreateExternalSystemAccountIdPoolEntryActionInputExt creates a new  CreateExternalSystemAccountIdPoolEntryActionInputExt.
+func NewCreateExternalSystemAccountIdPoolEntryActionInputExt(v LedgerVersion, value interface{}) (result CreateExternalSystemAccountIdPoolEntryActionInputExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// CreateExternalSystemAccountIdPoolEntryActionInput is an XDR Struct defines as:
+//
+//   struct CreateExternalSystemAccountIdPoolEntryActionInput
+//    {
+//        int32 externalSystemType;
+//        longstring data;
+//        uint64 parent;
+//
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type CreateExternalSystemAccountIdPoolEntryActionInput struct {
+	ExternalSystemType Int32                                                `json:"externalSystemType,omitempty"`
+	Data               Longstring                                           `json:"data,omitempty"`
+	Parent             Uint64                                               `json:"parent,omitempty"`
+	Ext                CreateExternalSystemAccountIdPoolEntryActionInputExt `json:"ext,omitempty"`
+}
+
+// DeleteExternalSystemAccountIdPoolEntryActionInputExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type DeleteExternalSystemAccountIdPoolEntryActionInputExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u DeleteExternalSystemAccountIdPoolEntryActionInputExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of DeleteExternalSystemAccountIdPoolEntryActionInputExt
+func (u DeleteExternalSystemAccountIdPoolEntryActionInputExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewDeleteExternalSystemAccountIdPoolEntryActionInputExt creates a new  DeleteExternalSystemAccountIdPoolEntryActionInputExt.
+func NewDeleteExternalSystemAccountIdPoolEntryActionInputExt(v LedgerVersion, value interface{}) (result DeleteExternalSystemAccountIdPoolEntryActionInputExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// DeleteExternalSystemAccountIdPoolEntryActionInput is an XDR Struct defines as:
+//
+//   struct DeleteExternalSystemAccountIdPoolEntryActionInput
+//    {
+//        uint64 poolEntryID;
+//
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type DeleteExternalSystemAccountIdPoolEntryActionInput struct {
+	PoolEntryId Uint64                                               `json:"poolEntryID,omitempty"`
+	Ext         DeleteExternalSystemAccountIdPoolEntryActionInputExt `json:"ext,omitempty"`
+}
+
+// ManageExternalSystemAccountIdPoolEntryOpActionInput is an XDR NestedUnion defines as:
+//
+//   union switch (ManageExternalSystemAccountIdPoolEntryAction action)
+//        {
+//        case CREATE:
+//            CreateExternalSystemAccountIdPoolEntryActionInput createExternalSystemAccountIdPoolEntryActionInput;
+//        case DELETE:
+//            DeleteExternalSystemAccountIdPoolEntryActionInput deleteExternalSystemAccountIdPoolEntryActionInput;
+//        }
+//
+type ManageExternalSystemAccountIdPoolEntryOpActionInput struct {
+	Action                                            ManageExternalSystemAccountIdPoolEntryAction       `json:"action,omitempty"`
+	CreateExternalSystemAccountIdPoolEntryActionInput *CreateExternalSystemAccountIdPoolEntryActionInput `json:"createExternalSystemAccountIdPoolEntryActionInput,omitempty"`
+	DeleteExternalSystemAccountIdPoolEntryActionInput *DeleteExternalSystemAccountIdPoolEntryActionInput `json:"deleteExternalSystemAccountIdPoolEntryActionInput,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ManageExternalSystemAccountIdPoolEntryOpActionInput) SwitchFieldName() string {
+	return "Action"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ManageExternalSystemAccountIdPoolEntryOpActionInput
+func (u ManageExternalSystemAccountIdPoolEntryOpActionInput) ArmForSwitch(sw int32) (string, bool) {
+	switch ManageExternalSystemAccountIdPoolEntryAction(sw) {
+	case ManageExternalSystemAccountIdPoolEntryActionCreate:
+		return "CreateExternalSystemAccountIdPoolEntryActionInput", true
+	case ManageExternalSystemAccountIdPoolEntryActionDelete:
+		return "DeleteExternalSystemAccountIdPoolEntryActionInput", true
+	}
+	return "-", false
+}
+
+// NewManageExternalSystemAccountIdPoolEntryOpActionInput creates a new  ManageExternalSystemAccountIdPoolEntryOpActionInput.
+func NewManageExternalSystemAccountIdPoolEntryOpActionInput(action ManageExternalSystemAccountIdPoolEntryAction, value interface{}) (result ManageExternalSystemAccountIdPoolEntryOpActionInput, err error) {
+	result.Action = action
+	switch ManageExternalSystemAccountIdPoolEntryAction(action) {
+	case ManageExternalSystemAccountIdPoolEntryActionCreate:
+		tv, ok := value.(CreateExternalSystemAccountIdPoolEntryActionInput)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CreateExternalSystemAccountIdPoolEntryActionInput")
+			return
+		}
+		result.CreateExternalSystemAccountIdPoolEntryActionInput = &tv
+	case ManageExternalSystemAccountIdPoolEntryActionDelete:
+		tv, ok := value.(DeleteExternalSystemAccountIdPoolEntryActionInput)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be DeleteExternalSystemAccountIdPoolEntryActionInput")
+			return
+		}
+		result.DeleteExternalSystemAccountIdPoolEntryActionInput = &tv
+	}
+	return
+}
+
+// MustCreateExternalSystemAccountIdPoolEntryActionInput retrieves the CreateExternalSystemAccountIdPoolEntryActionInput value from the union,
+// panicing if the value is not set.
+func (u ManageExternalSystemAccountIdPoolEntryOpActionInput) MustCreateExternalSystemAccountIdPoolEntryActionInput() CreateExternalSystemAccountIdPoolEntryActionInput {
+	val, ok := u.GetCreateExternalSystemAccountIdPoolEntryActionInput()
+
+	if !ok {
+		panic("arm CreateExternalSystemAccountIdPoolEntryActionInput is not set")
+	}
+
+	return val
+}
+
+// GetCreateExternalSystemAccountIdPoolEntryActionInput retrieves the CreateExternalSystemAccountIdPoolEntryActionInput value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageExternalSystemAccountIdPoolEntryOpActionInput) GetCreateExternalSystemAccountIdPoolEntryActionInput() (result CreateExternalSystemAccountIdPoolEntryActionInput, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Action))
+
+	if armName == "CreateExternalSystemAccountIdPoolEntryActionInput" {
+		result = *u.CreateExternalSystemAccountIdPoolEntryActionInput
+		ok = true
+	}
+
+	return
+}
+
+// MustDeleteExternalSystemAccountIdPoolEntryActionInput retrieves the DeleteExternalSystemAccountIdPoolEntryActionInput value from the union,
+// panicing if the value is not set.
+func (u ManageExternalSystemAccountIdPoolEntryOpActionInput) MustDeleteExternalSystemAccountIdPoolEntryActionInput() DeleteExternalSystemAccountIdPoolEntryActionInput {
+	val, ok := u.GetDeleteExternalSystemAccountIdPoolEntryActionInput()
+
+	if !ok {
+		panic("arm DeleteExternalSystemAccountIdPoolEntryActionInput is not set")
+	}
+
+	return val
+}
+
+// GetDeleteExternalSystemAccountIdPoolEntryActionInput retrieves the DeleteExternalSystemAccountIdPoolEntryActionInput value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageExternalSystemAccountIdPoolEntryOpActionInput) GetDeleteExternalSystemAccountIdPoolEntryActionInput() (result DeleteExternalSystemAccountIdPoolEntryActionInput, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Action))
+
+	if armName == "DeleteExternalSystemAccountIdPoolEntryActionInput" {
+		result = *u.DeleteExternalSystemAccountIdPoolEntryActionInput
+		ok = true
+	}
+
+	return
+}
+
+// ManageExternalSystemAccountIdPoolEntryOpExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type ManageExternalSystemAccountIdPoolEntryOpExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ManageExternalSystemAccountIdPoolEntryOpExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ManageExternalSystemAccountIdPoolEntryOpExt
+func (u ManageExternalSystemAccountIdPoolEntryOpExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewManageExternalSystemAccountIdPoolEntryOpExt creates a new  ManageExternalSystemAccountIdPoolEntryOpExt.
+func NewManageExternalSystemAccountIdPoolEntryOpExt(v LedgerVersion, value interface{}) (result ManageExternalSystemAccountIdPoolEntryOpExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// ManageExternalSystemAccountIdPoolEntryOp is an XDR Struct defines as:
+//
+//   struct ManageExternalSystemAccountIdPoolEntryOp
+//    {
+//        union switch (ManageExternalSystemAccountIdPoolEntryAction action)
+//        {
+//        case CREATE:
+//            CreateExternalSystemAccountIdPoolEntryActionInput createExternalSystemAccountIdPoolEntryActionInput;
+//        case DELETE:
+//            DeleteExternalSystemAccountIdPoolEntryActionInput deleteExternalSystemAccountIdPoolEntryActionInput;
+//        } actionInput;
+//
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type ManageExternalSystemAccountIdPoolEntryOp struct {
+	ActionInput ManageExternalSystemAccountIdPoolEntryOpActionInput `json:"actionInput,omitempty"`
+	Ext         ManageExternalSystemAccountIdPoolEntryOpExt         `json:"ext,omitempty"`
+}
+
+// ManageExternalSystemAccountIdPoolEntryResultCode is an XDR Enum defines as:
+//
+//   enum ManageExternalSystemAccountIdPoolEntryResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        MALFORMED = -1,
+//        ALREADY_EXISTS = -2,
+//        AUTO_GENERATED_TYPE_NOT_ALLOWED = -3,
+//        NOT_FOUND = -4
+//    };
+//
+type ManageExternalSystemAccountIdPoolEntryResultCode int32
+
+const (
+	ManageExternalSystemAccountIdPoolEntryResultCodeSuccess                     ManageExternalSystemAccountIdPoolEntryResultCode = 0
+	ManageExternalSystemAccountIdPoolEntryResultCodeMalformed                   ManageExternalSystemAccountIdPoolEntryResultCode = -1
+	ManageExternalSystemAccountIdPoolEntryResultCodeAlreadyExists               ManageExternalSystemAccountIdPoolEntryResultCode = -2
+	ManageExternalSystemAccountIdPoolEntryResultCodeAutoGeneratedTypeNotAllowed ManageExternalSystemAccountIdPoolEntryResultCode = -3
+	ManageExternalSystemAccountIdPoolEntryResultCodeNotFound                    ManageExternalSystemAccountIdPoolEntryResultCode = -4
+)
+
+var ManageExternalSystemAccountIdPoolEntryResultCodeAll = []ManageExternalSystemAccountIdPoolEntryResultCode{
+	ManageExternalSystemAccountIdPoolEntryResultCodeSuccess,
+	ManageExternalSystemAccountIdPoolEntryResultCodeMalformed,
+	ManageExternalSystemAccountIdPoolEntryResultCodeAlreadyExists,
+	ManageExternalSystemAccountIdPoolEntryResultCodeAutoGeneratedTypeNotAllowed,
+	ManageExternalSystemAccountIdPoolEntryResultCodeNotFound,
+}
+
+var manageExternalSystemAccountIdPoolEntryResultCodeMap = map[int32]string{
+	0:  "ManageExternalSystemAccountIdPoolEntryResultCodeSuccess",
+	-1: "ManageExternalSystemAccountIdPoolEntryResultCodeMalformed",
+	-2: "ManageExternalSystemAccountIdPoolEntryResultCodeAlreadyExists",
+	-3: "ManageExternalSystemAccountIdPoolEntryResultCodeAutoGeneratedTypeNotAllowed",
+	-4: "ManageExternalSystemAccountIdPoolEntryResultCodeNotFound",
+}
+
+var manageExternalSystemAccountIdPoolEntryResultCodeShortMap = map[int32]string{
+	0:  "success",
+	-1: "malformed",
+	-2: "already_exists",
+	-3: "auto_generated_type_not_allowed",
+	-4: "not_found",
+}
+
+var manageExternalSystemAccountIdPoolEntryResultCodeRevMap = map[string]int32{
+	"ManageExternalSystemAccountIdPoolEntryResultCodeSuccess":                     0,
+	"ManageExternalSystemAccountIdPoolEntryResultCodeMalformed":                   -1,
+	"ManageExternalSystemAccountIdPoolEntryResultCodeAlreadyExists":               -2,
+	"ManageExternalSystemAccountIdPoolEntryResultCodeAutoGeneratedTypeNotAllowed": -3,
+	"ManageExternalSystemAccountIdPoolEntryResultCodeNotFound":                    -4,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for ManageExternalSystemAccountIdPoolEntryResultCode
+func (e ManageExternalSystemAccountIdPoolEntryResultCode) ValidEnum(v int32) bool {
+	_, ok := manageExternalSystemAccountIdPoolEntryResultCodeMap[v]
+	return ok
+}
+func (e ManageExternalSystemAccountIdPoolEntryResultCode) isFlag() bool {
+	for i := len(ManageExternalSystemAccountIdPoolEntryResultCodeAll) - 1; i >= 0; i-- {
+		expected := ManageExternalSystemAccountIdPoolEntryResultCode(2) << uint64(len(ManageExternalSystemAccountIdPoolEntryResultCodeAll)-1) >> uint64(len(ManageExternalSystemAccountIdPoolEntryResultCodeAll)-i)
+		if expected != ManageExternalSystemAccountIdPoolEntryResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e ManageExternalSystemAccountIdPoolEntryResultCode) String() string {
+	name, _ := manageExternalSystemAccountIdPoolEntryResultCodeMap[int32(e)]
+	return name
+}
+
+func (e ManageExternalSystemAccountIdPoolEntryResultCode) ShortString() string {
+	name, _ := manageExternalSystemAccountIdPoolEntryResultCodeShortMap[int32(e)]
+	return name
+}
+
+func (e ManageExternalSystemAccountIdPoolEntryResultCode) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageExternalSystemAccountIdPoolEntryResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *ManageExternalSystemAccountIdPoolEntryResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = ManageExternalSystemAccountIdPoolEntryResultCode(t.Value)
+	return nil
+}
+
+// ManageExternalSystemAccountIdPoolEntrySuccessExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type ManageExternalSystemAccountIdPoolEntrySuccessExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ManageExternalSystemAccountIdPoolEntrySuccessExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ManageExternalSystemAccountIdPoolEntrySuccessExt
+func (u ManageExternalSystemAccountIdPoolEntrySuccessExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewManageExternalSystemAccountIdPoolEntrySuccessExt creates a new  ManageExternalSystemAccountIdPoolEntrySuccessExt.
+func NewManageExternalSystemAccountIdPoolEntrySuccessExt(v LedgerVersion, value interface{}) (result ManageExternalSystemAccountIdPoolEntrySuccessExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// ManageExternalSystemAccountIdPoolEntrySuccess is an XDR Struct defines as:
+//
+//   struct ManageExternalSystemAccountIdPoolEntrySuccess {
+//    	uint64 poolEntryID;
+//    	// reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type ManageExternalSystemAccountIdPoolEntrySuccess struct {
+	PoolEntryId Uint64                                           `json:"poolEntryID,omitempty"`
+	Ext         ManageExternalSystemAccountIdPoolEntrySuccessExt `json:"ext,omitempty"`
+}
+
+// ManageExternalSystemAccountIdPoolEntryResult is an XDR Union defines as:
+//
+//   union ManageExternalSystemAccountIdPoolEntryResult switch (ManageExternalSystemAccountIdPoolEntryResultCode code)
+//    {
+//    case SUCCESS:
+//        ManageExternalSystemAccountIdPoolEntrySuccess success;
+//    default:
+//        void;
+//    };
+//
+type ManageExternalSystemAccountIdPoolEntryResult struct {
+	Code    ManageExternalSystemAccountIdPoolEntryResultCode `json:"code,omitempty"`
+	Success *ManageExternalSystemAccountIdPoolEntrySuccess   `json:"success,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ManageExternalSystemAccountIdPoolEntryResult) SwitchFieldName() string {
+	return "Code"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ManageExternalSystemAccountIdPoolEntryResult
+func (u ManageExternalSystemAccountIdPoolEntryResult) ArmForSwitch(sw int32) (string, bool) {
+	switch ManageExternalSystemAccountIdPoolEntryResultCode(sw) {
+	case ManageExternalSystemAccountIdPoolEntryResultCodeSuccess:
+		return "Success", true
+	default:
+		return "", true
+	}
+}
+
+// NewManageExternalSystemAccountIdPoolEntryResult creates a new  ManageExternalSystemAccountIdPoolEntryResult.
+func NewManageExternalSystemAccountIdPoolEntryResult(code ManageExternalSystemAccountIdPoolEntryResultCode, value interface{}) (result ManageExternalSystemAccountIdPoolEntryResult, err error) {
+	result.Code = code
+	switch ManageExternalSystemAccountIdPoolEntryResultCode(code) {
+	case ManageExternalSystemAccountIdPoolEntryResultCodeSuccess:
+		tv, ok := value.(ManageExternalSystemAccountIdPoolEntrySuccess)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ManageExternalSystemAccountIdPoolEntrySuccess")
+			return
+		}
+		result.Success = &tv
+	default:
+		// void
+	}
+	return
+}
+
+// MustSuccess retrieves the Success value from the union,
+// panicing if the value is not set.
+func (u ManageExternalSystemAccountIdPoolEntryResult) MustSuccess() ManageExternalSystemAccountIdPoolEntrySuccess {
+	val, ok := u.GetSuccess()
+
+	if !ok {
+		panic("arm Success is not set")
+	}
+
+	return val
+}
+
+// GetSuccess retrieves the Success value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageExternalSystemAccountIdPoolEntryResult) GetSuccess() (result ManageExternalSystemAccountIdPoolEntrySuccess, ok bool) {
 	armName, _ := u.ArmForSwitch(int32(u.Code))
 
 	if armName == "Success" {
@@ -20711,31 +21767,37 @@ type WithdrawalRequest struct {
 //    	    CreateAMLAlertRequestOp createAMLAlertRequestOp;
 //    	case CREATE_KYC_REQUEST:
 //    		CreateUpdateKYCRequestOp createUpdateKYCRequestOp;
+//        case MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
+//            ManageExternalSystemAccountIdPoolEntryOp manageExternalSystemAccountIdPoolEntryOp;
+//        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
+//            BindExternalSystemAccountIdOp bindExternalSystemAccountIdOp;
 //        }
 //
 type OperationBody struct {
-	Type                        OperationType                `json:"type,omitempty"`
-	CreateAccountOp             *CreateAccountOp             `json:"createAccountOp,omitempty"`
-	PaymentOp                   *PaymentOp                   `json:"paymentOp,omitempty"`
-	SetOptionsOp                *SetOptionsOp                `json:"setOptionsOp,omitempty"`
-	CreateIssuanceRequestOp     *CreateIssuanceRequestOp     `json:"createIssuanceRequestOp,omitempty"`
-	SetFeesOp                   *SetFeesOp                   `json:"setFeesOp,omitempty"`
-	ManageAccountOp             *ManageAccountOp             `json:"manageAccountOp,omitempty"`
-	CreateWithdrawalRequestOp   *CreateWithdrawalRequestOp   `json:"createWithdrawalRequestOp,omitempty"`
-	ManageBalanceOp             *ManageBalanceOp             `json:"manageBalanceOp,omitempty"`
-	ReviewPaymentRequestOp      *ReviewPaymentRequestOp      `json:"reviewPaymentRequestOp,omitempty"`
-	ManageAssetOp               *ManageAssetOp               `json:"manageAssetOp,omitempty"`
-	CreatePreIssuanceRequest    *CreatePreIssuanceRequestOp  `json:"createPreIssuanceRequest,omitempty"`
-	SetLimitsOp                 *SetLimitsOp                 `json:"setLimitsOp,omitempty"`
-	DirectDebitOp               *DirectDebitOp               `json:"directDebitOp,omitempty"`
-	ManageAssetPairOp           *ManageAssetPairOp           `json:"manageAssetPairOp,omitempty"`
-	ManageOfferOp               *ManageOfferOp               `json:"manageOfferOp,omitempty"`
-	ManageInvoiceOp             *ManageInvoiceOp             `json:"manageInvoiceOp,omitempty"`
-	ReviewRequestOp             *ReviewRequestOp             `json:"reviewRequestOp,omitempty"`
-	CreateSaleCreationRequestOp *CreateSaleCreationRequestOp `json:"createSaleCreationRequestOp,omitempty"`
-	CheckSaleStateOp            *CheckSaleStateOp            `json:"checkSaleStateOp,omitempty"`
-	CreateAmlAlertRequestOp     *CreateAmlAlertRequestOp     `json:"createAMLAlertRequestOp,omitempty"`
-	CreateUpdateKycRequestOp    *CreateUpdateKycRequestOp    `json:"createUpdateKYCRequestOp,omitempty"`
+	Type                                     OperationType                             `json:"type,omitempty"`
+	CreateAccountOp                          *CreateAccountOp                          `json:"createAccountOp,omitempty"`
+	PaymentOp                                *PaymentOp                                `json:"paymentOp,omitempty"`
+	SetOptionsOp                             *SetOptionsOp                             `json:"setOptionsOp,omitempty"`
+	CreateIssuanceRequestOp                  *CreateIssuanceRequestOp                  `json:"createIssuanceRequestOp,omitempty"`
+	SetFeesOp                                *SetFeesOp                                `json:"setFeesOp,omitempty"`
+	ManageAccountOp                          *ManageAccountOp                          `json:"manageAccountOp,omitempty"`
+	CreateWithdrawalRequestOp                *CreateWithdrawalRequestOp                `json:"createWithdrawalRequestOp,omitempty"`
+	ManageBalanceOp                          *ManageBalanceOp                          `json:"manageBalanceOp,omitempty"`
+	ReviewPaymentRequestOp                   *ReviewPaymentRequestOp                   `json:"reviewPaymentRequestOp,omitempty"`
+	ManageAssetOp                            *ManageAssetOp                            `json:"manageAssetOp,omitempty"`
+	CreatePreIssuanceRequest                 *CreatePreIssuanceRequestOp               `json:"createPreIssuanceRequest,omitempty"`
+	SetLimitsOp                              *SetLimitsOp                              `json:"setLimitsOp,omitempty"`
+	DirectDebitOp                            *DirectDebitOp                            `json:"directDebitOp,omitempty"`
+	ManageAssetPairOp                        *ManageAssetPairOp                        `json:"manageAssetPairOp,omitempty"`
+	ManageOfferOp                            *ManageOfferOp                            `json:"manageOfferOp,omitempty"`
+	ManageInvoiceOp                          *ManageInvoiceOp                          `json:"manageInvoiceOp,omitempty"`
+	ReviewRequestOp                          *ReviewRequestOp                          `json:"reviewRequestOp,omitempty"`
+	CreateSaleCreationRequestOp              *CreateSaleCreationRequestOp              `json:"createSaleCreationRequestOp,omitempty"`
+	CheckSaleStateOp                         *CheckSaleStateOp                         `json:"checkSaleStateOp,omitempty"`
+	CreateAmlAlertRequestOp                  *CreateAmlAlertRequestOp                  `json:"createAMLAlertRequestOp,omitempty"`
+	CreateUpdateKycRequestOp                 *CreateUpdateKycRequestOp                 `json:"createUpdateKYCRequestOp,omitempty"`
+	ManageExternalSystemAccountIdPoolEntryOp *ManageExternalSystemAccountIdPoolEntryOp `json:"manageExternalSystemAccountIdPoolEntryOp,omitempty"`
+	BindExternalSystemAccountIdOp            *BindExternalSystemAccountIdOp            `json:"bindExternalSystemAccountIdOp,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -20790,6 +21852,10 @@ func (u OperationBody) ArmForSwitch(sw int32) (string, bool) {
 		return "CreateAmlAlertRequestOp", true
 	case OperationTypeCreateKycRequest:
 		return "CreateUpdateKycRequestOp", true
+	case OperationTypeManageExternalSystemAccountIdPoolEntry:
+		return "ManageExternalSystemAccountIdPoolEntryOp", true
+	case OperationTypeBindExternalSystemAccountId:
+		return "BindExternalSystemAccountIdOp", true
 	}
 	return "-", false
 }
@@ -20945,6 +22011,20 @@ func NewOperationBody(aType OperationType, value interface{}) (result OperationB
 			return
 		}
 		result.CreateUpdateKycRequestOp = &tv
+	case OperationTypeManageExternalSystemAccountIdPoolEntry:
+		tv, ok := value.(ManageExternalSystemAccountIdPoolEntryOp)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ManageExternalSystemAccountIdPoolEntryOp")
+			return
+		}
+		result.ManageExternalSystemAccountIdPoolEntryOp = &tv
+	case OperationTypeBindExternalSystemAccountId:
+		tv, ok := value.(BindExternalSystemAccountIdOp)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be BindExternalSystemAccountIdOp")
+			return
+		}
+		result.BindExternalSystemAccountIdOp = &tv
 	}
 	return
 }
@@ -21474,6 +22554,56 @@ func (u OperationBody) GetCreateUpdateKycRequestOp() (result CreateUpdateKycRequ
 	return
 }
 
+// MustManageExternalSystemAccountIdPoolEntryOp retrieves the ManageExternalSystemAccountIdPoolEntryOp value from the union,
+// panicing if the value is not set.
+func (u OperationBody) MustManageExternalSystemAccountIdPoolEntryOp() ManageExternalSystemAccountIdPoolEntryOp {
+	val, ok := u.GetManageExternalSystemAccountIdPoolEntryOp()
+
+	if !ok {
+		panic("arm ManageExternalSystemAccountIdPoolEntryOp is not set")
+	}
+
+	return val
+}
+
+// GetManageExternalSystemAccountIdPoolEntryOp retrieves the ManageExternalSystemAccountIdPoolEntryOp value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationBody) GetManageExternalSystemAccountIdPoolEntryOp() (result ManageExternalSystemAccountIdPoolEntryOp, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "ManageExternalSystemAccountIdPoolEntryOp" {
+		result = *u.ManageExternalSystemAccountIdPoolEntryOp
+		ok = true
+	}
+
+	return
+}
+
+// MustBindExternalSystemAccountIdOp retrieves the BindExternalSystemAccountIdOp value from the union,
+// panicing if the value is not set.
+func (u OperationBody) MustBindExternalSystemAccountIdOp() BindExternalSystemAccountIdOp {
+	val, ok := u.GetBindExternalSystemAccountIdOp()
+
+	if !ok {
+		panic("arm BindExternalSystemAccountIdOp is not set")
+	}
+
+	return val
+}
+
+// GetBindExternalSystemAccountIdOp retrieves the BindExternalSystemAccountIdOp value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationBody) GetBindExternalSystemAccountIdOp() (result BindExternalSystemAccountIdOp, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "BindExternalSystemAccountIdOp" {
+		result = *u.BindExternalSystemAccountIdOp
+		ok = true
+	}
+
+	return
+}
+
 // Operation is an XDR Struct defines as:
 //
 //   struct Operation
@@ -21527,6 +22657,10 @@ func (u OperationBody) GetCreateUpdateKycRequestOp() (result CreateUpdateKycRequ
 //    	    CreateAMLAlertRequestOp createAMLAlertRequestOp;
 //    	case CREATE_KYC_REQUEST:
 //    		CreateUpdateKYCRequestOp createUpdateKYCRequestOp;
+//        case MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
+//            ManageExternalSystemAccountIdPoolEntryOp manageExternalSystemAccountIdPoolEntryOp;
+//        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
+//            BindExternalSystemAccountIdOp bindExternalSystemAccountIdOp;
 //        }
 //        body;
 //    };
@@ -22119,31 +23253,37 @@ func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
 //            CreateAMLAlertRequestResult createAMLAlertRequestResult;
 //    	case CREATE_KYC_REQUEST:
 //    	    CreateUpdateKYCRequestResult createUpdateKYCRequestResult;
+//        case MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
+//            ManageExternalSystemAccountIdPoolEntryResult manageExternalSystemAccountIdPoolEntryResult;
+//        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
+//            BindExternalSystemAccountIdResult bindExternalSystemAccountIdResult;
 //        }
 //
 type OperationResultTr struct {
-	Type                            OperationType                    `json:"type,omitempty"`
-	CreateAccountResult             *CreateAccountResult             `json:"createAccountResult,omitempty"`
-	PaymentResult                   *PaymentResult                   `json:"paymentResult,omitempty"`
-	SetOptionsResult                *SetOptionsResult                `json:"setOptionsResult,omitempty"`
-	CreateIssuanceRequestResult     *CreateIssuanceRequestResult     `json:"createIssuanceRequestResult,omitempty"`
-	SetFeesResult                   *SetFeesResult                   `json:"setFeesResult,omitempty"`
-	ManageAccountResult             *ManageAccountResult             `json:"manageAccountResult,omitempty"`
-	CreateWithdrawalRequestResult   *CreateWithdrawalRequestResult   `json:"createWithdrawalRequestResult,omitempty"`
-	ManageBalanceResult             *ManageBalanceResult             `json:"manageBalanceResult,omitempty"`
-	ReviewPaymentRequestResult      *ReviewPaymentRequestResult      `json:"reviewPaymentRequestResult,omitempty"`
-	ManageAssetResult               *ManageAssetResult               `json:"manageAssetResult,omitempty"`
-	CreatePreIssuanceRequestResult  *CreatePreIssuanceRequestResult  `json:"createPreIssuanceRequestResult,omitempty"`
-	SetLimitsResult                 *SetLimitsResult                 `json:"setLimitsResult,omitempty"`
-	DirectDebitResult               *DirectDebitResult               `json:"directDebitResult,omitempty"`
-	ManageAssetPairResult           *ManageAssetPairResult           `json:"manageAssetPairResult,omitempty"`
-	ManageOfferResult               *ManageOfferResult               `json:"manageOfferResult,omitempty"`
-	ManageInvoiceResult             *ManageInvoiceResult             `json:"manageInvoiceResult,omitempty"`
-	ReviewRequestResult             *ReviewRequestResult             `json:"reviewRequestResult,omitempty"`
-	CreateSaleCreationRequestResult *CreateSaleCreationRequestResult `json:"createSaleCreationRequestResult,omitempty"`
-	CheckSaleStateResult            *CheckSaleStateResult            `json:"checkSaleStateResult,omitempty"`
-	CreateAmlAlertRequestResult     *CreateAmlAlertRequestResult     `json:"createAMLAlertRequestResult,omitempty"`
-	CreateUpdateKycRequestResult    *CreateUpdateKycRequestResult    `json:"createUpdateKYCRequestResult,omitempty"`
+	Type                                         OperationType                                 `json:"type,omitempty"`
+	CreateAccountResult                          *CreateAccountResult                          `json:"createAccountResult,omitempty"`
+	PaymentResult                                *PaymentResult                                `json:"paymentResult,omitempty"`
+	SetOptionsResult                             *SetOptionsResult                             `json:"setOptionsResult,omitempty"`
+	CreateIssuanceRequestResult                  *CreateIssuanceRequestResult                  `json:"createIssuanceRequestResult,omitempty"`
+	SetFeesResult                                *SetFeesResult                                `json:"setFeesResult,omitempty"`
+	ManageAccountResult                          *ManageAccountResult                          `json:"manageAccountResult,omitempty"`
+	CreateWithdrawalRequestResult                *CreateWithdrawalRequestResult                `json:"createWithdrawalRequestResult,omitempty"`
+	ManageBalanceResult                          *ManageBalanceResult                          `json:"manageBalanceResult,omitempty"`
+	ReviewPaymentRequestResult                   *ReviewPaymentRequestResult                   `json:"reviewPaymentRequestResult,omitempty"`
+	ManageAssetResult                            *ManageAssetResult                            `json:"manageAssetResult,omitempty"`
+	CreatePreIssuanceRequestResult               *CreatePreIssuanceRequestResult               `json:"createPreIssuanceRequestResult,omitempty"`
+	SetLimitsResult                              *SetLimitsResult                              `json:"setLimitsResult,omitempty"`
+	DirectDebitResult                            *DirectDebitResult                            `json:"directDebitResult,omitempty"`
+	ManageAssetPairResult                        *ManageAssetPairResult                        `json:"manageAssetPairResult,omitempty"`
+	ManageOfferResult                            *ManageOfferResult                            `json:"manageOfferResult,omitempty"`
+	ManageInvoiceResult                          *ManageInvoiceResult                          `json:"manageInvoiceResult,omitempty"`
+	ReviewRequestResult                          *ReviewRequestResult                          `json:"reviewRequestResult,omitempty"`
+	CreateSaleCreationRequestResult              *CreateSaleCreationRequestResult              `json:"createSaleCreationRequestResult,omitempty"`
+	CheckSaleStateResult                         *CheckSaleStateResult                         `json:"checkSaleStateResult,omitempty"`
+	CreateAmlAlertRequestResult                  *CreateAmlAlertRequestResult                  `json:"createAMLAlertRequestResult,omitempty"`
+	CreateUpdateKycRequestResult                 *CreateUpdateKycRequestResult                 `json:"createUpdateKYCRequestResult,omitempty"`
+	ManageExternalSystemAccountIdPoolEntryResult *ManageExternalSystemAccountIdPoolEntryResult `json:"manageExternalSystemAccountIdPoolEntryResult,omitempty"`
+	BindExternalSystemAccountIdResult            *BindExternalSystemAccountIdResult            `json:"bindExternalSystemAccountIdResult,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -22198,6 +23338,10 @@ func (u OperationResultTr) ArmForSwitch(sw int32) (string, bool) {
 		return "CreateAmlAlertRequestResult", true
 	case OperationTypeCreateKycRequest:
 		return "CreateUpdateKycRequestResult", true
+	case OperationTypeManageExternalSystemAccountIdPoolEntry:
+		return "ManageExternalSystemAccountIdPoolEntryResult", true
+	case OperationTypeBindExternalSystemAccountId:
+		return "BindExternalSystemAccountIdResult", true
 	}
 	return "-", false
 }
@@ -22353,6 +23497,20 @@ func NewOperationResultTr(aType OperationType, value interface{}) (result Operat
 			return
 		}
 		result.CreateUpdateKycRequestResult = &tv
+	case OperationTypeManageExternalSystemAccountIdPoolEntry:
+		tv, ok := value.(ManageExternalSystemAccountIdPoolEntryResult)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ManageExternalSystemAccountIdPoolEntryResult")
+			return
+		}
+		result.ManageExternalSystemAccountIdPoolEntryResult = &tv
+	case OperationTypeBindExternalSystemAccountId:
+		tv, ok := value.(BindExternalSystemAccountIdResult)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be BindExternalSystemAccountIdResult")
+			return
+		}
+		result.BindExternalSystemAccountIdResult = &tv
 	}
 	return
 }
@@ -22882,6 +24040,56 @@ func (u OperationResultTr) GetCreateUpdateKycRequestResult() (result CreateUpdat
 	return
 }
 
+// MustManageExternalSystemAccountIdPoolEntryResult retrieves the ManageExternalSystemAccountIdPoolEntryResult value from the union,
+// panicing if the value is not set.
+func (u OperationResultTr) MustManageExternalSystemAccountIdPoolEntryResult() ManageExternalSystemAccountIdPoolEntryResult {
+	val, ok := u.GetManageExternalSystemAccountIdPoolEntryResult()
+
+	if !ok {
+		panic("arm ManageExternalSystemAccountIdPoolEntryResult is not set")
+	}
+
+	return val
+}
+
+// GetManageExternalSystemAccountIdPoolEntryResult retrieves the ManageExternalSystemAccountIdPoolEntryResult value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationResultTr) GetManageExternalSystemAccountIdPoolEntryResult() (result ManageExternalSystemAccountIdPoolEntryResult, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "ManageExternalSystemAccountIdPoolEntryResult" {
+		result = *u.ManageExternalSystemAccountIdPoolEntryResult
+		ok = true
+	}
+
+	return
+}
+
+// MustBindExternalSystemAccountIdResult retrieves the BindExternalSystemAccountIdResult value from the union,
+// panicing if the value is not set.
+func (u OperationResultTr) MustBindExternalSystemAccountIdResult() BindExternalSystemAccountIdResult {
+	val, ok := u.GetBindExternalSystemAccountIdResult()
+
+	if !ok {
+		panic("arm BindExternalSystemAccountIdResult is not set")
+	}
+
+	return val
+}
+
+// GetBindExternalSystemAccountIdResult retrieves the BindExternalSystemAccountIdResult value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationResultTr) GetBindExternalSystemAccountIdResult() (result BindExternalSystemAccountIdResult, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "BindExternalSystemAccountIdResult" {
+		result = *u.BindExternalSystemAccountIdResult
+		ok = true
+	}
+
+	return
+}
+
 // OperationResult is an XDR Union defines as:
 //
 //   union OperationResult switch (OperationResultCode code)
@@ -22931,6 +24139,10 @@ func (u OperationResultTr) GetCreateUpdateKycRequestResult() (result CreateUpdat
 //            CreateAMLAlertRequestResult createAMLAlertRequestResult;
 //    	case CREATE_KYC_REQUEST:
 //    	    CreateUpdateKYCRequestResult createUpdateKYCRequestResult;
+//        case MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
+//            ManageExternalSystemAccountIdPoolEntryResult manageExternalSystemAccountIdPoolEntryResult;
+//        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
+//            BindExternalSystemAccountIdResult bindExternalSystemAccountIdResult;
 //        }
 //        tr;
 //    default:
@@ -23604,22 +24816,30 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ASSET_PREISSUER_MIGRATION = 6,
 //    	ASSET_PREISSUER_MIGRATED = 7,
 //    	USE_KYC_LEVEL = 8,
-//    	ERROR_ON_NON_ZERO_TASKS_TO_REMOVE_IN_REJECT_KYC = 9
+//    	ERROR_ON_NON_ZERO_TASKS_TO_REMOVE_IN_REJECT_KYC = 9,
+//    	ALLOW_ACCOUNT_MANAGER_TO_CHANGE_KYC = 10,
+//    	CHANGE_ASSET_ISSUER_BAD_AUTH_EXTRA_FIXED = 11,
+//        AUTO_CREATE_COMMISSION_BALANCE_ON_TRANSFER = 12,
+//        DO_NOT_BUILD_ACCOUNT_IF_VERSION_EQUALS_OR_GREATER = 13
 //    };
 //
 type LedgerVersion int32
 
 const (
-	LedgerVersionEmptyVersion                           LedgerVersion = 0
-	LedgerVersionPassExternalSysAccIdInCreateAcc        LedgerVersion = 1
-	LedgerVersionDetailedLedgerChanges                  LedgerVersion = 2
-	LedgerVersionNewSignerTypes                         LedgerVersion = 3
-	LedgerVersionTypedSale                              LedgerVersion = 4
-	LedgerVersionUniqueBalanceCreation                  LedgerVersion = 5
-	LedgerVersionAssetPreissuerMigration                LedgerVersion = 6
-	LedgerVersionAssetPreissuerMigrated                 LedgerVersion = 7
-	LedgerVersionUseKycLevel                            LedgerVersion = 8
-	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc LedgerVersion = 9
+	LedgerVersionEmptyVersion                              LedgerVersion = 0
+	LedgerVersionPassExternalSysAccIdInCreateAcc           LedgerVersion = 1
+	LedgerVersionDetailedLedgerChanges                     LedgerVersion = 2
+	LedgerVersionNewSignerTypes                            LedgerVersion = 3
+	LedgerVersionTypedSale                                 LedgerVersion = 4
+	LedgerVersionUniqueBalanceCreation                     LedgerVersion = 5
+	LedgerVersionAssetPreissuerMigration                   LedgerVersion = 6
+	LedgerVersionAssetPreissuerMigrated                    LedgerVersion = 7
+	LedgerVersionUseKycLevel                               LedgerVersion = 8
+	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc    LedgerVersion = 9
+	LedgerVersionAllowAccountManagerToChangeKyc            LedgerVersion = 10
+	LedgerVersionChangeAssetIssuerBadAuthExtraFixed        LedgerVersion = 11
+	LedgerVersionAutoCreateCommissionBalanceOnTransfer     LedgerVersion = 12
+	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater LedgerVersion = 13
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -23633,45 +24853,61 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAssetPreissuerMigrated,
 	LedgerVersionUseKycLevel,
 	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc,
+	LedgerVersionAllowAccountManagerToChangeKyc,
+	LedgerVersionChangeAssetIssuerBadAuthExtraFixed,
+	LedgerVersionAutoCreateCommissionBalanceOnTransfer,
+	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater,
 }
 
 var ledgerVersionMap = map[int32]string{
-	0: "LedgerVersionEmptyVersion",
-	1: "LedgerVersionPassExternalSysAccIdInCreateAcc",
-	2: "LedgerVersionDetailedLedgerChanges",
-	3: "LedgerVersionNewSignerTypes",
-	4: "LedgerVersionTypedSale",
-	5: "LedgerVersionUniqueBalanceCreation",
-	6: "LedgerVersionAssetPreissuerMigration",
-	7: "LedgerVersionAssetPreissuerMigrated",
-	8: "LedgerVersionUseKycLevel",
-	9: "LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc",
+	0:  "LedgerVersionEmptyVersion",
+	1:  "LedgerVersionPassExternalSysAccIdInCreateAcc",
+	2:  "LedgerVersionDetailedLedgerChanges",
+	3:  "LedgerVersionNewSignerTypes",
+	4:  "LedgerVersionTypedSale",
+	5:  "LedgerVersionUniqueBalanceCreation",
+	6:  "LedgerVersionAssetPreissuerMigration",
+	7:  "LedgerVersionAssetPreissuerMigrated",
+	8:  "LedgerVersionUseKycLevel",
+	9:  "LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc",
+	10: "LedgerVersionAllowAccountManagerToChangeKyc",
+	11: "LedgerVersionChangeAssetIssuerBadAuthExtraFixed",
+	12: "LedgerVersionAutoCreateCommissionBalanceOnTransfer",
+	13: "LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater",
 }
 
 var ledgerVersionShortMap = map[int32]string{
-	0: "empty_version",
-	1: "pass_external_sys_acc_id_in_create_acc",
-	2: "detailed_ledger_changes",
-	3: "new_signer_types",
-	4: "typed_sale",
-	5: "unique_balance_creation",
-	6: "asset_preissuer_migration",
-	7: "asset_preissuer_migrated",
-	8: "use_kyc_level",
-	9: "error_on_non_zero_tasks_to_remove_in_reject_kyc",
+	0:  "empty_version",
+	1:  "pass_external_sys_acc_id_in_create_acc",
+	2:  "detailed_ledger_changes",
+	3:  "new_signer_types",
+	4:  "typed_sale",
+	5:  "unique_balance_creation",
+	6:  "asset_preissuer_migration",
+	7:  "asset_preissuer_migrated",
+	8:  "use_kyc_level",
+	9:  "error_on_non_zero_tasks_to_remove_in_reject_kyc",
+	10: "allow_account_manager_to_change_kyc",
+	11: "change_asset_issuer_bad_auth_extra_fixed",
+	12: "auto_create_commission_balance_on_transfer",
+	13: "do_not_build_account_if_version_equals_or_greater",
 }
 
 var ledgerVersionRevMap = map[string]int32{
-	"LedgerVersionEmptyVersion":                           0,
-	"LedgerVersionPassExternalSysAccIdInCreateAcc":        1,
-	"LedgerVersionDetailedLedgerChanges":                  2,
-	"LedgerVersionNewSignerTypes":                         3,
-	"LedgerVersionTypedSale":                              4,
-	"LedgerVersionUniqueBalanceCreation":                  5,
-	"LedgerVersionAssetPreissuerMigration":                6,
-	"LedgerVersionAssetPreissuerMigrated":                 7,
-	"LedgerVersionUseKycLevel":                            8,
-	"LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc": 9,
+	"LedgerVersionEmptyVersion":                              0,
+	"LedgerVersionPassExternalSysAccIdInCreateAcc":           1,
+	"LedgerVersionDetailedLedgerChanges":                     2,
+	"LedgerVersionNewSignerTypes":                            3,
+	"LedgerVersionTypedSale":                                 4,
+	"LedgerVersionUniqueBalanceCreation":                     5,
+	"LedgerVersionAssetPreissuerMigration":                   6,
+	"LedgerVersionAssetPreissuerMigrated":                    7,
+	"LedgerVersionUseKycLevel":                               8,
+	"LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc":    9,
+	"LedgerVersionAllowAccountManagerToChangeKyc":            10,
+	"LedgerVersionChangeAssetIssuerBadAuthExtraFixed":        11,
+	"LedgerVersionAutoCreateCommissionBalanceOnTransfer":     12,
+	"LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater": 13,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -24053,33 +25289,37 @@ type Fee struct {
 //    	CREATE_SALE_REQUEST = 19,
 //    	CHECK_SALE_STATE = 20,
 //        CREATE_AML_ALERT = 21,
-//        CREATE_KYC_REQUEST = 22
+//        CREATE_KYC_REQUEST = 22,
+//    	MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY = 23,
+//    	BIND_EXTERNAL_SYSTEM_ACCOUNT_ID = 24
 //    };
 //
 type OperationType int32
 
 const (
-	OperationTypeCreateAccount            OperationType = 0
-	OperationTypePayment                  OperationType = 1
-	OperationTypeSetOptions               OperationType = 2
-	OperationTypeCreateIssuanceRequest    OperationType = 3
-	OperationTypeSetFees                  OperationType = 5
-	OperationTypeManageAccount            OperationType = 6
-	OperationTypeCreateWithdrawalRequest  OperationType = 7
-	OperationTypeManageBalance            OperationType = 9
-	OperationTypeReviewPaymentRequest     OperationType = 10
-	OperationTypeManageAsset              OperationType = 11
-	OperationTypeCreatePreissuanceRequest OperationType = 12
-	OperationTypeSetLimits                OperationType = 13
-	OperationTypeDirectDebit              OperationType = 14
-	OperationTypeManageAssetPair          OperationType = 15
-	OperationTypeManageOffer              OperationType = 16
-	OperationTypeManageInvoice            OperationType = 17
-	OperationTypeReviewRequest            OperationType = 18
-	OperationTypeCreateSaleRequest        OperationType = 19
-	OperationTypeCheckSaleState           OperationType = 20
-	OperationTypeCreateAmlAlert           OperationType = 21
-	OperationTypeCreateKycRequest         OperationType = 22
+	OperationTypeCreateAccount                          OperationType = 0
+	OperationTypePayment                                OperationType = 1
+	OperationTypeSetOptions                             OperationType = 2
+	OperationTypeCreateIssuanceRequest                  OperationType = 3
+	OperationTypeSetFees                                OperationType = 5
+	OperationTypeManageAccount                          OperationType = 6
+	OperationTypeCreateWithdrawalRequest                OperationType = 7
+	OperationTypeManageBalance                          OperationType = 9
+	OperationTypeReviewPaymentRequest                   OperationType = 10
+	OperationTypeManageAsset                            OperationType = 11
+	OperationTypeCreatePreissuanceRequest               OperationType = 12
+	OperationTypeSetLimits                              OperationType = 13
+	OperationTypeDirectDebit                            OperationType = 14
+	OperationTypeManageAssetPair                        OperationType = 15
+	OperationTypeManageOffer                            OperationType = 16
+	OperationTypeManageInvoice                          OperationType = 17
+	OperationTypeReviewRequest                          OperationType = 18
+	OperationTypeCreateSaleRequest                      OperationType = 19
+	OperationTypeCheckSaleState                         OperationType = 20
+	OperationTypeCreateAmlAlert                         OperationType = 21
+	OperationTypeCreateKycRequest                       OperationType = 22
+	OperationTypeManageExternalSystemAccountIdPoolEntry OperationType = 23
+	OperationTypeBindExternalSystemAccountId            OperationType = 24
 )
 
 var OperationTypeAll = []OperationType{
@@ -24104,6 +25344,8 @@ var OperationTypeAll = []OperationType{
 	OperationTypeCheckSaleState,
 	OperationTypeCreateAmlAlert,
 	OperationTypeCreateKycRequest,
+	OperationTypeManageExternalSystemAccountIdPoolEntry,
+	OperationTypeBindExternalSystemAccountId,
 }
 
 var operationTypeMap = map[int32]string{
@@ -24128,6 +25370,8 @@ var operationTypeMap = map[int32]string{
 	20: "OperationTypeCheckSaleState",
 	21: "OperationTypeCreateAmlAlert",
 	22: "OperationTypeCreateKycRequest",
+	23: "OperationTypeManageExternalSystemAccountIdPoolEntry",
+	24: "OperationTypeBindExternalSystemAccountId",
 }
 
 var operationTypeShortMap = map[int32]string{
@@ -24152,30 +25396,34 @@ var operationTypeShortMap = map[int32]string{
 	20: "check_sale_state",
 	21: "create_aml_alert",
 	22: "create_kyc_request",
+	23: "manage_external_system_account_id_pool_entry",
+	24: "bind_external_system_account_id",
 }
 
 var operationTypeRevMap = map[string]int32{
-	"OperationTypeCreateAccount":            0,
-	"OperationTypePayment":                  1,
-	"OperationTypeSetOptions":               2,
-	"OperationTypeCreateIssuanceRequest":    3,
-	"OperationTypeSetFees":                  5,
-	"OperationTypeManageAccount":            6,
-	"OperationTypeCreateWithdrawalRequest":  7,
-	"OperationTypeManageBalance":            9,
-	"OperationTypeReviewPaymentRequest":     10,
-	"OperationTypeManageAsset":              11,
-	"OperationTypeCreatePreissuanceRequest": 12,
-	"OperationTypeSetLimits":                13,
-	"OperationTypeDirectDebit":              14,
-	"OperationTypeManageAssetPair":          15,
-	"OperationTypeManageOffer":              16,
-	"OperationTypeManageInvoice":            17,
-	"OperationTypeReviewRequest":            18,
-	"OperationTypeCreateSaleRequest":        19,
-	"OperationTypeCheckSaleState":           20,
-	"OperationTypeCreateAmlAlert":           21,
-	"OperationTypeCreateKycRequest":         22,
+	"OperationTypeCreateAccount":                          0,
+	"OperationTypePayment":                                1,
+	"OperationTypeSetOptions":                             2,
+	"OperationTypeCreateIssuanceRequest":                  3,
+	"OperationTypeSetFees":                                5,
+	"OperationTypeManageAccount":                          6,
+	"OperationTypeCreateWithdrawalRequest":                7,
+	"OperationTypeManageBalance":                          9,
+	"OperationTypeReviewPaymentRequest":                   10,
+	"OperationTypeManageAsset":                            11,
+	"OperationTypeCreatePreissuanceRequest":               12,
+	"OperationTypeSetLimits":                              13,
+	"OperationTypeDirectDebit":                            14,
+	"OperationTypeManageAssetPair":                        15,
+	"OperationTypeManageOffer":                            16,
+	"OperationTypeManageInvoice":                          17,
+	"OperationTypeReviewRequest":                          18,
+	"OperationTypeCreateSaleRequest":                      19,
+	"OperationTypeCheckSaleState":                         20,
+	"OperationTypeCreateAmlAlert":                         21,
+	"OperationTypeCreateKycRequest":                       22,
+	"OperationTypeManageExternalSystemAccountIdPoolEntry": 23,
+	"OperationTypeBindExternalSystemAccountId":            24,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
