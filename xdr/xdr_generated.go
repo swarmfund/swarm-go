@@ -16159,9 +16159,7 @@ func NewPaymentV2ResponseExt(v LedgerVersion, value interface{}) (result Payment
 //        uint64 paymentID;
 //
 //        uint64 actualSourcePaymentFee;
-//        AssetCode actualSourcePaymentFeeAssetCode;
 //        uint64 actualDestinationPaymentFee;
-//        AssetCode actualDestPaymentFeeAssetCode;
 //
 //        // reserved for future use
 //        union switch (LedgerVersion v)
@@ -16173,16 +16171,14 @@ func NewPaymentV2ResponseExt(v LedgerVersion, value interface{}) (result Payment
 //    };
 //
 type PaymentV2Response struct {
-	Destination                     AccountId            `json:"destination,omitempty"`
-	DestinationBalanceId            BalanceId            `json:"destinationBalanceID,omitempty"`
-	Asset                           AssetCode            `json:"asset,omitempty"`
-	SourceSentUniversal             Uint64               `json:"sourceSentUniversal,omitempty"`
-	PaymentId                       Uint64               `json:"paymentID,omitempty"`
-	ActualSourcePaymentFee          Uint64               `json:"actualSourcePaymentFee,omitempty"`
-	ActualSourcePaymentFeeAssetCode AssetCode            `json:"actualSourcePaymentFeeAssetCode,omitempty"`
-	ActualDestinationPaymentFee     Uint64               `json:"actualDestinationPaymentFee,omitempty"`
-	ActualDestPaymentFeeAssetCode   AssetCode            `json:"actualDestPaymentFeeAssetCode,omitempty"`
-	Ext                             PaymentV2ResponseExt `json:"ext,omitempty"`
+	Destination                 AccountId            `json:"destination,omitempty"`
+	DestinationBalanceId        BalanceId            `json:"destinationBalanceID,omitempty"`
+	Asset                       AssetCode            `json:"asset,omitempty"`
+	SourceSentUniversal         Uint64               `json:"sourceSentUniversal,omitempty"`
+	PaymentId                   Uint64               `json:"paymentID,omitempty"`
+	ActualSourcePaymentFee      Uint64               `json:"actualSourcePaymentFee,omitempty"`
+	ActualDestinationPaymentFee Uint64               `json:"actualDestinationPaymentFee,omitempty"`
+	Ext                         PaymentV2ResponseExt `json:"ext,omitempty"`
 }
 
 // PaymentV2Result is an XDR Union defines as:
