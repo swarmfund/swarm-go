@@ -2198,7 +2198,7 @@ func NewExternalSystemAccountIdPoolEntryExt(v LedgerVersion, value interface{}) 
 //        uint64 expiresAt;
 //        uint64 bindedAt;
 //        uint64 parent;
-//        int32 isDeleted;
+//        bool isDeleted;
 //
 //
 //        // reserved for future use
@@ -2218,7 +2218,7 @@ type ExternalSystemAccountIdPoolEntry struct {
 	ExpiresAt          Uint64                              `json:"expiresAt,omitempty"`
 	BindedAt           Uint64                              `json:"bindedAt,omitempty"`
 	Parent             Uint64                              `json:"parent,omitempty"`
-	IsDeleted          Int32                               `json:"isDeleted,omitempty"`
+	IsDeleted          bool                                `json:"isDeleted,omitempty"`
 	Ext                ExternalSystemAccountIdPoolEntryExt `json:"ext,omitempty"`
 }
 
@@ -6989,7 +6989,6 @@ func NewLedgerKeyExternalSystemAccountIdPoolEntryExt(v LedgerVersion, value inte
 //
 //   struct {
 //    		uint64 poolEntryID;
-//    		int32 externalSystemType;
 //    		union switch (LedgerVersion v)
 //    		{
 //    		case EMPTY_VERSION:
@@ -6999,9 +6998,8 @@ func NewLedgerKeyExternalSystemAccountIdPoolEntryExt(v LedgerVersion, value inte
 //    	}
 //
 type LedgerKeyExternalSystemAccountIdPoolEntry struct {
-	PoolEntryId        Uint64                                       `json:"poolEntryID,omitempty"`
-	ExternalSystemType Int32                                        `json:"externalSystemType,omitempty"`
-	Ext                LedgerKeyExternalSystemAccountIdPoolEntryExt `json:"ext,omitempty"`
+	PoolEntryId Uint64                                       `json:"poolEntryID,omitempty"`
+	Ext         LedgerKeyExternalSystemAccountIdPoolEntryExt `json:"ext,omitempty"`
 }
 
 // LedgerKey is an XDR Union defines as:
@@ -7187,7 +7185,6 @@ type LedgerKeyExternalSystemAccountIdPoolEntry struct {
 //    case EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
 //        struct {
 //    		uint64 poolEntryID;
-//    		int32 externalSystemType;
 //    		union switch (LedgerVersion v)
 //    		{
 //    		case EMPTY_VERSION:
