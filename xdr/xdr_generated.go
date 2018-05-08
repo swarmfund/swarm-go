@@ -24597,8 +24597,10 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ALLOW_ACCOUNT_MANAGER_TO_CHANGE_KYC = 10,
 //    	CHANGE_ASSET_ISSUER_BAD_AUTH_EXTRA_FIXED = 11,
 //    	AUTO_CREATE_COMMISSION_BALANCE_ON_TRANSFER = 12,
-//    	CROSS_ASSET_FEE = 13,
-//    	USE_PAYMENT_V2 = 14
+//        ALLOW_REJECT_REQUEST_OF_BLOCKED_REQUESTOR = 13,
+//    	ASSET_UPDATE_CHECK_REFERENCE_EXISTS = 14,
+//    	CROSS_ASSET_FEE = 15,
+//    	USE_PAYMENT_V2 = 16
 //    };
 //
 type LedgerVersion int32
@@ -24617,8 +24619,10 @@ const (
 	LedgerVersionAllowAccountManagerToChangeKyc         LedgerVersion = 10
 	LedgerVersionChangeAssetIssuerBadAuthExtraFixed     LedgerVersion = 11
 	LedgerVersionAutoCreateCommissionBalanceOnTransfer  LedgerVersion = 12
-	LedgerVersionCrossAssetFee                          LedgerVersion = 13
-	LedgerVersionUsePaymentV2                           LedgerVersion = 14
+	LedgerVersionAllowRejectRequestOfBlockedRequestor   LedgerVersion = 13
+	LedgerVersionAssetUpdateCheckReferenceExists        LedgerVersion = 14
+	LedgerVersionCrossAssetFee                          LedgerVersion = 15
+	LedgerVersionUsePaymentV2                           LedgerVersion = 16
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -24635,6 +24639,8 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAllowAccountManagerToChangeKyc,
 	LedgerVersionChangeAssetIssuerBadAuthExtraFixed,
 	LedgerVersionAutoCreateCommissionBalanceOnTransfer,
+	LedgerVersionAllowRejectRequestOfBlockedRequestor,
+	LedgerVersionAssetUpdateCheckReferenceExists,
 	LedgerVersionCrossAssetFee,
 	LedgerVersionUsePaymentV2,
 }
@@ -24653,8 +24659,10 @@ var ledgerVersionMap = map[int32]string{
 	10: "LedgerVersionAllowAccountManagerToChangeKyc",
 	11: "LedgerVersionChangeAssetIssuerBadAuthExtraFixed",
 	12: "LedgerVersionAutoCreateCommissionBalanceOnTransfer",
-	13: "LedgerVersionCrossAssetFee",
-	14: "LedgerVersionUsePaymentV2",
+	13: "LedgerVersionAllowRejectRequestOfBlockedRequestor",
+	14: "LedgerVersionAssetUpdateCheckReferenceExists",
+	15: "LedgerVersionCrossAssetFee",
+	16: "LedgerVersionUsePaymentV2",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -24671,8 +24679,10 @@ var ledgerVersionShortMap = map[int32]string{
 	10: "allow_account_manager_to_change_kyc",
 	11: "change_asset_issuer_bad_auth_extra_fixed",
 	12: "auto_create_commission_balance_on_transfer",
-	13: "cross_asset_fee",
-	14: "use_payment_v2",
+	13: "allow_reject_request_of_blocked_requestor",
+	14: "asset_update_check_reference_exists",
+	15: "cross_asset_fee",
+	16: "use_payment_v2",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -24689,8 +24699,10 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAllowAccountManagerToChangeKyc":         10,
 	"LedgerVersionChangeAssetIssuerBadAuthExtraFixed":     11,
 	"LedgerVersionAutoCreateCommissionBalanceOnTransfer":  12,
-	"LedgerVersionCrossAssetFee":                          13,
-	"LedgerVersionUsePaymentV2":                           14,
+	"LedgerVersionAllowRejectRequestOfBlockedRequestor":   13,
+	"LedgerVersionAssetUpdateCheckReferenceExists":        14,
+	"LedgerVersionCrossAssetFee":                          15,
+	"LedgerVersionUsePaymentV2":                           16,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
