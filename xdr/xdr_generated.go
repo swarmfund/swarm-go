@@ -25811,8 +25811,7 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	CROSS_ASSET_FEE = 15,
 //    	USE_PAYMENT_V2 = 16,
 //    	ALLOW_SYNDICATE_TO_UPDATE_KYC = 17,
-//    	AUTO_CREATE_COMMISSION_BALANCE_ON_TRANSFER = 18,
-//        DO_NOT_BUILD_ACCOUNT_IF_VERSION_EQUALS_OR_GREATER = 19
+//        DO_NOT_BUILD_ACCOUNT_IF_VERSION_EQUALS_OR_GREATER = 18
 //    };
 //
 type LedgerVersion int32
@@ -25836,8 +25835,7 @@ const (
 	LedgerVersionCrossAssetFee                             LedgerVersion = 15
 	LedgerVersionUsePaymentV2                              LedgerVersion = 16
 	LedgerVersionAllowSyndicateToUpdateKyc                 LedgerVersion = 17
-	LedgerVersionAutoCreateCommissionBalanceOnTransfer     LedgerVersion = 18
-	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater LedgerVersion = 19
+	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater LedgerVersion = 18
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -25859,7 +25857,6 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionCrossAssetFee,
 	LedgerVersionUsePaymentV2,
 	LedgerVersionAllowSyndicateToUpdateKyc,
-	LedgerVersionAutoCreateCommissionBalanceOnTransfer,
 	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater,
 }
 
@@ -25882,8 +25879,7 @@ var ledgerVersionMap = map[int32]string{
 	15: "LedgerVersionCrossAssetFee",
 	16: "LedgerVersionUsePaymentV2",
 	17: "LedgerVersionAllowSyndicateToUpdateKyc",
-	18: "LedgerVersionAutoCreateCommissionBalanceOnTransfer",
-	19: "LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater",
+	18: "LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -25905,8 +25901,7 @@ var ledgerVersionShortMap = map[int32]string{
 	15: "cross_asset_fee",
 	16: "use_payment_v2",
 	17: "allow_syndicate_to_update_kyc",
-	18: "auto_create_commission_balance_on_transfer",
-	19: "do_not_build_account_if_version_equals_or_greater",
+	18: "do_not_build_account_if_version_equals_or_greater",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -25928,8 +25923,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionCrossAssetFee":                             15,
 	"LedgerVersionUsePaymentV2":                              16,
 	"LedgerVersionAllowSyndicateToUpdateKyc":                 17,
-	"LedgerVersionAutoCreateCommissionBalanceOnTransfer":     18,
-	"LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater": 19,
+	"LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater": 18,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
