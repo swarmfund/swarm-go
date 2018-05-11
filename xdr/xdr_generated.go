@@ -37,6 +37,7 @@
 //  xdr/raw/Stellar-operation-manage-external-system-id-pool-entry.x
 //  xdr/raw/Stellar-operation-manage-invoice.x
 //  xdr/raw/Stellar-operation-manage-offer.x
+//  xdr/raw/Stellar-operation-payment-v2.x
 //  xdr/raw/Stellar-operation-payment.x
 //  xdr/raw/Stellar-operation-review-payment-request.x
 //  xdr/raw/Stellar-operation-review-request.x
@@ -2488,16 +2489,115 @@ func (e *EmissionFeeType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// PaymentFeeType is an XDR Enum defines as:
+//
+//   enum PaymentFeeType
+//    {
+//        OUTGOING = 1,
+//        INCOMING = 2
+//    };
+//
+type PaymentFeeType int32
+
+const (
+	PaymentFeeTypeOutgoing PaymentFeeType = 1
+	PaymentFeeTypeIncoming PaymentFeeType = 2
+)
+
+var PaymentFeeTypeAll = []PaymentFeeType{
+	PaymentFeeTypeOutgoing,
+	PaymentFeeTypeIncoming,
+}
+
+var paymentFeeTypeMap = map[int32]string{
+	1: "PaymentFeeTypeOutgoing",
+	2: "PaymentFeeTypeIncoming",
+}
+
+var paymentFeeTypeShortMap = map[int32]string{
+	1: "outgoing",
+	2: "incoming",
+}
+
+var paymentFeeTypeRevMap = map[string]int32{
+	"PaymentFeeTypeOutgoing": 1,
+	"PaymentFeeTypeIncoming": 2,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for PaymentFeeType
+func (e PaymentFeeType) ValidEnum(v int32) bool {
+	_, ok := paymentFeeTypeMap[v]
+	return ok
+}
+func (e PaymentFeeType) isFlag() bool {
+	for i := len(PaymentFeeTypeAll) - 1; i >= 0; i-- {
+		expected := PaymentFeeType(2) << uint64(len(PaymentFeeTypeAll)-1) >> uint64(len(PaymentFeeTypeAll)-i)
+		if expected != PaymentFeeTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e PaymentFeeType) String() string {
+	name, _ := paymentFeeTypeMap[int32(e)]
+	return name
+}
+
+func (e PaymentFeeType) ShortString() string {
+	name, _ := paymentFeeTypeShortMap[int32(e)]
+	return name
+}
+
+func (e PaymentFeeType) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range PaymentFeeTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *PaymentFeeType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = PaymentFeeType(t.Value)
+	return nil
+}
+
 // FeeEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case CROSS_ASSET_FEE:
+//            AssetCode feeAsset;
 //        }
 //
 type FeeEntryExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V        LedgerVersion `json:"v,omitempty"`
+	FeeAsset *AssetCode    `json:"feeAsset,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -2512,6 +2612,8 @@ func (u FeeEntryExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionCrossAssetFee:
+		return "FeeAsset", true
 	}
 	return "-", false
 }
@@ -2522,7 +2624,39 @@ func NewFeeEntryExt(v LedgerVersion, value interface{}) (result FeeEntryExt, err
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionCrossAssetFee:
+		tv, ok := value.(AssetCode)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be AssetCode")
+			return
+		}
+		result.FeeAsset = &tv
 	}
+	return
+}
+
+// MustFeeAsset retrieves the FeeAsset value from the union,
+// panicing if the value is not set.
+func (u FeeEntryExt) MustFeeAsset() AssetCode {
+	val, ok := u.GetFeeAsset()
+
+	if !ok {
+		panic("arm FeeAsset is not set")
+	}
+
+	return val
+}
+
+// GetFeeAsset retrieves the FeeAsset value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u FeeEntryExt) GetFeeAsset() (result AssetCode, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "FeeAsset" {
+		result = *u.FeeAsset
+		ok = true
+	}
+
 	return
 }
 
@@ -2549,9 +2683,10 @@ func NewFeeEntryExt(v LedgerVersion, value interface{}) (result FeeEntryExt, err
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case CROSS_ASSET_FEE:
+//            AssetCode feeAsset;
 //        }
 //        ext;
-//
 //    };
 //
 type FeeEntry struct {
@@ -16439,6 +16574,740 @@ func (u ManageOfferResult) GetCurrentPriceRestriction() (result ManageOfferResul
 	return
 }
 
+// FeeDataV2Ext is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type FeeDataV2Ext struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u FeeDataV2Ext) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of FeeDataV2Ext
+func (u FeeDataV2Ext) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewFeeDataV2Ext creates a new  FeeDataV2Ext.
+func NewFeeDataV2Ext(v LedgerVersion, value interface{}) (result FeeDataV2Ext, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// FeeDataV2 is an XDR Struct defines as:
+//
+//   struct FeeDataV2 {
+//        uint64 maxPaymentFee;
+//        uint64 fixedFee;
+//
+//        // Cross asset fees
+//        AssetCode feeAsset;
+//
+//    	// reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type FeeDataV2 struct {
+	MaxPaymentFee Uint64       `json:"maxPaymentFee,omitempty"`
+	FixedFee      Uint64       `json:"fixedFee,omitempty"`
+	FeeAsset      AssetCode    `json:"feeAsset,omitempty"`
+	Ext           FeeDataV2Ext `json:"ext,omitempty"`
+}
+
+// PaymentFeeDataV2Ext is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type PaymentFeeDataV2Ext struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PaymentFeeDataV2Ext) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PaymentFeeDataV2Ext
+func (u PaymentFeeDataV2Ext) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewPaymentFeeDataV2Ext creates a new  PaymentFeeDataV2Ext.
+func NewPaymentFeeDataV2Ext(v LedgerVersion, value interface{}) (result PaymentFeeDataV2Ext, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// PaymentFeeDataV2 is an XDR Struct defines as:
+//
+//   struct PaymentFeeDataV2 {
+//        FeeDataV2 sourceFee;
+//        FeeDataV2 destinationFee;
+//        bool sourcePaysForDest; // if true - source account pays fee, else destination
+//
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type PaymentFeeDataV2 struct {
+	SourceFee         FeeDataV2           `json:"sourceFee,omitempty"`
+	DestinationFee    FeeDataV2           `json:"destinationFee,omitempty"`
+	SourcePaysForDest bool                `json:"sourcePaysForDest,omitempty"`
+	Ext               PaymentFeeDataV2Ext `json:"ext,omitempty"`
+}
+
+// PaymentDestinationType is an XDR Enum defines as:
+//
+//   enum PaymentDestinationType {
+//        ACCOUNT = 0,
+//        BALANCE = 1
+//    };
+//
+type PaymentDestinationType int32
+
+const (
+	PaymentDestinationTypeAccount PaymentDestinationType = 0
+	PaymentDestinationTypeBalance PaymentDestinationType = 1
+)
+
+var PaymentDestinationTypeAll = []PaymentDestinationType{
+	PaymentDestinationTypeAccount,
+	PaymentDestinationTypeBalance,
+}
+
+var paymentDestinationTypeMap = map[int32]string{
+	0: "PaymentDestinationTypeAccount",
+	1: "PaymentDestinationTypeBalance",
+}
+
+var paymentDestinationTypeShortMap = map[int32]string{
+	0: "account",
+	1: "balance",
+}
+
+var paymentDestinationTypeRevMap = map[string]int32{
+	"PaymentDestinationTypeAccount": 0,
+	"PaymentDestinationTypeBalance": 1,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for PaymentDestinationType
+func (e PaymentDestinationType) ValidEnum(v int32) bool {
+	_, ok := paymentDestinationTypeMap[v]
+	return ok
+}
+func (e PaymentDestinationType) isFlag() bool {
+	for i := len(PaymentDestinationTypeAll) - 1; i >= 0; i-- {
+		expected := PaymentDestinationType(2) << uint64(len(PaymentDestinationTypeAll)-1) >> uint64(len(PaymentDestinationTypeAll)-i)
+		if expected != PaymentDestinationTypeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e PaymentDestinationType) String() string {
+	name, _ := paymentDestinationTypeMap[int32(e)]
+	return name
+}
+
+func (e PaymentDestinationType) ShortString() string {
+	name, _ := paymentDestinationTypeShortMap[int32(e)]
+	return name
+}
+
+func (e PaymentDestinationType) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range PaymentDestinationTypeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *PaymentDestinationType) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = PaymentDestinationType(t.Value)
+	return nil
+}
+
+// PaymentOpV2Destination is an XDR NestedUnion defines as:
+//
+//   union switch (PaymentDestinationType type) {
+//            case ACCOUNT:
+//                AccountID accountID;
+//            case BALANCE:
+//                BalanceID balanceID;
+//        }
+//
+type PaymentOpV2Destination struct {
+	Type      PaymentDestinationType `json:"type,omitempty"`
+	AccountId *AccountId             `json:"accountID,omitempty"`
+	BalanceId *BalanceId             `json:"balanceID,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PaymentOpV2Destination) SwitchFieldName() string {
+	return "Type"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PaymentOpV2Destination
+func (u PaymentOpV2Destination) ArmForSwitch(sw int32) (string, bool) {
+	switch PaymentDestinationType(sw) {
+	case PaymentDestinationTypeAccount:
+		return "AccountId", true
+	case PaymentDestinationTypeBalance:
+		return "BalanceId", true
+	}
+	return "-", false
+}
+
+// NewPaymentOpV2Destination creates a new  PaymentOpV2Destination.
+func NewPaymentOpV2Destination(aType PaymentDestinationType, value interface{}) (result PaymentOpV2Destination, err error) {
+	result.Type = aType
+	switch PaymentDestinationType(aType) {
+	case PaymentDestinationTypeAccount:
+		tv, ok := value.(AccountId)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be AccountId")
+			return
+		}
+		result.AccountId = &tv
+	case PaymentDestinationTypeBalance:
+		tv, ok := value.(BalanceId)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be BalanceId")
+			return
+		}
+		result.BalanceId = &tv
+	}
+	return
+}
+
+// MustAccountId retrieves the AccountId value from the union,
+// panicing if the value is not set.
+func (u PaymentOpV2Destination) MustAccountId() AccountId {
+	val, ok := u.GetAccountId()
+
+	if !ok {
+		panic("arm AccountId is not set")
+	}
+
+	return val
+}
+
+// GetAccountId retrieves the AccountId value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u PaymentOpV2Destination) GetAccountId() (result AccountId, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "AccountId" {
+		result = *u.AccountId
+		ok = true
+	}
+
+	return
+}
+
+// MustBalanceId retrieves the BalanceId value from the union,
+// panicing if the value is not set.
+func (u PaymentOpV2Destination) MustBalanceId() BalanceId {
+	val, ok := u.GetBalanceId()
+
+	if !ok {
+		panic("arm BalanceId is not set")
+	}
+
+	return val
+}
+
+// GetBalanceId retrieves the BalanceId value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u PaymentOpV2Destination) GetBalanceId() (result BalanceId, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "BalanceId" {
+		result = *u.BalanceId
+		ok = true
+	}
+
+	return
+}
+
+// PaymentOpV2Ext is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type PaymentOpV2Ext struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PaymentOpV2Ext) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PaymentOpV2Ext
+func (u PaymentOpV2Ext) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewPaymentOpV2Ext creates a new  PaymentOpV2Ext.
+func NewPaymentOpV2Ext(v LedgerVersion, value interface{}) (result PaymentOpV2Ext, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// PaymentOpV2 is an XDR Struct defines as:
+//
+//   struct PaymentOpV2
+//    {
+//        BalanceID sourceBalanceID;
+//
+//        union switch (PaymentDestinationType type) {
+//            case ACCOUNT:
+//                AccountID accountID;
+//            case BALANCE:
+//                BalanceID balanceID;
+//        } destination;
+//
+//        uint64 amount;
+//
+//        PaymentFeeDataV2 feeData;
+//
+//        longstring subject;
+//        longstring reference;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type PaymentOpV2 struct {
+	SourceBalanceId BalanceId              `json:"sourceBalanceID,omitempty"`
+	Destination     PaymentOpV2Destination `json:"destination,omitempty"`
+	Amount          Uint64                 `json:"amount,omitempty"`
+	FeeData         PaymentFeeDataV2       `json:"feeData,omitempty"`
+	Subject         Longstring             `json:"subject,omitempty"`
+	Reference       Longstring             `json:"reference,omitempty"`
+	Ext             PaymentOpV2Ext         `json:"ext,omitempty"`
+}
+
+// PaymentV2ResultCode is an XDR Enum defines as:
+//
+//   enum PaymentV2ResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        SUCCESS = 0, // payment successfully completed
+//
+//        // codes considered as "failure" for the operation
+//        MALFORMED = -1, // bad input
+//        UNDERFUNDED = -2, // not enough funds in source account
+//        LINE_FULL = -3, // destination would go above their limit
+//    	DESTINATION_BALANCE_NOT_FOUND = -4,
+//        BALANCE_ASSETS_MISMATCHED = -5,
+//    	SRC_BALANCE_NOT_FOUND = -6, // source balance not found
+//        REFERENCE_DUPLICATION = -7,
+//        STATS_OVERFLOW = -8,
+//        LIMITS_EXCEEDED = -9,
+//        NOT_ALLOWED_BY_ASSET_POLICY = -10,
+//        INVALID_DESTINATION_FEE = -11,
+//        INVALID_DESTINATION_FEE_ASSET = -12, // destination fee asset must be the same as source balance asset
+//        FEE_ASSET_MISMATCHED = -13,
+//        INSUFFICIENT_FEE_AMOUNT = -14,
+//        BALANCE_TO_CHARGE_FEE_FROM_NOT_FOUND = -15,
+//        PAYMENT_AMOUNT_IS_LESS_THAN_DEST_FEE = -16
+//    };
+//
+type PaymentV2ResultCode int32
+
+const (
+	PaymentV2ResultCodeSuccess                        PaymentV2ResultCode = 0
+	PaymentV2ResultCodeMalformed                      PaymentV2ResultCode = -1
+	PaymentV2ResultCodeUnderfunded                    PaymentV2ResultCode = -2
+	PaymentV2ResultCodeLineFull                       PaymentV2ResultCode = -3
+	PaymentV2ResultCodeDestinationBalanceNotFound     PaymentV2ResultCode = -4
+	PaymentV2ResultCodeBalanceAssetsMismatched        PaymentV2ResultCode = -5
+	PaymentV2ResultCodeSrcBalanceNotFound             PaymentV2ResultCode = -6
+	PaymentV2ResultCodeReferenceDuplication           PaymentV2ResultCode = -7
+	PaymentV2ResultCodeStatsOverflow                  PaymentV2ResultCode = -8
+	PaymentV2ResultCodeLimitsExceeded                 PaymentV2ResultCode = -9
+	PaymentV2ResultCodeNotAllowedByAssetPolicy        PaymentV2ResultCode = -10
+	PaymentV2ResultCodeInvalidDestinationFee          PaymentV2ResultCode = -11
+	PaymentV2ResultCodeInvalidDestinationFeeAsset     PaymentV2ResultCode = -12
+	PaymentV2ResultCodeFeeAssetMismatched             PaymentV2ResultCode = -13
+	PaymentV2ResultCodeInsufficientFeeAmount          PaymentV2ResultCode = -14
+	PaymentV2ResultCodeBalanceToChargeFeeFromNotFound PaymentV2ResultCode = -15
+	PaymentV2ResultCodePaymentAmountIsLessThanDestFee PaymentV2ResultCode = -16
+)
+
+var PaymentV2ResultCodeAll = []PaymentV2ResultCode{
+	PaymentV2ResultCodeSuccess,
+	PaymentV2ResultCodeMalformed,
+	PaymentV2ResultCodeUnderfunded,
+	PaymentV2ResultCodeLineFull,
+	PaymentV2ResultCodeDestinationBalanceNotFound,
+	PaymentV2ResultCodeBalanceAssetsMismatched,
+	PaymentV2ResultCodeSrcBalanceNotFound,
+	PaymentV2ResultCodeReferenceDuplication,
+	PaymentV2ResultCodeStatsOverflow,
+	PaymentV2ResultCodeLimitsExceeded,
+	PaymentV2ResultCodeNotAllowedByAssetPolicy,
+	PaymentV2ResultCodeInvalidDestinationFee,
+	PaymentV2ResultCodeInvalidDestinationFeeAsset,
+	PaymentV2ResultCodeFeeAssetMismatched,
+	PaymentV2ResultCodeInsufficientFeeAmount,
+	PaymentV2ResultCodeBalanceToChargeFeeFromNotFound,
+	PaymentV2ResultCodePaymentAmountIsLessThanDestFee,
+}
+
+var paymentV2ResultCodeMap = map[int32]string{
+	0:   "PaymentV2ResultCodeSuccess",
+	-1:  "PaymentV2ResultCodeMalformed",
+	-2:  "PaymentV2ResultCodeUnderfunded",
+	-3:  "PaymentV2ResultCodeLineFull",
+	-4:  "PaymentV2ResultCodeDestinationBalanceNotFound",
+	-5:  "PaymentV2ResultCodeBalanceAssetsMismatched",
+	-6:  "PaymentV2ResultCodeSrcBalanceNotFound",
+	-7:  "PaymentV2ResultCodeReferenceDuplication",
+	-8:  "PaymentV2ResultCodeStatsOverflow",
+	-9:  "PaymentV2ResultCodeLimitsExceeded",
+	-10: "PaymentV2ResultCodeNotAllowedByAssetPolicy",
+	-11: "PaymentV2ResultCodeInvalidDestinationFee",
+	-12: "PaymentV2ResultCodeInvalidDestinationFeeAsset",
+	-13: "PaymentV2ResultCodeFeeAssetMismatched",
+	-14: "PaymentV2ResultCodeInsufficientFeeAmount",
+	-15: "PaymentV2ResultCodeBalanceToChargeFeeFromNotFound",
+	-16: "PaymentV2ResultCodePaymentAmountIsLessThanDestFee",
+}
+
+var paymentV2ResultCodeShortMap = map[int32]string{
+	0:   "success",
+	-1:  "malformed",
+	-2:  "underfunded",
+	-3:  "line_full",
+	-4:  "destination_balance_not_found",
+	-5:  "balance_assets_mismatched",
+	-6:  "src_balance_not_found",
+	-7:  "reference_duplication",
+	-8:  "stats_overflow",
+	-9:  "limits_exceeded",
+	-10: "not_allowed_by_asset_policy",
+	-11: "invalid_destination_fee",
+	-12: "invalid_destination_fee_asset",
+	-13: "fee_asset_mismatched",
+	-14: "insufficient_fee_amount",
+	-15: "balance_to_charge_fee_from_not_found",
+	-16: "payment_amount_is_less_than_dest_fee",
+}
+
+var paymentV2ResultCodeRevMap = map[string]int32{
+	"PaymentV2ResultCodeSuccess":                        0,
+	"PaymentV2ResultCodeMalformed":                      -1,
+	"PaymentV2ResultCodeUnderfunded":                    -2,
+	"PaymentV2ResultCodeLineFull":                       -3,
+	"PaymentV2ResultCodeDestinationBalanceNotFound":     -4,
+	"PaymentV2ResultCodeBalanceAssetsMismatched":        -5,
+	"PaymentV2ResultCodeSrcBalanceNotFound":             -6,
+	"PaymentV2ResultCodeReferenceDuplication":           -7,
+	"PaymentV2ResultCodeStatsOverflow":                  -8,
+	"PaymentV2ResultCodeLimitsExceeded":                 -9,
+	"PaymentV2ResultCodeNotAllowedByAssetPolicy":        -10,
+	"PaymentV2ResultCodeInvalidDestinationFee":          -11,
+	"PaymentV2ResultCodeInvalidDestinationFeeAsset":     -12,
+	"PaymentV2ResultCodeFeeAssetMismatched":             -13,
+	"PaymentV2ResultCodeInsufficientFeeAmount":          -14,
+	"PaymentV2ResultCodeBalanceToChargeFeeFromNotFound": -15,
+	"PaymentV2ResultCodePaymentAmountIsLessThanDestFee": -16,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for PaymentV2ResultCode
+func (e PaymentV2ResultCode) ValidEnum(v int32) bool {
+	_, ok := paymentV2ResultCodeMap[v]
+	return ok
+}
+func (e PaymentV2ResultCode) isFlag() bool {
+	for i := len(PaymentV2ResultCodeAll) - 1; i >= 0; i-- {
+		expected := PaymentV2ResultCode(2) << uint64(len(PaymentV2ResultCodeAll)-1) >> uint64(len(PaymentV2ResultCodeAll)-i)
+		if expected != PaymentV2ResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e PaymentV2ResultCode) String() string {
+	name, _ := paymentV2ResultCodeMap[int32(e)]
+	return name
+}
+
+func (e PaymentV2ResultCode) ShortString() string {
+	name, _ := paymentV2ResultCodeShortMap[int32(e)]
+	return name
+}
+
+func (e PaymentV2ResultCode) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range PaymentV2ResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *PaymentV2ResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = PaymentV2ResultCode(t.Value)
+	return nil
+}
+
+// PaymentV2ResponseExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type PaymentV2ResponseExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PaymentV2ResponseExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PaymentV2ResponseExt
+func (u PaymentV2ResponseExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewPaymentV2ResponseExt creates a new  PaymentV2ResponseExt.
+func NewPaymentV2ResponseExt(v LedgerVersion, value interface{}) (result PaymentV2ResponseExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// PaymentV2Response is an XDR Struct defines as:
+//
+//   struct PaymentV2Response {
+//        AccountID destination;
+//        BalanceID destinationBalanceID;
+//
+//        AssetCode asset;
+//        uint64 sourceSentUniversal;
+//        uint64 paymentID;
+//
+//        uint64 actualSourcePaymentFee;
+//        uint64 actualDestinationPaymentFee;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type PaymentV2Response struct {
+	Destination                 AccountId            `json:"destination,omitempty"`
+	DestinationBalanceId        BalanceId            `json:"destinationBalanceID,omitempty"`
+	Asset                       AssetCode            `json:"asset,omitempty"`
+	SourceSentUniversal         Uint64               `json:"sourceSentUniversal,omitempty"`
+	PaymentId                   Uint64               `json:"paymentID,omitempty"`
+	ActualSourcePaymentFee      Uint64               `json:"actualSourcePaymentFee,omitempty"`
+	ActualDestinationPaymentFee Uint64               `json:"actualDestinationPaymentFee,omitempty"`
+	Ext                         PaymentV2ResponseExt `json:"ext,omitempty"`
+}
+
+// PaymentV2Result is an XDR Union defines as:
+//
+//   union PaymentV2Result switch (PaymentV2ResultCode code)
+//    {
+//    case SUCCESS:
+//        PaymentV2Response paymentV2Response;
+//    default:
+//        void;
+//    };
+//
+type PaymentV2Result struct {
+	Code              PaymentV2ResultCode `json:"code,omitempty"`
+	PaymentV2Response *PaymentV2Response  `json:"paymentV2Response,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PaymentV2Result) SwitchFieldName() string {
+	return "Code"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PaymentV2Result
+func (u PaymentV2Result) ArmForSwitch(sw int32) (string, bool) {
+	switch PaymentV2ResultCode(sw) {
+	case PaymentV2ResultCodeSuccess:
+		return "PaymentV2Response", true
+	default:
+		return "", true
+	}
+}
+
+// NewPaymentV2Result creates a new  PaymentV2Result.
+func NewPaymentV2Result(code PaymentV2ResultCode, value interface{}) (result PaymentV2Result, err error) {
+	result.Code = code
+	switch PaymentV2ResultCode(code) {
+	case PaymentV2ResultCodeSuccess:
+		tv, ok := value.(PaymentV2Response)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be PaymentV2Response")
+			return
+		}
+		result.PaymentV2Response = &tv
+	default:
+		// void
+	}
+	return
+}
+
+// MustPaymentV2Response retrieves the PaymentV2Response value from the union,
+// panicing if the value is not set.
+func (u PaymentV2Result) MustPaymentV2Response() PaymentV2Response {
+	val, ok := u.GetPaymentV2Response()
+
+	if !ok {
+		panic("arm PaymentV2Response is not set")
+	}
+
+	return val
+}
+
+// GetPaymentV2Response retrieves the PaymentV2Response value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u PaymentV2Result) GetPaymentV2Response() (result PaymentV2Response, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Code))
+
+	if armName == "PaymentV2Response" {
+		result = *u.PaymentV2Response
+		ok = true
+	}
+
+	return
+}
+
 // InvoiceReferenceExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -18466,22 +19335,36 @@ type SetFeesOp struct {
 //    		MALFORMED_RANGE = -6,
 //    		RANGE_OVERLAP = -7,
 //    		NOT_FOUND = -8,
-//    		SUB_TYPE_NOT_EXIST = -9
+//    		SUB_TYPE_NOT_EXIST = -9,
+//    		INVALID_FEE_VERSION = -10, // version of fee entry is greater than ledger version
+//    		INVALID_FEE_ASSET = -11,
+//    		FEE_ASSET_NOT_ALLOWED = -12, // feeAsset can be set only if feeType is PAYMENT
+//    		CROSS_ASSET_FEE_NOT_ALLOWED = -13, // feeAsset on payment fee type can differ from asset only if payment fee subtype is OUTGOING
+//    		FEE_ASSET_NOT_FOUND = -14,
+//    		ASSET_PAIR_NOT_FOUND = -15, // cannot create cross asset fee entry without existing asset pair
+//    		INVALID_ASSET_PAIR_PRICE = -16
 //        };
 //
 type SetFeesResultCode int32
 
 const (
-	SetFeesResultCodeSuccess         SetFeesResultCode = 0
-	SetFeesResultCodeInvalidAmount   SetFeesResultCode = -1
-	SetFeesResultCodeInvalidFeeType  SetFeesResultCode = -2
-	SetFeesResultCodeAssetNotFound   SetFeesResultCode = -3
-	SetFeesResultCodeInvalidAsset    SetFeesResultCode = -4
-	SetFeesResultCodeMalformed       SetFeesResultCode = -5
-	SetFeesResultCodeMalformedRange  SetFeesResultCode = -6
-	SetFeesResultCodeRangeOverlap    SetFeesResultCode = -7
-	SetFeesResultCodeNotFound        SetFeesResultCode = -8
-	SetFeesResultCodeSubTypeNotExist SetFeesResultCode = -9
+	SetFeesResultCodeSuccess                 SetFeesResultCode = 0
+	SetFeesResultCodeInvalidAmount           SetFeesResultCode = -1
+	SetFeesResultCodeInvalidFeeType          SetFeesResultCode = -2
+	SetFeesResultCodeAssetNotFound           SetFeesResultCode = -3
+	SetFeesResultCodeInvalidAsset            SetFeesResultCode = -4
+	SetFeesResultCodeMalformed               SetFeesResultCode = -5
+	SetFeesResultCodeMalformedRange          SetFeesResultCode = -6
+	SetFeesResultCodeRangeOverlap            SetFeesResultCode = -7
+	SetFeesResultCodeNotFound                SetFeesResultCode = -8
+	SetFeesResultCodeSubTypeNotExist         SetFeesResultCode = -9
+	SetFeesResultCodeInvalidFeeVersion       SetFeesResultCode = -10
+	SetFeesResultCodeInvalidFeeAsset         SetFeesResultCode = -11
+	SetFeesResultCodeFeeAssetNotAllowed      SetFeesResultCode = -12
+	SetFeesResultCodeCrossAssetFeeNotAllowed SetFeesResultCode = -13
+	SetFeesResultCodeFeeAssetNotFound        SetFeesResultCode = -14
+	SetFeesResultCodeAssetPairNotFound       SetFeesResultCode = -15
+	SetFeesResultCodeInvalidAssetPairPrice   SetFeesResultCode = -16
 )
 
 var SetFeesResultCodeAll = []SetFeesResultCode{
@@ -18495,45 +19378,73 @@ var SetFeesResultCodeAll = []SetFeesResultCode{
 	SetFeesResultCodeRangeOverlap,
 	SetFeesResultCodeNotFound,
 	SetFeesResultCodeSubTypeNotExist,
+	SetFeesResultCodeInvalidFeeVersion,
+	SetFeesResultCodeInvalidFeeAsset,
+	SetFeesResultCodeFeeAssetNotAllowed,
+	SetFeesResultCodeCrossAssetFeeNotAllowed,
+	SetFeesResultCodeFeeAssetNotFound,
+	SetFeesResultCodeAssetPairNotFound,
+	SetFeesResultCodeInvalidAssetPairPrice,
 }
 
 var setFeesResultCodeMap = map[int32]string{
-	0:  "SetFeesResultCodeSuccess",
-	-1: "SetFeesResultCodeInvalidAmount",
-	-2: "SetFeesResultCodeInvalidFeeType",
-	-3: "SetFeesResultCodeAssetNotFound",
-	-4: "SetFeesResultCodeInvalidAsset",
-	-5: "SetFeesResultCodeMalformed",
-	-6: "SetFeesResultCodeMalformedRange",
-	-7: "SetFeesResultCodeRangeOverlap",
-	-8: "SetFeesResultCodeNotFound",
-	-9: "SetFeesResultCodeSubTypeNotExist",
+	0:   "SetFeesResultCodeSuccess",
+	-1:  "SetFeesResultCodeInvalidAmount",
+	-2:  "SetFeesResultCodeInvalidFeeType",
+	-3:  "SetFeesResultCodeAssetNotFound",
+	-4:  "SetFeesResultCodeInvalidAsset",
+	-5:  "SetFeesResultCodeMalformed",
+	-6:  "SetFeesResultCodeMalformedRange",
+	-7:  "SetFeesResultCodeRangeOverlap",
+	-8:  "SetFeesResultCodeNotFound",
+	-9:  "SetFeesResultCodeSubTypeNotExist",
+	-10: "SetFeesResultCodeInvalidFeeVersion",
+	-11: "SetFeesResultCodeInvalidFeeAsset",
+	-12: "SetFeesResultCodeFeeAssetNotAllowed",
+	-13: "SetFeesResultCodeCrossAssetFeeNotAllowed",
+	-14: "SetFeesResultCodeFeeAssetNotFound",
+	-15: "SetFeesResultCodeAssetPairNotFound",
+	-16: "SetFeesResultCodeInvalidAssetPairPrice",
 }
 
 var setFeesResultCodeShortMap = map[int32]string{
-	0:  "success",
-	-1: "invalid_amount",
-	-2: "invalid_fee_type",
-	-3: "asset_not_found",
-	-4: "invalid_asset",
-	-5: "malformed",
-	-6: "malformed_range",
-	-7: "range_overlap",
-	-8: "not_found",
-	-9: "sub_type_not_exist",
+	0:   "success",
+	-1:  "invalid_amount",
+	-2:  "invalid_fee_type",
+	-3:  "asset_not_found",
+	-4:  "invalid_asset",
+	-5:  "malformed",
+	-6:  "malformed_range",
+	-7:  "range_overlap",
+	-8:  "not_found",
+	-9:  "sub_type_not_exist",
+	-10: "invalid_fee_version",
+	-11: "invalid_fee_asset",
+	-12: "fee_asset_not_allowed",
+	-13: "cross_asset_fee_not_allowed",
+	-14: "fee_asset_not_found",
+	-15: "asset_pair_not_found",
+	-16: "invalid_asset_pair_price",
 }
 
 var setFeesResultCodeRevMap = map[string]int32{
-	"SetFeesResultCodeSuccess":         0,
-	"SetFeesResultCodeInvalidAmount":   -1,
-	"SetFeesResultCodeInvalidFeeType":  -2,
-	"SetFeesResultCodeAssetNotFound":   -3,
-	"SetFeesResultCodeInvalidAsset":    -4,
-	"SetFeesResultCodeMalformed":       -5,
-	"SetFeesResultCodeMalformedRange":  -6,
-	"SetFeesResultCodeRangeOverlap":    -7,
-	"SetFeesResultCodeNotFound":        -8,
-	"SetFeesResultCodeSubTypeNotExist": -9,
+	"SetFeesResultCodeSuccess":                 0,
+	"SetFeesResultCodeInvalidAmount":           -1,
+	"SetFeesResultCodeInvalidFeeType":          -2,
+	"SetFeesResultCodeAssetNotFound":           -3,
+	"SetFeesResultCodeInvalidAsset":            -4,
+	"SetFeesResultCodeMalformed":               -5,
+	"SetFeesResultCodeMalformedRange":          -6,
+	"SetFeesResultCodeRangeOverlap":            -7,
+	"SetFeesResultCodeNotFound":                -8,
+	"SetFeesResultCodeSubTypeNotExist":         -9,
+	"SetFeesResultCodeInvalidFeeVersion":       -10,
+	"SetFeesResultCodeInvalidFeeAsset":         -11,
+	"SetFeesResultCodeFeeAssetNotAllowed":      -12,
+	"SetFeesResultCodeCrossAssetFeeNotAllowed": -13,
+	"SetFeesResultCodeFeeAssetNotFound":        -14,
+	"SetFeesResultCodeAssetPairNotFound":       -15,
+	"SetFeesResultCodeInvalidAssetPairPrice":   -16,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -21768,6 +22679,8 @@ type WithdrawalRequest struct {
 //            ManageExternalSystemAccountIdPoolEntryOp manageExternalSystemAccountIdPoolEntryOp;
 //        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
 //            BindExternalSystemAccountIdOp bindExternalSystemAccountIdOp;
+//        case PAYMENT_V2:
+//            PaymentOpV2 paymentOpV2;
 //        }
 //
 type OperationBody struct {
@@ -21795,6 +22708,7 @@ type OperationBody struct {
 	CreateUpdateKycRequestOp                 *CreateUpdateKycRequestOp                 `json:"createUpdateKYCRequestOp,omitempty"`
 	ManageExternalSystemAccountIdPoolEntryOp *ManageExternalSystemAccountIdPoolEntryOp `json:"manageExternalSystemAccountIdPoolEntryOp,omitempty"`
 	BindExternalSystemAccountIdOp            *BindExternalSystemAccountIdOp            `json:"bindExternalSystemAccountIdOp,omitempty"`
+	PaymentOpV2                              *PaymentOpV2                              `json:"paymentOpV2,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -21853,6 +22767,8 @@ func (u OperationBody) ArmForSwitch(sw int32) (string, bool) {
 		return "ManageExternalSystemAccountIdPoolEntryOp", true
 	case OperationTypeBindExternalSystemAccountId:
 		return "BindExternalSystemAccountIdOp", true
+	case OperationTypePaymentV2:
+		return "PaymentOpV2", true
 	}
 	return "-", false
 }
@@ -22022,6 +22938,13 @@ func NewOperationBody(aType OperationType, value interface{}) (result OperationB
 			return
 		}
 		result.BindExternalSystemAccountIdOp = &tv
+	case OperationTypePaymentV2:
+		tv, ok := value.(PaymentOpV2)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be PaymentOpV2")
+			return
+		}
+		result.PaymentOpV2 = &tv
 	}
 	return
 }
@@ -22601,6 +23524,31 @@ func (u OperationBody) GetBindExternalSystemAccountIdOp() (result BindExternalSy
 	return
 }
 
+// MustPaymentOpV2 retrieves the PaymentOpV2 value from the union,
+// panicing if the value is not set.
+func (u OperationBody) MustPaymentOpV2() PaymentOpV2 {
+	val, ok := u.GetPaymentOpV2()
+
+	if !ok {
+		panic("arm PaymentOpV2 is not set")
+	}
+
+	return val
+}
+
+// GetPaymentOpV2 retrieves the PaymentOpV2 value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationBody) GetPaymentOpV2() (result PaymentOpV2, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "PaymentOpV2" {
+		result = *u.PaymentOpV2
+		ok = true
+	}
+
+	return
+}
+
 // Operation is an XDR Struct defines as:
 //
 //   struct Operation
@@ -22658,6 +23606,8 @@ func (u OperationBody) GetBindExternalSystemAccountIdOp() (result BindExternalSy
 //            ManageExternalSystemAccountIdPoolEntryOp manageExternalSystemAccountIdPoolEntryOp;
 //        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
 //            BindExternalSystemAccountIdOp bindExternalSystemAccountIdOp;
+//        case PAYMENT_V2:
+//            PaymentOpV2 paymentOpV2;
 //        }
 //        body;
 //    };
@@ -23254,6 +24204,8 @@ func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
 //            ManageExternalSystemAccountIdPoolEntryResult manageExternalSystemAccountIdPoolEntryResult;
 //        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
 //            BindExternalSystemAccountIdResult bindExternalSystemAccountIdResult;
+//        case PAYMENT_V2:
+//            PaymentV2Result paymentV2Result;
 //        }
 //
 type OperationResultTr struct {
@@ -23281,6 +24233,7 @@ type OperationResultTr struct {
 	CreateUpdateKycRequestResult                 *CreateUpdateKycRequestResult                 `json:"createUpdateKYCRequestResult,omitempty"`
 	ManageExternalSystemAccountIdPoolEntryResult *ManageExternalSystemAccountIdPoolEntryResult `json:"manageExternalSystemAccountIdPoolEntryResult,omitempty"`
 	BindExternalSystemAccountIdResult            *BindExternalSystemAccountIdResult            `json:"bindExternalSystemAccountIdResult,omitempty"`
+	PaymentV2Result                              *PaymentV2Result                              `json:"paymentV2Result,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -23339,6 +24292,8 @@ func (u OperationResultTr) ArmForSwitch(sw int32) (string, bool) {
 		return "ManageExternalSystemAccountIdPoolEntryResult", true
 	case OperationTypeBindExternalSystemAccountId:
 		return "BindExternalSystemAccountIdResult", true
+	case OperationTypePaymentV2:
+		return "PaymentV2Result", true
 	}
 	return "-", false
 }
@@ -23508,6 +24463,13 @@ func NewOperationResultTr(aType OperationType, value interface{}) (result Operat
 			return
 		}
 		result.BindExternalSystemAccountIdResult = &tv
+	case OperationTypePaymentV2:
+		tv, ok := value.(PaymentV2Result)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be PaymentV2Result")
+			return
+		}
+		result.PaymentV2Result = &tv
 	}
 	return
 }
@@ -24087,6 +25049,31 @@ func (u OperationResultTr) GetBindExternalSystemAccountIdResult() (result BindEx
 	return
 }
 
+// MustPaymentV2Result retrieves the PaymentV2Result value from the union,
+// panicing if the value is not set.
+func (u OperationResultTr) MustPaymentV2Result() PaymentV2Result {
+	val, ok := u.GetPaymentV2Result()
+
+	if !ok {
+		panic("arm PaymentV2Result is not set")
+	}
+
+	return val
+}
+
+// GetPaymentV2Result retrieves the PaymentV2Result value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationResultTr) GetPaymentV2Result() (result PaymentV2Result, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "PaymentV2Result" {
+		result = *u.PaymentV2Result
+		ok = true
+	}
+
+	return
+}
+
 // OperationResult is an XDR Union defines as:
 //
 //   union OperationResult switch (OperationResultCode code)
@@ -24140,6 +25127,8 @@ func (u OperationResultTr) GetBindExternalSystemAccountIdResult() (result BindEx
 //            ManageExternalSystemAccountIdPoolEntryResult manageExternalSystemAccountIdPoolEntryResult;
 //        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
 //            BindExternalSystemAccountIdResult bindExternalSystemAccountIdResult;
+//        case PAYMENT_V2:
+//            PaymentV2Result paymentV2Result;
 //        }
 //        tr;
 //    default:
@@ -24816,8 +25805,14 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ERROR_ON_NON_ZERO_TASKS_TO_REMOVE_IN_REJECT_KYC = 9,
 //    	ALLOW_ACCOUNT_MANAGER_TO_CHANGE_KYC = 10,
 //    	CHANGE_ASSET_ISSUER_BAD_AUTH_EXTRA_FIXED = 11,
-//        AUTO_CREATE_COMMISSION_BALANCE_ON_TRANSFER = 12,
-//        DO_NOT_BUILD_ACCOUNT_IF_VERSION_EQUALS_OR_GREATER = 13
+//    	AUTO_CREATE_COMMISSION_BALANCE_ON_TRANSFER = 12,
+//        ALLOW_REJECT_REQUEST_OF_BLOCKED_REQUESTOR = 13,
+//    	ASSET_UPDATE_CHECK_REFERENCE_EXISTS = 14,
+//    	CROSS_ASSET_FEE = 15,
+//    	USE_PAYMENT_V2 = 16,
+//    	ALLOW_SYNDICATE_TO_UPDATE_KYC = 17,
+//    	AUTO_CREATE_COMMISSION_BALANCE_ON_TRANSFER = 18,
+//        DO_NOT_BUILD_ACCOUNT_IF_VERSION_EQUALS_OR_GREATER = 19
 //    };
 //
 type LedgerVersion int32
@@ -24836,7 +25831,13 @@ const (
 	LedgerVersionAllowAccountManagerToChangeKyc            LedgerVersion = 10
 	LedgerVersionChangeAssetIssuerBadAuthExtraFixed        LedgerVersion = 11
 	LedgerVersionAutoCreateCommissionBalanceOnTransfer     LedgerVersion = 12
-	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater LedgerVersion = 13
+	LedgerVersionAllowRejectRequestOfBlockedRequestor      LedgerVersion = 13
+	LedgerVersionAssetUpdateCheckReferenceExists           LedgerVersion = 14
+	LedgerVersionCrossAssetFee                             LedgerVersion = 15
+	LedgerVersionUsePaymentV2                              LedgerVersion = 16
+	LedgerVersionAllowSyndicateToUpdateKyc                 LedgerVersion = 17
+	LedgerVersionAutoCreateCommissionBalanceOnTransfer     LedgerVersion = 18
+	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater LedgerVersion = 19
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -24852,6 +25853,12 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc,
 	LedgerVersionAllowAccountManagerToChangeKyc,
 	LedgerVersionChangeAssetIssuerBadAuthExtraFixed,
+	LedgerVersionAutoCreateCommissionBalanceOnTransfer,
+	LedgerVersionAllowRejectRequestOfBlockedRequestor,
+	LedgerVersionAssetUpdateCheckReferenceExists,
+	LedgerVersionCrossAssetFee,
+	LedgerVersionUsePaymentV2,
+	LedgerVersionAllowSyndicateToUpdateKyc,
 	LedgerVersionAutoCreateCommissionBalanceOnTransfer,
 	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater,
 }
@@ -24870,7 +25877,13 @@ var ledgerVersionMap = map[int32]string{
 	10: "LedgerVersionAllowAccountManagerToChangeKyc",
 	11: "LedgerVersionChangeAssetIssuerBadAuthExtraFixed",
 	12: "LedgerVersionAutoCreateCommissionBalanceOnTransfer",
-	13: "LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater",
+	13: "LedgerVersionAllowRejectRequestOfBlockedRequestor",
+	14: "LedgerVersionAssetUpdateCheckReferenceExists",
+	15: "LedgerVersionCrossAssetFee",
+	16: "LedgerVersionUsePaymentV2",
+	17: "LedgerVersionAllowSyndicateToUpdateKyc",
+	18: "LedgerVersionAutoCreateCommissionBalanceOnTransfer",
+	19: "LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -24887,7 +25900,13 @@ var ledgerVersionShortMap = map[int32]string{
 	10: "allow_account_manager_to_change_kyc",
 	11: "change_asset_issuer_bad_auth_extra_fixed",
 	12: "auto_create_commission_balance_on_transfer",
-	13: "do_not_build_account_if_version_equals_or_greater",
+	13: "allow_reject_request_of_blocked_requestor",
+	14: "asset_update_check_reference_exists",
+	15: "cross_asset_fee",
+	16: "use_payment_v2",
+	17: "allow_syndicate_to_update_kyc",
+	18: "auto_create_commission_balance_on_transfer",
+	19: "do_not_build_account_if_version_equals_or_greater",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -24904,7 +25923,13 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAllowAccountManagerToChangeKyc":            10,
 	"LedgerVersionChangeAssetIssuerBadAuthExtraFixed":        11,
 	"LedgerVersionAutoCreateCommissionBalanceOnTransfer":     12,
-	"LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater": 13,
+	"LedgerVersionAllowRejectRequestOfBlockedRequestor":      13,
+	"LedgerVersionAssetUpdateCheckReferenceExists":           14,
+	"LedgerVersionCrossAssetFee":                             15,
+	"LedgerVersionUsePaymentV2":                              16,
+	"LedgerVersionAllowSyndicateToUpdateKyc":                 17,
+	"LedgerVersionAutoCreateCommissionBalanceOnTransfer":     18,
+	"LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater": 19,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -25287,8 +26312,9 @@ type Fee struct {
 //    	CHECK_SALE_STATE = 20,
 //        CREATE_AML_ALERT = 21,
 //        CREATE_KYC_REQUEST = 22,
-//    	MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY = 23,
-//    	BIND_EXTERNAL_SYSTEM_ACCOUNT_ID = 24
+//        PAYMENT_V2 = 23,
+//        MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY = 24,
+//        BIND_EXTERNAL_SYSTEM_ACCOUNT_ID = 25
 //    };
 //
 type OperationType int32
@@ -25315,8 +26341,9 @@ const (
 	OperationTypeCheckSaleState                         OperationType = 20
 	OperationTypeCreateAmlAlert                         OperationType = 21
 	OperationTypeCreateKycRequest                       OperationType = 22
-	OperationTypeManageExternalSystemAccountIdPoolEntry OperationType = 23
-	OperationTypeBindExternalSystemAccountId            OperationType = 24
+	OperationTypePaymentV2                              OperationType = 23
+	OperationTypeManageExternalSystemAccountIdPoolEntry OperationType = 24
+	OperationTypeBindExternalSystemAccountId            OperationType = 25
 )
 
 var OperationTypeAll = []OperationType{
@@ -25341,6 +26368,7 @@ var OperationTypeAll = []OperationType{
 	OperationTypeCheckSaleState,
 	OperationTypeCreateAmlAlert,
 	OperationTypeCreateKycRequest,
+	OperationTypePaymentV2,
 	OperationTypeManageExternalSystemAccountIdPoolEntry,
 	OperationTypeBindExternalSystemAccountId,
 }
@@ -25367,8 +26395,9 @@ var operationTypeMap = map[int32]string{
 	20: "OperationTypeCheckSaleState",
 	21: "OperationTypeCreateAmlAlert",
 	22: "OperationTypeCreateKycRequest",
-	23: "OperationTypeManageExternalSystemAccountIdPoolEntry",
-	24: "OperationTypeBindExternalSystemAccountId",
+	23: "OperationTypePaymentV2",
+	24: "OperationTypeManageExternalSystemAccountIdPoolEntry",
+	25: "OperationTypeBindExternalSystemAccountId",
 }
 
 var operationTypeShortMap = map[int32]string{
@@ -25393,8 +26422,9 @@ var operationTypeShortMap = map[int32]string{
 	20: "check_sale_state",
 	21: "create_aml_alert",
 	22: "create_kyc_request",
-	23: "manage_external_system_account_id_pool_entry",
-	24: "bind_external_system_account_id",
+	23: "payment_v2",
+	24: "manage_external_system_account_id_pool_entry",
+	25: "bind_external_system_account_id",
 }
 
 var operationTypeRevMap = map[string]int32{
@@ -25419,8 +26449,9 @@ var operationTypeRevMap = map[string]int32{
 	"OperationTypeCheckSaleState":                         20,
 	"OperationTypeCreateAmlAlert":                         21,
 	"OperationTypeCreateKycRequest":                       22,
-	"OperationTypeManageExternalSystemAccountIdPoolEntry": 23,
-	"OperationTypeBindExternalSystemAccountId":            24,
+	"OperationTypePaymentV2":                              23,
+	"OperationTypeManageExternalSystemAccountIdPoolEntry": 24,
+	"OperationTypeBindExternalSystemAccountId":            25,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
