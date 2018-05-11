@@ -34,6 +34,7 @@
 //  xdr/raw/Stellar-operation-manage-balance.x
 //  xdr/raw/Stellar-operation-manage-invoice.x
 //  xdr/raw/Stellar-operation-manage-offer.x
+//  xdr/raw/Stellar-operation-manage-sale.x
 //  xdr/raw/Stellar-operation-payment-v2.x
 //  xdr/raw/Stellar-operation-payment.x
 //  xdr/raw/Stellar-operation-review-payment-request.x
@@ -48,6 +49,7 @@
 //  xdr/raw/Stellar-reviewable-request-limits-update.x
 //  xdr/raw/Stellar-reviewable-request-sale.x
 //  xdr/raw/Stellar-reviewable-request-update-KYC.x
+//  xdr/raw/Stellar-reviewable-request-update-sale-details.x
 //  xdr/raw/Stellar-reviewable-request-withdrawal.x
 //  xdr/raw/Stellar-transaction.x
 //  xdr/raw/Stellar-types.x
@@ -3230,7 +3232,8 @@ type ReferenceEntry struct {
 //    	LIMITS_UPDATE = 6,
 //    	TWO_STEP_WITHDRAWAL = 7,
 //        AML_ALERT = 8,
-//    	UPDATE_KYC = 9
+//    	UPDATE_KYC = 9,
+//    	UPDATE_SALE_DETAILS = 10
 //    };
 //
 type ReviewableRequestType int32
@@ -3246,6 +3249,7 @@ const (
 	ReviewableRequestTypeTwoStepWithdrawal ReviewableRequestType = 7
 	ReviewableRequestTypeAmlAlert          ReviewableRequestType = 8
 	ReviewableRequestTypeUpdateKyc         ReviewableRequestType = 9
+	ReviewableRequestTypeUpdateSaleDetails ReviewableRequestType = 10
 )
 
 var ReviewableRequestTypeAll = []ReviewableRequestType{
@@ -3259,32 +3263,35 @@ var ReviewableRequestTypeAll = []ReviewableRequestType{
 	ReviewableRequestTypeTwoStepWithdrawal,
 	ReviewableRequestTypeAmlAlert,
 	ReviewableRequestTypeUpdateKyc,
+	ReviewableRequestTypeUpdateSaleDetails,
 }
 
 var reviewableRequestTypeMap = map[int32]string{
-	0: "ReviewableRequestTypeAssetCreate",
-	1: "ReviewableRequestTypeAssetUpdate",
-	2: "ReviewableRequestTypePreIssuanceCreate",
-	3: "ReviewableRequestTypeIssuanceCreate",
-	4: "ReviewableRequestTypeWithdraw",
-	5: "ReviewableRequestTypeSale",
-	6: "ReviewableRequestTypeLimitsUpdate",
-	7: "ReviewableRequestTypeTwoStepWithdrawal",
-	8: "ReviewableRequestTypeAmlAlert",
-	9: "ReviewableRequestTypeUpdateKyc",
+	0:  "ReviewableRequestTypeAssetCreate",
+	1:  "ReviewableRequestTypeAssetUpdate",
+	2:  "ReviewableRequestTypePreIssuanceCreate",
+	3:  "ReviewableRequestTypeIssuanceCreate",
+	4:  "ReviewableRequestTypeWithdraw",
+	5:  "ReviewableRequestTypeSale",
+	6:  "ReviewableRequestTypeLimitsUpdate",
+	7:  "ReviewableRequestTypeTwoStepWithdrawal",
+	8:  "ReviewableRequestTypeAmlAlert",
+	9:  "ReviewableRequestTypeUpdateKyc",
+	10: "ReviewableRequestTypeUpdateSaleDetails",
 }
 
 var reviewableRequestTypeShortMap = map[int32]string{
-	0: "asset_create",
-	1: "asset_update",
-	2: "pre_issuance_create",
-	3: "issuance_create",
-	4: "withdraw",
-	5: "sale",
-	6: "limits_update",
-	7: "two_step_withdrawal",
-	8: "aml_alert",
-	9: "update_kyc",
+	0:  "asset_create",
+	1:  "asset_update",
+	2:  "pre_issuance_create",
+	3:  "issuance_create",
+	4:  "withdraw",
+	5:  "sale",
+	6:  "limits_update",
+	7:  "two_step_withdrawal",
+	8:  "aml_alert",
+	9:  "update_kyc",
+	10: "update_sale_details",
 }
 
 var reviewableRequestTypeRevMap = map[string]int32{
@@ -3298,6 +3305,7 @@ var reviewableRequestTypeRevMap = map[string]int32{
 	"ReviewableRequestTypeTwoStepWithdrawal": 7,
 	"ReviewableRequestTypeAmlAlert":          8,
 	"ReviewableRequestTypeUpdateKyc":         9,
+	"ReviewableRequestTypeUpdateSaleDetails": 10,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -3384,20 +3392,23 @@ func (e *ReviewableRequestType) UnmarshalJSON(data []byte) error {
 //                AMLAlertRequest amlAlertRequest;
 //            case UPDATE_KYC:
 //                UpdateKYCRequest updateKYCRequest;
+//            case UPDATE_SALE_DETAILS:
+//                UpdateSaleDetailsRequest updateSaleDetailsRequest;
 //    	}
 //
 type ReviewableRequestEntryBody struct {
-	Type                     ReviewableRequestType `json:"type,omitempty"`
-	AssetCreationRequest     *AssetCreationRequest `json:"assetCreationRequest,omitempty"`
-	AssetUpdateRequest       *AssetUpdateRequest   `json:"assetUpdateRequest,omitempty"`
-	PreIssuanceRequest       *PreIssuanceRequest   `json:"preIssuanceRequest,omitempty"`
-	IssuanceRequest          *IssuanceRequest      `json:"issuanceRequest,omitempty"`
-	WithdrawalRequest        *WithdrawalRequest    `json:"withdrawalRequest,omitempty"`
-	SaleCreationRequest      *SaleCreationRequest  `json:"saleCreationRequest,omitempty"`
-	LimitsUpdateRequest      *LimitsUpdateRequest  `json:"limitsUpdateRequest,omitempty"`
-	TwoStepWithdrawalRequest *WithdrawalRequest    `json:"twoStepWithdrawalRequest,omitempty"`
-	AmlAlertRequest          *AmlAlertRequest      `json:"amlAlertRequest,omitempty"`
-	UpdateKycRequest         *UpdateKycRequest     `json:"updateKYCRequest,omitempty"`
+	Type                     ReviewableRequestType     `json:"type,omitempty"`
+	AssetCreationRequest     *AssetCreationRequest     `json:"assetCreationRequest,omitempty"`
+	AssetUpdateRequest       *AssetUpdateRequest       `json:"assetUpdateRequest,omitempty"`
+	PreIssuanceRequest       *PreIssuanceRequest       `json:"preIssuanceRequest,omitempty"`
+	IssuanceRequest          *IssuanceRequest          `json:"issuanceRequest,omitempty"`
+	WithdrawalRequest        *WithdrawalRequest        `json:"withdrawalRequest,omitempty"`
+	SaleCreationRequest      *SaleCreationRequest      `json:"saleCreationRequest,omitempty"`
+	LimitsUpdateRequest      *LimitsUpdateRequest      `json:"limitsUpdateRequest,omitempty"`
+	TwoStepWithdrawalRequest *WithdrawalRequest        `json:"twoStepWithdrawalRequest,omitempty"`
+	AmlAlertRequest          *AmlAlertRequest          `json:"amlAlertRequest,omitempty"`
+	UpdateKycRequest         *UpdateKycRequest         `json:"updateKYCRequest,omitempty"`
+	UpdateSaleDetailsRequest *UpdateSaleDetailsRequest `json:"updateSaleDetailsRequest,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -3430,6 +3441,8 @@ func (u ReviewableRequestEntryBody) ArmForSwitch(sw int32) (string, bool) {
 		return "AmlAlertRequest", true
 	case ReviewableRequestTypeUpdateKyc:
 		return "UpdateKycRequest", true
+	case ReviewableRequestTypeUpdateSaleDetails:
+		return "UpdateSaleDetailsRequest", true
 	}
 	return "-", false
 }
@@ -3508,6 +3521,13 @@ func NewReviewableRequestEntryBody(aType ReviewableRequestType, value interface{
 			return
 		}
 		result.UpdateKycRequest = &tv
+	case ReviewableRequestTypeUpdateSaleDetails:
+		tv, ok := value.(UpdateSaleDetailsRequest)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be UpdateSaleDetailsRequest")
+			return
+		}
+		result.UpdateSaleDetailsRequest = &tv
 	}
 	return
 }
@@ -3762,6 +3782,31 @@ func (u ReviewableRequestEntryBody) GetUpdateKycRequest() (result UpdateKycReque
 	return
 }
 
+// MustUpdateSaleDetailsRequest retrieves the UpdateSaleDetailsRequest value from the union,
+// panicing if the value is not set.
+func (u ReviewableRequestEntryBody) MustUpdateSaleDetailsRequest() UpdateSaleDetailsRequest {
+	val, ok := u.GetUpdateSaleDetailsRequest()
+
+	if !ok {
+		panic("arm UpdateSaleDetailsRequest is not set")
+	}
+
+	return val
+}
+
+// GetUpdateSaleDetailsRequest retrieves the UpdateSaleDetailsRequest value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewableRequestEntryBody) GetUpdateSaleDetailsRequest() (result UpdateSaleDetailsRequest, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "UpdateSaleDetailsRequest" {
+		result = *u.UpdateSaleDetailsRequest
+		ok = true
+	}
+
+	return
+}
+
 // ReviewableRequestEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -3832,6 +3877,8 @@ func NewReviewableRequestEntryExt(v LedgerVersion, value interface{}) (result Re
 //                AMLAlertRequest amlAlertRequest;
 //            case UPDATE_KYC:
 //                UpdateKYCRequest updateKYCRequest;
+//            case UPDATE_SALE_DETAILS:
+//                UpdateSaleDetailsRequest updateSaleDetailsRequest;
 //    	} body;
 //
 //    	// reserved for future use
@@ -15521,6 +15568,603 @@ func (u ManageOfferResult) GetCurrentPriceRestriction() (result ManageOfferResul
 	return
 }
 
+// ManageSaleAction is an XDR Enum defines as:
+//
+//   enum ManageSaleAction
+//    {
+//        CREATE_UPDATE_DETAILS_REQUEST = 1
+//    };
+//
+type ManageSaleAction int32
+
+const (
+	ManageSaleActionCreateUpdateDetailsRequest ManageSaleAction = 1
+)
+
+var ManageSaleActionAll = []ManageSaleAction{
+	ManageSaleActionCreateUpdateDetailsRequest,
+}
+
+var manageSaleActionMap = map[int32]string{
+	1: "ManageSaleActionCreateUpdateDetailsRequest",
+}
+
+var manageSaleActionShortMap = map[int32]string{
+	1: "create_update_details_request",
+}
+
+var manageSaleActionRevMap = map[string]int32{
+	"ManageSaleActionCreateUpdateDetailsRequest": 1,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for ManageSaleAction
+func (e ManageSaleAction) ValidEnum(v int32) bool {
+	_, ok := manageSaleActionMap[v]
+	return ok
+}
+func (e ManageSaleAction) isFlag() bool {
+	for i := len(ManageSaleActionAll) - 1; i >= 0; i-- {
+		expected := ManageSaleAction(2) << uint64(len(ManageSaleActionAll)-1) >> uint64(len(ManageSaleActionAll)-i)
+		if expected != ManageSaleActionAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e ManageSaleAction) String() string {
+	name, _ := manageSaleActionMap[int32(e)]
+	return name
+}
+
+func (e ManageSaleAction) ShortString() string {
+	name, _ := manageSaleActionShortMap[int32(e)]
+	return name
+}
+
+func (e ManageSaleAction) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageSaleActionAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *ManageSaleAction) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = ManageSaleAction(t.Value)
+	return nil
+}
+
+// UpdateSaleDetailsDataExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type UpdateSaleDetailsDataExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u UpdateSaleDetailsDataExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of UpdateSaleDetailsDataExt
+func (u UpdateSaleDetailsDataExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewUpdateSaleDetailsDataExt creates a new  UpdateSaleDetailsDataExt.
+func NewUpdateSaleDetailsDataExt(v LedgerVersion, value interface{}) (result UpdateSaleDetailsDataExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// UpdateSaleDetailsData is an XDR Struct defines as:
+//
+//   struct UpdateSaleDetailsData {
+//        uint64 requestID; // if requestID is 0 - create request, else - update
+//        longstring newDetails;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        } ext;
+//    };
+//
+type UpdateSaleDetailsData struct {
+	RequestId  Uint64                   `json:"requestID,omitempty"`
+	NewDetails Longstring               `json:"newDetails,omitempty"`
+	Ext        UpdateSaleDetailsDataExt `json:"ext,omitempty"`
+}
+
+// ManageSaleOpData is an XDR NestedUnion defines as:
+//
+//   union switch (ManageSaleAction action) {
+//        case CREATE_UPDATE_DETAILS_REQUEST:
+//            UpdateSaleDetailsData updateSaleDetailsData;
+//        }
+//
+type ManageSaleOpData struct {
+	Action                ManageSaleAction       `json:"action,omitempty"`
+	UpdateSaleDetailsData *UpdateSaleDetailsData `json:"updateSaleDetailsData,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ManageSaleOpData) SwitchFieldName() string {
+	return "Action"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ManageSaleOpData
+func (u ManageSaleOpData) ArmForSwitch(sw int32) (string, bool) {
+	switch ManageSaleAction(sw) {
+	case ManageSaleActionCreateUpdateDetailsRequest:
+		return "UpdateSaleDetailsData", true
+	}
+	return "-", false
+}
+
+// NewManageSaleOpData creates a new  ManageSaleOpData.
+func NewManageSaleOpData(action ManageSaleAction, value interface{}) (result ManageSaleOpData, err error) {
+	result.Action = action
+	switch ManageSaleAction(action) {
+	case ManageSaleActionCreateUpdateDetailsRequest:
+		tv, ok := value.(UpdateSaleDetailsData)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be UpdateSaleDetailsData")
+			return
+		}
+		result.UpdateSaleDetailsData = &tv
+	}
+	return
+}
+
+// MustUpdateSaleDetailsData retrieves the UpdateSaleDetailsData value from the union,
+// panicing if the value is not set.
+func (u ManageSaleOpData) MustUpdateSaleDetailsData() UpdateSaleDetailsData {
+	val, ok := u.GetUpdateSaleDetailsData()
+
+	if !ok {
+		panic("arm UpdateSaleDetailsData is not set")
+	}
+
+	return val
+}
+
+// GetUpdateSaleDetailsData retrieves the UpdateSaleDetailsData value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageSaleOpData) GetUpdateSaleDetailsData() (result UpdateSaleDetailsData, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Action))
+
+	if armName == "UpdateSaleDetailsData" {
+		result = *u.UpdateSaleDetailsData
+		ok = true
+	}
+
+	return
+}
+
+// ManageSaleOpExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type ManageSaleOpExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ManageSaleOpExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ManageSaleOpExt
+func (u ManageSaleOpExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewManageSaleOpExt creates a new  ManageSaleOpExt.
+func NewManageSaleOpExt(v LedgerVersion, value interface{}) (result ManageSaleOpExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// ManageSaleOp is an XDR Struct defines as:
+//
+//   struct ManageSaleOp
+//    {
+//        uint64 saleID;
+//
+//        union switch (ManageSaleAction action) {
+//        case CREATE_UPDATE_DETAILS_REQUEST:
+//            UpdateSaleDetailsData updateSaleDetailsData;
+//        } data;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        } ext;
+//    };
+//
+type ManageSaleOp struct {
+	SaleId Uint64           `json:"saleID,omitempty"`
+	Data   ManageSaleOpData `json:"data,omitempty"`
+	Ext    ManageSaleOpExt  `json:"ext,omitempty"`
+}
+
+// ManageSaleResultCode is an XDR Enum defines as:
+//
+//   enum ManageSaleResultCode
+//    {
+//        SUCCESS = 0,
+//
+//        SALE_NOT_FOUND = -1, // sale not found
+//        INVALID_NEW_DETAILS = -2, // newDetails field is invalid JSON
+//        UPDATE_DETAILS_REQUEST_ALREADY_EXISTS = -3,
+//        UPDATE_DETAILS_REQUEST_NOT_FOUND = -4
+//    };
+//
+type ManageSaleResultCode int32
+
+const (
+	ManageSaleResultCodeSuccess                           ManageSaleResultCode = 0
+	ManageSaleResultCodeSaleNotFound                      ManageSaleResultCode = -1
+	ManageSaleResultCodeInvalidNewDetails                 ManageSaleResultCode = -2
+	ManageSaleResultCodeUpdateDetailsRequestAlreadyExists ManageSaleResultCode = -3
+	ManageSaleResultCodeUpdateDetailsRequestNotFound      ManageSaleResultCode = -4
+)
+
+var ManageSaleResultCodeAll = []ManageSaleResultCode{
+	ManageSaleResultCodeSuccess,
+	ManageSaleResultCodeSaleNotFound,
+	ManageSaleResultCodeInvalidNewDetails,
+	ManageSaleResultCodeUpdateDetailsRequestAlreadyExists,
+	ManageSaleResultCodeUpdateDetailsRequestNotFound,
+}
+
+var manageSaleResultCodeMap = map[int32]string{
+	0:  "ManageSaleResultCodeSuccess",
+	-1: "ManageSaleResultCodeSaleNotFound",
+	-2: "ManageSaleResultCodeInvalidNewDetails",
+	-3: "ManageSaleResultCodeUpdateDetailsRequestAlreadyExists",
+	-4: "ManageSaleResultCodeUpdateDetailsRequestNotFound",
+}
+
+var manageSaleResultCodeShortMap = map[int32]string{
+	0:  "success",
+	-1: "sale_not_found",
+	-2: "invalid_new_details",
+	-3: "update_details_request_already_exists",
+	-4: "update_details_request_not_found",
+}
+
+var manageSaleResultCodeRevMap = map[string]int32{
+	"ManageSaleResultCodeSuccess":                           0,
+	"ManageSaleResultCodeSaleNotFound":                      -1,
+	"ManageSaleResultCodeInvalidNewDetails":                 -2,
+	"ManageSaleResultCodeUpdateDetailsRequestAlreadyExists": -3,
+	"ManageSaleResultCodeUpdateDetailsRequestNotFound":      -4,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for ManageSaleResultCode
+func (e ManageSaleResultCode) ValidEnum(v int32) bool {
+	_, ok := manageSaleResultCodeMap[v]
+	return ok
+}
+func (e ManageSaleResultCode) isFlag() bool {
+	for i := len(ManageSaleResultCodeAll) - 1; i >= 0; i-- {
+		expected := ManageSaleResultCode(2) << uint64(len(ManageSaleResultCodeAll)-1) >> uint64(len(ManageSaleResultCodeAll)-i)
+		if expected != ManageSaleResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e ManageSaleResultCode) String() string {
+	name, _ := manageSaleResultCodeMap[int32(e)]
+	return name
+}
+
+func (e ManageSaleResultCode) ShortString() string {
+	name, _ := manageSaleResultCodeShortMap[int32(e)]
+	return name
+}
+
+func (e ManageSaleResultCode) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range ManageSaleResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *ManageSaleResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = ManageSaleResultCode(t.Value)
+	return nil
+}
+
+// ManageSaleResultSuccessResponse is an XDR NestedUnion defines as:
+//
+//   union switch (ManageSaleAction action) {
+//        case CREATE_UPDATE_DETAILS_REQUEST:
+//            uint64 requestID;
+//        }
+//
+type ManageSaleResultSuccessResponse struct {
+	Action    ManageSaleAction `json:"action,omitempty"`
+	RequestId *Uint64          `json:"requestID,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ManageSaleResultSuccessResponse) SwitchFieldName() string {
+	return "Action"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ManageSaleResultSuccessResponse
+func (u ManageSaleResultSuccessResponse) ArmForSwitch(sw int32) (string, bool) {
+	switch ManageSaleAction(sw) {
+	case ManageSaleActionCreateUpdateDetailsRequest:
+		return "RequestId", true
+	}
+	return "-", false
+}
+
+// NewManageSaleResultSuccessResponse creates a new  ManageSaleResultSuccessResponse.
+func NewManageSaleResultSuccessResponse(action ManageSaleAction, value interface{}) (result ManageSaleResultSuccessResponse, err error) {
+	result.Action = action
+	switch ManageSaleAction(action) {
+	case ManageSaleActionCreateUpdateDetailsRequest:
+		tv, ok := value.(Uint64)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be Uint64")
+			return
+		}
+		result.RequestId = &tv
+	}
+	return
+}
+
+// MustRequestId retrieves the RequestId value from the union,
+// panicing if the value is not set.
+func (u ManageSaleResultSuccessResponse) MustRequestId() Uint64 {
+	val, ok := u.GetRequestId()
+
+	if !ok {
+		panic("arm RequestId is not set")
+	}
+
+	return val
+}
+
+// GetRequestId retrieves the RequestId value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageSaleResultSuccessResponse) GetRequestId() (result Uint64, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Action))
+
+	if armName == "RequestId" {
+		result = *u.RequestId
+		ok = true
+	}
+
+	return
+}
+
+// ManageSaleResultSuccessExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type ManageSaleResultSuccessExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ManageSaleResultSuccessExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ManageSaleResultSuccessExt
+func (u ManageSaleResultSuccessExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewManageSaleResultSuccessExt creates a new  ManageSaleResultSuccessExt.
+func NewManageSaleResultSuccessExt(v LedgerVersion, value interface{}) (result ManageSaleResultSuccessExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// ManageSaleResultSuccess is an XDR Struct defines as:
+//
+//   struct ManageSaleResultSuccess
+//    {
+//        union switch (ManageSaleAction action) {
+//        case CREATE_UPDATE_DETAILS_REQUEST:
+//            uint64 requestID;
+//        } response;
+//
+//        //reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type ManageSaleResultSuccess struct {
+	Response ManageSaleResultSuccessResponse `json:"response,omitempty"`
+	Ext      ManageSaleResultSuccessExt      `json:"ext,omitempty"`
+}
+
+// ManageSaleResult is an XDR Union defines as:
+//
+//   union ManageSaleResult switch (ManageSaleResultCode code)
+//    {
+//    case SUCCESS:
+//        ManageSaleResultSuccess success;
+//    default:
+//        void;
+//    };
+//
+type ManageSaleResult struct {
+	Code    ManageSaleResultCode     `json:"code,omitempty"`
+	Success *ManageSaleResultSuccess `json:"success,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ManageSaleResult) SwitchFieldName() string {
+	return "Code"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ManageSaleResult
+func (u ManageSaleResult) ArmForSwitch(sw int32) (string, bool) {
+	switch ManageSaleResultCode(sw) {
+	case ManageSaleResultCodeSuccess:
+		return "Success", true
+	default:
+		return "", true
+	}
+}
+
+// NewManageSaleResult creates a new  ManageSaleResult.
+func NewManageSaleResult(code ManageSaleResultCode, value interface{}) (result ManageSaleResult, err error) {
+	result.Code = code
+	switch ManageSaleResultCode(code) {
+	case ManageSaleResultCodeSuccess:
+		tv, ok := value.(ManageSaleResultSuccess)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ManageSaleResultSuccess")
+			return
+		}
+		result.Success = &tv
+	default:
+		// void
+	}
+	return
+}
+
+// MustSuccess retrieves the Success value from the union,
+// panicing if the value is not set.
+func (u ManageSaleResult) MustSuccess() ManageSaleResultSuccess {
+	val, ok := u.GetSuccess()
+
+	if !ok {
+		panic("arm Success is not set")
+	}
+
+	return val
+}
+
+// GetSuccess retrieves the Success value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageSaleResult) GetSuccess() (result ManageSaleResultSuccess, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Code))
+
+	if armName == "Success" {
+		result = *u.Success
+		ok = true
+	}
+
+	return
+}
+
 // FeeDataV2Ext is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -21290,6 +21934,65 @@ type UpdateKycRequest struct {
 	Ext                UpdateKycRequestExt `json:"ext,omitempty"`
 }
 
+// UpdateSaleDetailsRequestExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type UpdateSaleDetailsRequestExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u UpdateSaleDetailsRequestExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of UpdateSaleDetailsRequestExt
+func (u UpdateSaleDetailsRequestExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewUpdateSaleDetailsRequestExt creates a new  UpdateSaleDetailsRequestExt.
+func NewUpdateSaleDetailsRequestExt(v LedgerVersion, value interface{}) (result UpdateSaleDetailsRequestExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// UpdateSaleDetailsRequest is an XDR Struct defines as:
+//
+//   struct UpdateSaleDetailsRequest {
+//        uint64 saleID; // ID of sale to update details
+//        longstring newDetails;
+//
+//        // Reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type UpdateSaleDetailsRequest struct {
+	SaleId     Uint64                      `json:"saleID,omitempty"`
+	NewDetails Longstring                  `json:"newDetails,omitempty"`
+	Ext        UpdateSaleDetailsRequestExt `json:"ext,omitempty"`
+}
+
 // WithdrawalType is an XDR Enum defines as:
 //
 //   enum WithdrawalType {
@@ -21624,6 +22327,8 @@ type WithdrawalRequest struct {
 //    		CreateUpdateKYCRequestOp createUpdateKYCRequestOp;
 //        case PAYMENT_V2:
 //            PaymentOpV2 paymentOpV2;
+//        case MANAGE_SALE:
+//            ManageSaleOp manageSaleOp;
 //        }
 //
 type OperationBody struct {
@@ -21650,6 +22355,7 @@ type OperationBody struct {
 	CreateAmlAlertRequestOp     *CreateAmlAlertRequestOp     `json:"createAMLAlertRequestOp,omitempty"`
 	CreateUpdateKycRequestOp    *CreateUpdateKycRequestOp    `json:"createUpdateKYCRequestOp,omitempty"`
 	PaymentOpV2                 *PaymentOpV2                 `json:"paymentOpV2,omitempty"`
+	ManageSaleOp                *ManageSaleOp                `json:"manageSaleOp,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -21706,6 +22412,8 @@ func (u OperationBody) ArmForSwitch(sw int32) (string, bool) {
 		return "CreateUpdateKycRequestOp", true
 	case OperationTypePaymentV2:
 		return "PaymentOpV2", true
+	case OperationTypeManageSale:
+		return "ManageSaleOp", true
 	}
 	return "-", false
 }
@@ -21868,6 +22576,13 @@ func NewOperationBody(aType OperationType, value interface{}) (result OperationB
 			return
 		}
 		result.PaymentOpV2 = &tv
+	case OperationTypeManageSale:
+		tv, ok := value.(ManageSaleOp)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ManageSaleOp")
+			return
+		}
+		result.ManageSaleOp = &tv
 	}
 	return
 }
@@ -22422,6 +23137,31 @@ func (u OperationBody) GetPaymentOpV2() (result PaymentOpV2, ok bool) {
 	return
 }
 
+// MustManageSaleOp retrieves the ManageSaleOp value from the union,
+// panicing if the value is not set.
+func (u OperationBody) MustManageSaleOp() ManageSaleOp {
+	val, ok := u.GetManageSaleOp()
+
+	if !ok {
+		panic("arm ManageSaleOp is not set")
+	}
+
+	return val
+}
+
+// GetManageSaleOp retrieves the ManageSaleOp value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationBody) GetManageSaleOp() (result ManageSaleOp, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "ManageSaleOp" {
+		result = *u.ManageSaleOp
+		ok = true
+	}
+
+	return
+}
+
 // Operation is an XDR Struct defines as:
 //
 //   struct Operation
@@ -22477,6 +23217,8 @@ func (u OperationBody) GetPaymentOpV2() (result PaymentOpV2, ok bool) {
 //    		CreateUpdateKYCRequestOp createUpdateKYCRequestOp;
 //        case PAYMENT_V2:
 //            PaymentOpV2 paymentOpV2;
+//        case MANAGE_SALE:
+//            ManageSaleOp manageSaleOp;
 //        }
 //        body;
 //    };
@@ -23071,6 +23813,8 @@ func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
 //    	    CreateUpdateKYCRequestResult createUpdateKYCRequestResult;
 //        case PAYMENT_V2:
 //            PaymentV2Result paymentV2Result;
+//        case MANAGE_SALE:
+//            ManageSaleResult manageSaleResult;
 //        }
 //
 type OperationResultTr struct {
@@ -23097,6 +23841,7 @@ type OperationResultTr struct {
 	CreateAmlAlertRequestResult     *CreateAmlAlertRequestResult     `json:"createAMLAlertRequestResult,omitempty"`
 	CreateUpdateKycRequestResult    *CreateUpdateKycRequestResult    `json:"createUpdateKYCRequestResult,omitempty"`
 	PaymentV2Result                 *PaymentV2Result                 `json:"paymentV2Result,omitempty"`
+	ManageSaleResult                *ManageSaleResult                `json:"manageSaleResult,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -23153,6 +23898,8 @@ func (u OperationResultTr) ArmForSwitch(sw int32) (string, bool) {
 		return "CreateUpdateKycRequestResult", true
 	case OperationTypePaymentV2:
 		return "PaymentV2Result", true
+	case OperationTypeManageSale:
+		return "ManageSaleResult", true
 	}
 	return "-", false
 }
@@ -23315,6 +24062,13 @@ func NewOperationResultTr(aType OperationType, value interface{}) (result Operat
 			return
 		}
 		result.PaymentV2Result = &tv
+	case OperationTypeManageSale:
+		tv, ok := value.(ManageSaleResult)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ManageSaleResult")
+			return
+		}
+		result.ManageSaleResult = &tv
 	}
 	return
 }
@@ -23869,6 +24623,31 @@ func (u OperationResultTr) GetPaymentV2Result() (result PaymentV2Result, ok bool
 	return
 }
 
+// MustManageSaleResult retrieves the ManageSaleResult value from the union,
+// panicing if the value is not set.
+func (u OperationResultTr) MustManageSaleResult() ManageSaleResult {
+	val, ok := u.GetManageSaleResult()
+
+	if !ok {
+		panic("arm ManageSaleResult is not set")
+	}
+
+	return val
+}
+
+// GetManageSaleResult retrieves the ManageSaleResult value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationResultTr) GetManageSaleResult() (result ManageSaleResult, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "ManageSaleResult" {
+		result = *u.ManageSaleResult
+		ok = true
+	}
+
+	return
+}
+
 // OperationResult is an XDR Union defines as:
 //
 //   union OperationResult switch (OperationResultCode code)
@@ -23920,6 +24699,8 @@ func (u OperationResultTr) GetPaymentV2Result() (result PaymentV2Result, ok bool
 //    	    CreateUpdateKYCRequestResult createUpdateKYCRequestResult;
 //        case PAYMENT_V2:
 //            PaymentV2Result paymentV2Result;
+//        case MANAGE_SALE:
+//            ManageSaleResult manageSaleResult;
 //        }
 //        tr;
 //    default:
@@ -25085,7 +25866,8 @@ type Fee struct {
 //    	CHECK_SALE_STATE = 20,
 //        CREATE_AML_ALERT = 21,
 //        CREATE_KYC_REQUEST = 22,
-//        PAYMENT_V2 = 23
+//        PAYMENT_V2 = 23,
+//        MANAGE_SALE = 24
 //    };
 //
 type OperationType int32
@@ -25113,6 +25895,7 @@ const (
 	OperationTypeCreateAmlAlert           OperationType = 21
 	OperationTypeCreateKycRequest         OperationType = 22
 	OperationTypePaymentV2                OperationType = 23
+	OperationTypeManageSale               OperationType = 24
 )
 
 var OperationTypeAll = []OperationType{
@@ -25138,6 +25921,7 @@ var OperationTypeAll = []OperationType{
 	OperationTypeCreateAmlAlert,
 	OperationTypeCreateKycRequest,
 	OperationTypePaymentV2,
+	OperationTypeManageSale,
 }
 
 var operationTypeMap = map[int32]string{
@@ -25163,6 +25947,7 @@ var operationTypeMap = map[int32]string{
 	21: "OperationTypeCreateAmlAlert",
 	22: "OperationTypeCreateKycRequest",
 	23: "OperationTypePaymentV2",
+	24: "OperationTypeManageSale",
 }
 
 var operationTypeShortMap = map[int32]string{
@@ -25188,6 +25973,7 @@ var operationTypeShortMap = map[int32]string{
 	21: "create_aml_alert",
 	22: "create_kyc_request",
 	23: "payment_v2",
+	24: "manage_sale",
 }
 
 var operationTypeRevMap = map[string]int32{
@@ -25213,6 +25999,7 @@ var operationTypeRevMap = map[string]int32{
 	"OperationTypeCreateAmlAlert":           21,
 	"OperationTypeCreateKycRequest":         22,
 	"OperationTypePaymentV2":                23,
+	"OperationTypeManageSale":               24,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
