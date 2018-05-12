@@ -25381,7 +25381,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //        ALLOW_REJECT_REQUEST_OF_BLOCKED_REQUESTOR = 13,
 //    	ASSET_UPDATE_CHECK_REFERENCE_EXISTS = 14,
 //    	CROSS_ASSET_FEE = 15,
-//    	USE_PAYMENT_V2 = 16
+//    	USE_PAYMENT_V2 = 16,
+//    	ALLOW_SYNDICATE_TO_UPDATE_KYC = 17
 //    };
 //
 type LedgerVersion int32
@@ -25404,6 +25405,7 @@ const (
 	LedgerVersionAssetUpdateCheckReferenceExists        LedgerVersion = 14
 	LedgerVersionCrossAssetFee                          LedgerVersion = 15
 	LedgerVersionUsePaymentV2                           LedgerVersion = 16
+	LedgerVersionAllowSyndicateToUpdateKyc              LedgerVersion = 17
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -25424,6 +25426,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAssetUpdateCheckReferenceExists,
 	LedgerVersionCrossAssetFee,
 	LedgerVersionUsePaymentV2,
+	LedgerVersionAllowSyndicateToUpdateKyc,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -25444,6 +25447,7 @@ var ledgerVersionMap = map[int32]string{
 	14: "LedgerVersionAssetUpdateCheckReferenceExists",
 	15: "LedgerVersionCrossAssetFee",
 	16: "LedgerVersionUsePaymentV2",
+	17: "LedgerVersionAllowSyndicateToUpdateKyc",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -25464,6 +25468,7 @@ var ledgerVersionShortMap = map[int32]string{
 	14: "asset_update_check_reference_exists",
 	15: "cross_asset_fee",
 	16: "use_payment_v2",
+	17: "allow_syndicate_to_update_kyc",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -25484,6 +25489,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAssetUpdateCheckReferenceExists":        14,
 	"LedgerVersionCrossAssetFee":                          15,
 	"LedgerVersionUsePaymentV2":                           16,
+	"LedgerVersionAllowSyndicateToUpdateKyc":              17,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
