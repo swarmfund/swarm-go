@@ -1,14 +1,18 @@
 package xdrbuild
 
 import (
-	"math"
+	"reflect"
 
 	. "github.com/go-ozzo/ozzo-validation"
 	"gitlab.com/distributed_lab/logan/v3/errors"
 	"gitlab.com/tokend/go/xdr"
 )
 
-var ErrThresholdOutOfRange = errors.New("threshold out of range")
+var (
+	ErrEmptyOp = errors.New("at least one value was expected")
+)
+
+const maxSignerWeight = 255
 
 type Signer struct {
 	PublicKey  string
@@ -16,6 +20,23 @@ type Signer struct {
 	SignerType uint32
 	Identity   uint32
 	Name       string
+}
+
+func (s Signer) Validate() error {
+	errs := Errors{
+		"public_key": Validate(s.PublicKey, Required),
+	}
+
+	if s.Weight != 0 {
+		errs = Errors{
+			"signer_type": Validate(s.SignerType, Required),
+			"identity":    Validate(s.Identity, Required),
+			"name":        Validate(s.Name, Required),
+			"weight":      Validate(int64(s.Weight), Required, Max(maxSignerWeight)),
+		}
+	}
+
+	return errs.Filter()
 }
 
 type SetOptions struct {
@@ -30,65 +51,66 @@ func (op SetOptions) Validate() error {
 	errs := Errors{}
 
 	if op.Signer != nil {
-		errs["/op/signer/public_key"] = Validate(op.Signer.PublicKey, Required)
-		errs["/op/signer/signer_type"] = Validate(op.Signer.SignerType, Required)
-		errs["/op/signer/identity"] = Validate(op.Signer.Identity, Required)
-		errs["/op/signer/name"] = Validate(op.Signer.Name, Required)
+		errs["/signer"] = op.Signer.Validate()
 	}
 
 	if op.LowThreshold != nil {
-		errs["/op/low_threshold"] = validateThreshold(*op.LowThreshold)
+		errs["/low_threshold"] = Validate(int64(*op.LowThreshold), Max(maxSignerWeight))
 	}
 
 	if op.MedThreshold != nil {
-		errs["/op/med_threshold"] = validateThreshold(*op.MedThreshold)
+		errs["/med_threshold"] = Validate(int64(*op.MedThreshold), Max(maxSignerWeight))
 	}
 
 	if op.HighThreshold != nil {
-		errs["/op/high_threshold"] = validateThreshold(*op.HighThreshold)
+		errs["/high_threshold"] = Validate(int64(*op.HighThreshold), Max(maxSignerWeight))
+	}
+
+	if reflect.DeepEqual(op, SetOptions{}) {
+		errs["/"] = ErrEmptyOp
 	}
 
 	return errs.Filter()
 }
 
 func (op SetOptions) XDR() (*xdr.Operation, error) {
-	signer := &xdr.Signer{
-		Weight:     xdr.Uint32(op.Signer.Weight),
-		SignerType: xdr.Uint32(op.Signer.SignerType),
-		Identity:   xdr.Uint32(op.Signer.Identity),
-		Name:       xdr.String256(op.Signer.Name),
+	xdrOp := xdr.SetOptionsOp{
+		MasterWeight:  (*xdr.Uint32)(op.MasterWeight),
+		LowThreshold:  (*xdr.Uint32)(op.LowThreshold),
+		MedThreshold:  (*xdr.Uint32)(op.MedThreshold),
+		HighThreshold: (*xdr.Uint32)(op.HighThreshold),
 	}
 
-	var signerPubKey xdr.AccountId
-	if err := signerPubKey.SetAddress(op.Signer.PublicKey); err != nil {
-		return nil, errors.Wrap(err, "failed to set signer public key")
-	}
+	if op.Signer != nil {
+		var signerPubKey xdr.AccountId
+		if err := signerPubKey.SetAddress(op.Signer.PublicKey); err != nil {
+			return nil, errors.Wrap(err, "failed to set signer public key")
+		}
 
-	signer.PubKey = signerPubKey
+		xdrOp.Signer = &xdr.Signer{
+			PubKey:     signerPubKey,
+			Weight:     xdr.Uint32(op.Signer.Weight),
+			SignerType: xdr.Uint32(op.Signer.SignerType),
+			Identity:   xdr.Uint32(op.Signer.Identity),
+			Name:       xdr.String256(op.Signer.Name),
+		}
+	}
 
 	return &xdr.Operation{
 		Body: xdr.OperationBody{
-			Type: xdr.OperationTypeSetOptions,
-			SetOptionsOp: &xdr.SetOptionsOp{
-				MasterWeight:  (*xdr.Uint32)(op.MasterWeight),
-				LowThreshold:  (*xdr.Uint32)(op.LowThreshold),
-				MedThreshold:  (*xdr.Uint32)(op.MedThreshold),
-				HighThreshold: (*xdr.Uint32)(op.HighThreshold),
-				Signer:        signer,
-			},
+			Type:         xdr.OperationTypeSetOptions,
+			SetOptionsOp: &xdrOp,
 		},
 	}, nil
 }
 
 //DeleteSigner create new SetOptions without signer weight
 //by default if signer weight is zero, it mean delete signer
-func DeleteSigner(publicKey, name string, signerType, identity uint32) *SetOptions {
+func DeleteSigner(publicKey string) *SetOptions {
 	return &SetOptions{
 		Signer: &Signer{
-			PublicKey:  publicKey,
-			SignerType: signerType,
-			Identity:   identity,
-			Name:       name,
+			PublicKey: publicKey,
+			Weight:    0,
 		},
 	}
 }
@@ -105,18 +127,11 @@ func AddSigner(publicKey, name string, weight, signerType, identity uint32) *Set
 	}
 }
 
-func SetThreshold(masterWeight, lowThreshold, medThreshold, highThreshold uint32) *SetOptions {
+func SetThresholds(masterWeight, lowThreshold, medThreshold, highThreshold uint32) *SetOptions {
 	return &SetOptions{
 		MasterWeight:  &masterWeight,
 		LowThreshold:  &lowThreshold,
 		MedThreshold:  &medThreshold,
 		HighThreshold: &highThreshold,
 	}
-}
-
-func validateThreshold(value uint32) error {
-	if value > math.MaxUint8 {
-		return ErrThresholdOutOfRange
-	}
-	return nil
 }
