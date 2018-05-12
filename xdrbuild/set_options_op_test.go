@@ -91,7 +91,7 @@ func TestSetOptions_XDR(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, setOpts.Signer.PublicKey, xdrOp.Body.SetOptionsOp.Signer.PubKey.Address())
-		assert.Equal(t, 0, uint32(xdrOp.Body.SetOptionsOp.Signer.Weight))
+		assert.Equal(t, uint32(0), uint32(xdrOp.Body.SetOptionsOp.Signer.Weight))
 	})
 
 	t.Run("SetThresholds", func(t *testing.T) {
