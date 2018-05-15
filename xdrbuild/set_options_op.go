@@ -55,7 +55,7 @@ func (op SetOptions) Validate() error {
 	}
 
 	if op.MasterWeight != nil {
-		errs["/master_weight"] = Validate(int64(*op.LowThreshold), Max(maxSignerWeight))
+		errs["/master_weight"] = Validate(int64(*op.MasterWeight), Max(maxSignerWeight))
 	}
 
 	if op.LowThreshold != nil {
