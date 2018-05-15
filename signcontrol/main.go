@@ -101,7 +101,7 @@ func checkV2(request *http.Request) (string, error) {
 		return "", err
 	}
 	if ok := signature.IsValid(request); !ok {
-		return "", errors.New("invalid signature")
+		return "", ErrSignature
 	}
 	return signature.KeyID, nil
 }
