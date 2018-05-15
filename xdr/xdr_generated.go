@@ -27516,11 +27516,6 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	UNIQUE_BALANCE_CREATION = 5, // allows to specify in manage balance that balance should not be created if one for such asset and account exists
 //    	ASSET_PREISSUER_MIGRATION = 6,
 //    	ASSET_PREISSUER_MIGRATED = 7,
-//    	USE_KYC_LEVEL = 8,
-//    	ERROR_ON_NON_ZERO_TASKS_TO_REMOVE_IN_REJECT_KYC = 9,
-//    	ALLOW_ACCOUNT_MANAGER_TO_CHANGE_KYC = 10,
-//    	CHANGE_ASSET_ISSUER_BAD_AUTH_EXTRA_FIXED = 11,
-//    	AUTO_CREATE_COMMISSION_BALANCE_ON_TRANSFER = 12,
 //        USE_KYC_LEVEL = 8,
 //    	ERROR_ON_NON_ZERO_TASKS_TO_REMOVE_IN_REJECT_KYC = 9,
 //    	ALLOW_ACCOUNT_MANAGER_TO_CHANGE_KYC = 10,
@@ -27551,11 +27546,6 @@ const (
 	LedgerVersionAllowAccountManagerToChangeKyc            LedgerVersion = 10
 	LedgerVersionChangeAssetIssuerBadAuthExtraFixed        LedgerVersion = 11
 	LedgerVersionAutoCreateCommissionBalanceOnTransfer     LedgerVersion = 12
-	LedgerVersionUseKycLevel                               LedgerVersion = 8
-	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc    LedgerVersion = 9
-	LedgerVersionAllowAccountManagerToChangeKyc            LedgerVersion = 10
-	LedgerVersionChangeAssetIssuerBadAuthExtraFixed        LedgerVersion = 11
-	LedgerVersionAutoCreateCommissionBalanceOnTransfer     LedgerVersion = 12
 	LedgerVersionAllowRejectRequestOfBlockedRequestor      LedgerVersion = 13
 	LedgerVersionAssetUpdateCheckReferenceExists           LedgerVersion = 14
 	LedgerVersionCrossAssetFee                             LedgerVersion = 15
@@ -27574,11 +27564,6 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionUniqueBalanceCreation,
 	LedgerVersionAssetPreissuerMigration,
 	LedgerVersionAssetPreissuerMigrated,
-	LedgerVersionUseKycLevel,
-	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc,
-	LedgerVersionAllowAccountManagerToChangeKyc,
-	LedgerVersionChangeAssetIssuerBadAuthExtraFixed,
-	LedgerVersionAutoCreateCommissionBalanceOnTransfer,
 	LedgerVersionUseKycLevel,
 	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc,
 	LedgerVersionAllowAccountManagerToChangeKyc,
@@ -27607,11 +27592,6 @@ var ledgerVersionMap = map[int32]string{
 	10: "LedgerVersionAllowAccountManagerToChangeKyc",
 	11: "LedgerVersionChangeAssetIssuerBadAuthExtraFixed",
 	12: "LedgerVersionAutoCreateCommissionBalanceOnTransfer",
-	8:  "LedgerVersionUseKycLevel",
-	9:  "LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc",
-	10: "LedgerVersionAllowAccountManagerToChangeKyc",
-	11: "LedgerVersionChangeAssetIssuerBadAuthExtraFixed",
-	12: "LedgerVersionAutoCreateCommissionBalanceOnTransfer",
 	13: "LedgerVersionAllowRejectRequestOfBlockedRequestor",
 	14: "LedgerVersionAssetUpdateCheckReferenceExists",
 	15: "LedgerVersionCrossAssetFee",
@@ -27635,11 +27615,6 @@ var ledgerVersionShortMap = map[int32]string{
 	10: "allow_account_manager_to_change_kyc",
 	11: "change_asset_issuer_bad_auth_extra_fixed",
 	12: "auto_create_commission_balance_on_transfer",
-	8:  "use_kyc_level",
-	9:  "error_on_non_zero_tasks_to_remove_in_reject_kyc",
-	10: "allow_account_manager_to_change_kyc",
-	11: "change_asset_issuer_bad_auth_extra_fixed",
-	12: "auto_create_commission_balance_on_transfer",
 	13: "allow_reject_request_of_blocked_requestor",
 	14: "asset_update_check_reference_exists",
 	15: "cross_asset_fee",
@@ -27658,11 +27633,6 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionUniqueBalanceCreation":                     5,
 	"LedgerVersionAssetPreissuerMigration":                   6,
 	"LedgerVersionAssetPreissuerMigrated":                    7,
-	"LedgerVersionUseKycLevel":                               8,
-	"LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc":    9,
-	"LedgerVersionAllowAccountManagerToChangeKyc":            10,
-	"LedgerVersionChangeAssetIssuerBadAuthExtraFixed":        11,
-	"LedgerVersionAutoCreateCommissionBalanceOnTransfer":     12,
 	"LedgerVersionUseKycLevel":                               8,
 	"LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc":    9,
 	"LedgerVersionAllowAccountManagerToChangeKyc":            10,
