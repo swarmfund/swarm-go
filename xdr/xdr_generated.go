@@ -22808,6 +22808,18 @@ type SaleCreationRequestQuoteAsset struct {
 	Ext        SaleCreationRequestQuoteAssetExt `json:"ext,omitempty"`
 }
 
+// SaleCreationRequestExtV2 is an XDR NestedStruct defines as:
+//
+//   struct {
+//                SaleTypeExt saleTypeExt;
+//                uint64 requiredBaseAssetForHardCap;
+//            }
+//
+type SaleCreationRequestExtV2 struct {
+	SaleTypeExt                 SaleTypeExt `json:"saleTypeExt,omitempty"`
+	RequiredBaseAssetForHardCap Uint64      `json:"requiredBaseAssetForHardCap,omitempty"`
+}
+
 // SaleCreationRequestExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -22816,11 +22828,17 @@ type SaleCreationRequestQuoteAsset struct {
 //            void;
 //    	case TYPED_SALE:
 //    		SaleTypeExt saleTypeExt;
+//        case ALLOW_TO_SPECIFY_REQUIRED_BASE_ASSET_AMOUNT_FOR_HARD_CAP:
+//            struct {
+//                SaleTypeExt saleTypeExt;
+//                uint64 requiredBaseAssetForHardCap;
+//            } extV2;
 //        }
 //
 type SaleCreationRequestExt struct {
-	V           LedgerVersion `json:"v,omitempty"`
-	SaleTypeExt *SaleTypeExt  `json:"saleTypeExt,omitempty"`
+	V           LedgerVersion             `json:"v,omitempty"`
+	SaleTypeExt *SaleTypeExt              `json:"saleTypeExt,omitempty"`
+	ExtV2       *SaleCreationRequestExtV2 `json:"extV2,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -22837,6 +22855,8 @@ func (u SaleCreationRequestExt) ArmForSwitch(sw int32) (string, bool) {
 		return "", true
 	case LedgerVersionTypedSale:
 		return "SaleTypeExt", true
+	case LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap:
+		return "ExtV2", true
 	}
 	return "-", false
 }
@@ -22854,6 +22874,13 @@ func NewSaleCreationRequestExt(v LedgerVersion, value interface{}) (result SaleC
 			return
 		}
 		result.SaleTypeExt = &tv
+	case LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap:
+		tv, ok := value.(SaleCreationRequestExtV2)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be SaleCreationRequestExtV2")
+			return
+		}
+		result.ExtV2 = &tv
 	}
 	return
 }
@@ -22883,6 +22910,31 @@ func (u SaleCreationRequestExt) GetSaleTypeExt() (result SaleTypeExt, ok bool) {
 	return
 }
 
+// MustExtV2 retrieves the ExtV2 value from the union,
+// panicing if the value is not set.
+func (u SaleCreationRequestExt) MustExtV2() SaleCreationRequestExtV2 {
+	val, ok := u.GetExtV2()
+
+	if !ok {
+		panic("arm ExtV2 is not set")
+	}
+
+	return val
+}
+
+// GetExtV2 retrieves the ExtV2 value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u SaleCreationRequestExt) GetExtV2() (result SaleCreationRequestExtV2, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "ExtV2" {
+		result = *u.ExtV2
+		ok = true
+	}
+
+	return
+}
+
 // SaleCreationRequest is an XDR Struct defines as:
 //
 //   struct SaleCreationRequest {
@@ -22902,6 +22954,11 @@ func (u SaleCreationRequestExt) GetSaleTypeExt() (result SaleTypeExt, ok bool) {
 //            void;
 //    	case TYPED_SALE:
 //    		SaleTypeExt saleTypeExt;
+//        case ALLOW_TO_SPECIFY_REQUIRED_BASE_ASSET_AMOUNT_FOR_HARD_CAP:
+//            struct {
+//                SaleTypeExt saleTypeExt;
+//                uint64 requiredBaseAssetForHardCap;
+//            } extV2;
 //        }
 //        ext;
 //    };
@@ -26600,31 +26657,33 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	CROSS_ASSET_FEE = 15,
 //    	USE_PAYMENT_V2 = 16,
 //    	ALLOW_SYNDICATE_TO_UPDATE_KYC = 17,
-//    	DO_NOT_BUILD_ACCOUNT_IF_VERSION_EQUALS_OR_GREATER = 18
+//    	DO_NOT_BUILD_ACCOUNT_IF_VERSION_EQUALS_OR_GREATER = 18,
+//    	ALLOW_TO_SPECIFY_REQUIRED_BASE_ASSET_AMOUNT_FOR_HARD_CAP = 19
 //    };
 //
 type LedgerVersion int32
 
 const (
-	LedgerVersionEmptyVersion                              LedgerVersion = 0
-	LedgerVersionPassExternalSysAccIdInCreateAcc           LedgerVersion = 1
-	LedgerVersionDetailedLedgerChanges                     LedgerVersion = 2
-	LedgerVersionNewSignerTypes                            LedgerVersion = 3
-	LedgerVersionTypedSale                                 LedgerVersion = 4
-	LedgerVersionUniqueBalanceCreation                     LedgerVersion = 5
-	LedgerVersionAssetPreissuerMigration                   LedgerVersion = 6
-	LedgerVersionAssetPreissuerMigrated                    LedgerVersion = 7
-	LedgerVersionUseKycLevel                               LedgerVersion = 8
-	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc    LedgerVersion = 9
-	LedgerVersionAllowAccountManagerToChangeKyc            LedgerVersion = 10
-	LedgerVersionChangeAssetIssuerBadAuthExtraFixed        LedgerVersion = 11
-	LedgerVersionAutoCreateCommissionBalanceOnTransfer     LedgerVersion = 12
-	LedgerVersionAllowRejectRequestOfBlockedRequestor      LedgerVersion = 13
-	LedgerVersionAssetUpdateCheckReferenceExists           LedgerVersion = 14
-	LedgerVersionCrossAssetFee                             LedgerVersion = 15
-	LedgerVersionUsePaymentV2                              LedgerVersion = 16
-	LedgerVersionAllowSyndicateToUpdateKyc                 LedgerVersion = 17
-	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater LedgerVersion = 18
+	LedgerVersionEmptyVersion                                    LedgerVersion = 0
+	LedgerVersionPassExternalSysAccIdInCreateAcc                 LedgerVersion = 1
+	LedgerVersionDetailedLedgerChanges                           LedgerVersion = 2
+	LedgerVersionNewSignerTypes                                  LedgerVersion = 3
+	LedgerVersionTypedSale                                       LedgerVersion = 4
+	LedgerVersionUniqueBalanceCreation                           LedgerVersion = 5
+	LedgerVersionAssetPreissuerMigration                         LedgerVersion = 6
+	LedgerVersionAssetPreissuerMigrated                          LedgerVersion = 7
+	LedgerVersionUseKycLevel                                     LedgerVersion = 8
+	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc          LedgerVersion = 9
+	LedgerVersionAllowAccountManagerToChangeKyc                  LedgerVersion = 10
+	LedgerVersionChangeAssetIssuerBadAuthExtraFixed              LedgerVersion = 11
+	LedgerVersionAutoCreateCommissionBalanceOnTransfer           LedgerVersion = 12
+	LedgerVersionAllowRejectRequestOfBlockedRequestor            LedgerVersion = 13
+	LedgerVersionAssetUpdateCheckReferenceExists                 LedgerVersion = 14
+	LedgerVersionCrossAssetFee                                   LedgerVersion = 15
+	LedgerVersionUsePaymentV2                                    LedgerVersion = 16
+	LedgerVersionAllowSyndicateToUpdateKyc                       LedgerVersion = 17
+	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater       LedgerVersion = 18
+	LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap LedgerVersion = 19
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -26647,6 +26706,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionUsePaymentV2,
 	LedgerVersionAllowSyndicateToUpdateKyc,
 	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater,
+	LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -26669,6 +26729,7 @@ var ledgerVersionMap = map[int32]string{
 	16: "LedgerVersionUsePaymentV2",
 	17: "LedgerVersionAllowSyndicateToUpdateKyc",
 	18: "LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater",
+	19: "LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -26691,28 +26752,30 @@ var ledgerVersionShortMap = map[int32]string{
 	16: "use_payment_v2",
 	17: "allow_syndicate_to_update_kyc",
 	18: "do_not_build_account_if_version_equals_or_greater",
+	19: "allow_to_specify_required_base_asset_amount_for_hard_cap",
 }
 
 var ledgerVersionRevMap = map[string]int32{
-	"LedgerVersionEmptyVersion":                              0,
-	"LedgerVersionPassExternalSysAccIdInCreateAcc":           1,
-	"LedgerVersionDetailedLedgerChanges":                     2,
-	"LedgerVersionNewSignerTypes":                            3,
-	"LedgerVersionTypedSale":                                 4,
-	"LedgerVersionUniqueBalanceCreation":                     5,
-	"LedgerVersionAssetPreissuerMigration":                   6,
-	"LedgerVersionAssetPreissuerMigrated":                    7,
-	"LedgerVersionUseKycLevel":                               8,
-	"LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc":    9,
-	"LedgerVersionAllowAccountManagerToChangeKyc":            10,
-	"LedgerVersionChangeAssetIssuerBadAuthExtraFixed":        11,
-	"LedgerVersionAutoCreateCommissionBalanceOnTransfer":     12,
-	"LedgerVersionAllowRejectRequestOfBlockedRequestor":      13,
-	"LedgerVersionAssetUpdateCheckReferenceExists":           14,
-	"LedgerVersionCrossAssetFee":                             15,
-	"LedgerVersionUsePaymentV2":                              16,
-	"LedgerVersionAllowSyndicateToUpdateKyc":                 17,
-	"LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater": 18,
+	"LedgerVersionEmptyVersion":                                    0,
+	"LedgerVersionPassExternalSysAccIdInCreateAcc":                 1,
+	"LedgerVersionDetailedLedgerChanges":                           2,
+	"LedgerVersionNewSignerTypes":                                  3,
+	"LedgerVersionTypedSale":                                       4,
+	"LedgerVersionUniqueBalanceCreation":                           5,
+	"LedgerVersionAssetPreissuerMigration":                         6,
+	"LedgerVersionAssetPreissuerMigrated":                          7,
+	"LedgerVersionUseKycLevel":                                     8,
+	"LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc":          9,
+	"LedgerVersionAllowAccountManagerToChangeKyc":                  10,
+	"LedgerVersionChangeAssetIssuerBadAuthExtraFixed":              11,
+	"LedgerVersionAutoCreateCommissionBalanceOnTransfer":           12,
+	"LedgerVersionAllowRejectRequestOfBlockedRequestor":            13,
+	"LedgerVersionAssetUpdateCheckReferenceExists":                 14,
+	"LedgerVersionCrossAssetFee":                                   15,
+	"LedgerVersionUsePaymentV2":                                    16,
+	"LedgerVersionAllowSyndicateToUpdateKyc":                       17,
+	"LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater":       18,
+	"LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap": 19,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
