@@ -12,6 +12,8 @@ import (
 	"gitlab.com/tokend/keypair"
 )
 
+type Operation = internal.Operation
+
 type Transaction struct {
 	builder    *Builder
 	source     keypair.Address
@@ -106,7 +108,7 @@ func (tx *Transaction) Sign(kp keypair.Full) *Transaction {
 	return tx
 }
 
-func (tx *Transaction) Op(op internal.Operation) *Transaction {
+func (tx *Transaction) Op(op Operation) *Transaction {
 	tx.operations = append(tx.operations, op)
 	return tx
 }
