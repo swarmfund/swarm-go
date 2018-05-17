@@ -2974,12 +2974,12 @@ func (e *KeyValueEntryType) UnmarshalJSON(data []byte) error {
 //   union switch (KeyValueEntryType type)
 //            {
 //                 case UINT32:
-//                    uint32 defaultMask;
+//                    uint32 ui32Value;
 //            }
 //
 type KeyValueEntryValue struct {
-	Type        KeyValueEntryType `json:"type,omitempty"`
-	DefaultMask *Uint32           `json:"defaultMask,omitempty"`
+	Type      KeyValueEntryType `json:"type,omitempty"`
+	Ui32Value *Uint32           `json:"ui32Value,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -2993,7 +2993,7 @@ func (u KeyValueEntryValue) SwitchFieldName() string {
 func (u KeyValueEntryValue) ArmForSwitch(sw int32) (string, bool) {
 	switch KeyValueEntryType(sw) {
 	case KeyValueEntryTypeUint32:
-		return "DefaultMask", true
+		return "Ui32Value", true
 	}
 	return "-", false
 }
@@ -3008,30 +3008,30 @@ func NewKeyValueEntryValue(aType KeyValueEntryType, value interface{}) (result K
 			err = fmt.Errorf("invalid value, must be Uint32")
 			return
 		}
-		result.DefaultMask = &tv
+		result.Ui32Value = &tv
 	}
 	return
 }
 
-// MustDefaultMask retrieves the DefaultMask value from the union,
+// MustUi32Value retrieves the Ui32Value value from the union,
 // panicing if the value is not set.
-func (u KeyValueEntryValue) MustDefaultMask() Uint32 {
-	val, ok := u.GetDefaultMask()
+func (u KeyValueEntryValue) MustUi32Value() Uint32 {
+	val, ok := u.GetUi32Value()
 
 	if !ok {
-		panic("arm DefaultMask is not set")
+		panic("arm Ui32Value is not set")
 	}
 
 	return val
 }
 
-// GetDefaultMask retrieves the DefaultMask value from the union,
+// GetUi32Value retrieves the Ui32Value value from the union,
 // returning ok if the union's switch indicated the value is valid.
-func (u KeyValueEntryValue) GetDefaultMask() (result Uint32, ok bool) {
+func (u KeyValueEntryValue) GetUi32Value() (result Uint32, ok bool) {
 	armName, _ := u.ArmForSwitch(int32(u.Type))
 
-	if armName == "DefaultMask" {
-		result = *u.DefaultMask
+	if armName == "Ui32Value" {
+		result = *u.Ui32Value
 		ok = true
 	}
 
@@ -3085,7 +3085,7 @@ func NewKeyValueEntryExt(v LedgerVersion, value interface{}) (result KeyValueEnt
 //            union switch (KeyValueEntryType type)
 //            {
 //                 case UINT32:
-//                    uint32 defaultMask;
+//                    uint32 ui32Value;
 //            }
 //            value;
 //
