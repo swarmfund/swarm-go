@@ -2883,29 +2883,35 @@ type InvoiceEntry struct {
 //
 //   enum KeyValueEntryType
 //        {
-//            UINT32 = 1
+//            UINT32 = 1,
+//            STRING = 2
 //        };
 //
 type KeyValueEntryType int32
 
 const (
 	KeyValueEntryTypeUint32 KeyValueEntryType = 1
+	KeyValueEntryTypeString KeyValueEntryType = 2
 )
 
 var KeyValueEntryTypeAll = []KeyValueEntryType{
 	KeyValueEntryTypeUint32,
+	KeyValueEntryTypeString,
 }
 
 var keyValueEntryTypeMap = map[int32]string{
 	1: "KeyValueEntryTypeUint32",
+	2: "KeyValueEntryTypeString",
 }
 
 var keyValueEntryTypeShortMap = map[int32]string{
 	1: "uint32",
+	2: "string",
 }
 
 var keyValueEntryTypeRevMap = map[string]int32{
 	"KeyValueEntryTypeUint32": 1,
+	"KeyValueEntryTypeString": 2,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -2975,11 +2981,14 @@ func (e *KeyValueEntryType) UnmarshalJSON(data []byte) error {
 //            {
 //                 case UINT32:
 //                    uint32 ui32Value;
+//                 case STRING:
+//                    string stringValue<>;
 //            }
 //
 type KeyValueEntryValue struct {
-	Type      KeyValueEntryType `json:"type,omitempty"`
-	Ui32Value *Uint32           `json:"ui32Value,omitempty"`
+	Type        KeyValueEntryType `json:"type,omitempty"`
+	Ui32Value   *Uint32           `json:"ui32Value,omitempty"`
+	StringValue *string           `json:"stringValue,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -2994,6 +3003,8 @@ func (u KeyValueEntryValue) ArmForSwitch(sw int32) (string, bool) {
 	switch KeyValueEntryType(sw) {
 	case KeyValueEntryTypeUint32:
 		return "Ui32Value", true
+	case KeyValueEntryTypeString:
+		return "StringValue", true
 	}
 	return "-", false
 }
@@ -3009,6 +3020,13 @@ func NewKeyValueEntryValue(aType KeyValueEntryType, value interface{}) (result K
 			return
 		}
 		result.Ui32Value = &tv
+	case KeyValueEntryTypeString:
+		tv, ok := value.(string)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be string")
+			return
+		}
+		result.StringValue = &tv
 	}
 	return
 }
@@ -3032,6 +3050,31 @@ func (u KeyValueEntryValue) GetUi32Value() (result Uint32, ok bool) {
 
 	if armName == "Ui32Value" {
 		result = *u.Ui32Value
+		ok = true
+	}
+
+	return
+}
+
+// MustStringValue retrieves the StringValue value from the union,
+// panicing if the value is not set.
+func (u KeyValueEntryValue) MustStringValue() string {
+	val, ok := u.GetStringValue()
+
+	if !ok {
+		panic("arm StringValue is not set")
+	}
+
+	return val
+}
+
+// GetStringValue retrieves the StringValue value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u KeyValueEntryValue) GetStringValue() (result string, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "StringValue" {
+		result = *u.StringValue
 		ok = true
 	}
 
@@ -3086,6 +3129,8 @@ func NewKeyValueEntryExt(v LedgerVersion, value interface{}) (result KeyValueEnt
 //            {
 //                 case UINT32:
 //                    uint32 ui32Value;
+//                 case STRING:
+//                    string stringValue<>;
 //            }
 //            value;
 //
@@ -16089,34 +16134,34 @@ func (u ManageInvoiceResult) GetSuccess() (result ManageInvoiceSuccessResult, ok
 //   enum ManageKVAction
 //        {
 //            PUT = 1,
-//            DELETE = 2
+//            REMOVE = 2
 //        };
 //
 type ManageKvAction int32
 
 const (
 	ManageKvActionPut    ManageKvAction = 1
-	ManageKvActionDelete ManageKvAction = 2
+	ManageKvActionRemove ManageKvAction = 2
 )
 
 var ManageKvActionAll = []ManageKvAction{
 	ManageKvActionPut,
-	ManageKvActionDelete,
+	ManageKvActionRemove,
 }
 
 var manageKvActionMap = map[int32]string{
 	1: "ManageKvActionPut",
-	2: "ManageKvActionDelete",
+	2: "ManageKvActionRemove",
 }
 
 var manageKvActionShortMap = map[int32]string{
 	1: "put",
-	2: "delete",
+	2: "remove",
 }
 
 var manageKvActionRevMap = map[string]int32{
 	"ManageKvActionPut":    1,
-	"ManageKvActionDelete": 2,
+	"ManageKvActionRemove": 2,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -16186,7 +16231,7 @@ func (e *ManageKvAction) UnmarshalJSON(data []byte) error {
 //            {
 //                case PUT:
 //                    KeyValueEntry value;
-//                case DELETE:
+//                case REMOVE:
 //                    void;
 //            }
 //
@@ -16207,7 +16252,7 @@ func (u ManageKeyValueOpAction) ArmForSwitch(sw int32) (string, bool) {
 	switch ManageKvAction(sw) {
 	case ManageKvActionPut:
 		return "Value", true
-	case ManageKvActionDelete:
+	case ManageKvActionRemove:
 		return "", true
 	}
 	return "-", false
@@ -16224,7 +16269,7 @@ func NewManageKeyValueOpAction(action ManageKvAction, value interface{}) (result
 			return
 		}
 		result.Value = &tv
-	case ManageKvActionDelete:
+	case ManageKvActionRemove:
 		// void
 	}
 	return
@@ -16302,7 +16347,7 @@ func NewManageKeyValueOpExt(v LedgerVersion, value interface{}) (result ManageKe
 //            {
 //                case PUT:
 //                    KeyValueEntry value;
-//                case DELETE:
+//                case REMOVE:
 //                    void;
 //            }
 //            action;
@@ -16382,34 +16427,40 @@ type ManageKeyValueSuccess struct {
 //   enum ManageKeyValueResultCode
 //        {
 //            SUCCESS = 1,
-//            NOT_FOUND = -1
+//            NOT_FOUND = -1,
+//            INVALID_TYPE = -2
 //        };
 //
 type ManageKeyValueResultCode int32
 
 const (
-	ManageKeyValueResultCodeSuccess  ManageKeyValueResultCode = 1
-	ManageKeyValueResultCodeNotFound ManageKeyValueResultCode = -1
+	ManageKeyValueResultCodeSuccess     ManageKeyValueResultCode = 1
+	ManageKeyValueResultCodeNotFound    ManageKeyValueResultCode = -1
+	ManageKeyValueResultCodeInvalidType ManageKeyValueResultCode = -2
 )
 
 var ManageKeyValueResultCodeAll = []ManageKeyValueResultCode{
 	ManageKeyValueResultCodeSuccess,
 	ManageKeyValueResultCodeNotFound,
+	ManageKeyValueResultCodeInvalidType,
 }
 
 var manageKeyValueResultCodeMap = map[int32]string{
 	1:  "ManageKeyValueResultCodeSuccess",
 	-1: "ManageKeyValueResultCodeNotFound",
+	-2: "ManageKeyValueResultCodeInvalidType",
 }
 
 var manageKeyValueResultCodeShortMap = map[int32]string{
 	1:  "success",
 	-1: "not_found",
+	-2: "invalid_type",
 }
 
 var manageKeyValueResultCodeRevMap = map[string]int32{
-	"ManageKeyValueResultCodeSuccess":  1,
-	"ManageKeyValueResultCodeNotFound": -1,
+	"ManageKeyValueResultCodeSuccess":     1,
+	"ManageKeyValueResultCodeNotFound":    -1,
+	"ManageKeyValueResultCodeInvalidType": -2,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
