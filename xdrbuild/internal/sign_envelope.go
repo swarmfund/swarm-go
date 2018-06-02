@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/lbhack/go/xdr"
 	"gitlab.com/tokend/keypair"
 )
 

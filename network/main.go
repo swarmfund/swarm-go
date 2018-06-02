@@ -8,8 +8,8 @@ import (
 
 	"strings"
 
-	"gitlab.com/tokend/go/hash"
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/lbhack/go/hash"
+	"gitlab.com/lbhack/go/xdr"
 	"github.com/pkg/errors"
 )
 

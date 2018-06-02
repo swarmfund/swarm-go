@@ -1,7 +1,7 @@
 package amount_test
 
 import (
-	"gitlab.com/tokend/go/amount"
+	"gitlab.com/lbhack/go/amount"
 	"math"
 	"testing"
 )

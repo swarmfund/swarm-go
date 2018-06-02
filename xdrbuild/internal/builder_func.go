@@ -1,6 +1,6 @@
 package internal
 
-import "gitlab.com/tokend/go/xdr"
+import "gitlab.com/lbhack/go/xdr"
 
 type OperationFunc func() (*xdr.Operation, error)
 

@@ -3,7 +3,7 @@ package amount_test
 import (
 	"testing"
 
-	"gitlab.com/tokend/go/amount"
+	"gitlab.com/lbhack/go/amount"
 )
 
 var testsData = []struct {

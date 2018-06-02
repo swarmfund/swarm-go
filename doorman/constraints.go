@@ -3,7 +3,7 @@ package doorman
 import (
 	"net/http"
 
-	"gitlab.com/tokend/go/signcontrol"
+	"gitlab.com/lbhack/go/signcontrol"
 )
 
 func SignerOf(address string) SignerConstraint {

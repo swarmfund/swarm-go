@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/tokend/go/signcontrol/internal/httpsignatures"
+	"gitlab.com/lbhack/go/signcontrol/internal/httpsignatures"
 	"gitlab.com/tokend/keypair"
 )
 

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"gitlab.com/tokend/go/network"
-	"gitlab.com/tokend/go/xdr"
-	"gitlab.com/tokend/go/xdrbuild/internal"
+	"gitlab.com/lbhack/go/network"
+	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/lbhack/go/xdrbuild/internal"
 	"gitlab.com/tokend/keypair"
 )
 

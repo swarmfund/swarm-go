@@ -3,7 +3,7 @@ package xdrbuild
 import (
 	"github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/lbhack/go/xdr"
 )
 
 type CreateIssuanceRequestOp struct {

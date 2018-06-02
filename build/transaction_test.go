@@ -1,7 +1,7 @@
 package build
 
 import (
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/lbhack/go/xdr"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

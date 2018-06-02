@@ -1,7 +1,7 @@
 package xdrbuild
 
 import (
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/lbhack/go/xdr"
 )
 
 type SetAssetPrice struct {

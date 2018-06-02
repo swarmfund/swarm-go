@@ -763,7 +763,7 @@ type AccountTypeLimitsEntry struct {
 //    	AML_ALERT_REVIEWER = 8388608, // can review aml alert requests
 //    	KYC_ACC_MANAGER = 16777216, // can manage kyc
 //    	KYC_SUPER_ADMIN = 33554432,
-//        EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_MANAGER = 67108864,
+//    	EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_MANAGER = 67108864,
 //        KEY_VALUE_MANAGER = 134217728 // can manage keyValue
 //    };
 //
@@ -1814,7 +1814,8 @@ type AssetPairEntry struct {
 //    	WITHDRAWABLE = 8,
 //    	TWO_STEP_WITHDRAWAL = 16,
 //    	REQUIRES_KYC = 32,
-//    	ISSUANCE_MANUAL_REVIEW_REQUIRED = 64
+//    	ISSUANCE_MANUAL_REVIEW_REQUIRED = 64,
+//    	NON_FUNGIBLE = 128
 //    };
 //
 type AssetPolicy int32
@@ -1827,6 +1828,7 @@ const (
 	AssetPolicyTwoStepWithdrawal            AssetPolicy = 16
 	AssetPolicyRequiresKyc                  AssetPolicy = 32
 	AssetPolicyIssuanceManualReviewRequired AssetPolicy = 64
+	AssetPolicyNonFungible                  AssetPolicy = 128
 )
 
 var AssetPolicyAll = []AssetPolicy{
@@ -1837,26 +1839,29 @@ var AssetPolicyAll = []AssetPolicy{
 	AssetPolicyTwoStepWithdrawal,
 	AssetPolicyRequiresKyc,
 	AssetPolicyIssuanceManualReviewRequired,
+	AssetPolicyNonFungible,
 }
 
 var assetPolicyMap = map[int32]string{
-	1:  "AssetPolicyTransferable",
-	2:  "AssetPolicyBaseAsset",
-	4:  "AssetPolicyStatsQuoteAsset",
-	8:  "AssetPolicyWithdrawable",
-	16: "AssetPolicyTwoStepWithdrawal",
-	32: "AssetPolicyRequiresKyc",
-	64: "AssetPolicyIssuanceManualReviewRequired",
+	1:   "AssetPolicyTransferable",
+	2:   "AssetPolicyBaseAsset",
+	4:   "AssetPolicyStatsQuoteAsset",
+	8:   "AssetPolicyWithdrawable",
+	16:  "AssetPolicyTwoStepWithdrawal",
+	32:  "AssetPolicyRequiresKyc",
+	64:  "AssetPolicyIssuanceManualReviewRequired",
+	128: "AssetPolicyNonFungible",
 }
 
 var assetPolicyShortMap = map[int32]string{
-	1:  "transferable",
-	2:  "base_asset",
-	4:  "stats_quote_asset",
-	8:  "withdrawable",
-	16: "two_step_withdrawal",
-	32: "requires_kyc",
-	64: "issuance_manual_review_required",
+	1:   "transferable",
+	2:   "base_asset",
+	4:   "stats_quote_asset",
+	8:   "withdrawable",
+	16:  "two_step_withdrawal",
+	32:  "requires_kyc",
+	64:  "issuance_manual_review_required",
+	128: "non_fungible",
 }
 
 var assetPolicyRevMap = map[string]int32{
@@ -1867,6 +1872,7 @@ var assetPolicyRevMap = map[string]int32{
 	"AssetPolicyTwoStepWithdrawal":            16,
 	"AssetPolicyRequiresKyc":                  32,
 	"AssetPolicyIssuanceManualReviewRequired": 64,
+	"AssetPolicyNonFungible":                  128,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -2697,7 +2703,6 @@ func (u FeeEntryExt) GetFeeAsset() (result AssetCode, ok bool) {
 //            AssetCode feeAsset;
 //        }
 //        ext;
-//
 //    };
 //
 type FeeEntry struct {
@@ -4110,7 +4115,7 @@ func NewReviewableRequestEntryExt(v LedgerVersion, value interface{}) (result Re
 //    	uint64 requestID;
 //    	Hash hash; // hash of the request body
 //    	AccountID requestor;
-//    	string256 rejectReason;
+//    	longstring rejectReason;
 //    	AccountID reviewer;
 //    	string64* reference; // reference for request which will act as an unique key for the request (will reject request with the same reference from same requestor)
 //    	int64 createdAt; // when request was created
@@ -4153,7 +4158,7 @@ type ReviewableRequestEntry struct {
 	RequestId    Uint64                     `json:"requestID,omitempty"`
 	Hash         Hash                       `json:"hash,omitempty"`
 	Requestor    AccountId                  `json:"requestor,omitempty"`
-	RejectReason String256                  `json:"rejectReason,omitempty"`
+	RejectReason Longstring                 `json:"rejectReason,omitempty"`
 	Reviewer     AccountId                  `json:"reviewer,omitempty"`
 	Reference    *String64                  `json:"reference,omitempty"`
 	CreatedAt    Int64                      `json:"createdAt,omitempty"`
@@ -4547,6 +4552,18 @@ type SaleQuoteAsset struct {
 	Ext          SaleQuoteAssetExt `json:"ext,omitempty"`
 }
 
+// SaleParticip is an XDR Struct defines as:
+//
+//   struct SaleParticip {
+//    	AccountID accountID;
+//    	uint64 amount;
+//    };
+//
+type SaleParticip struct {
+	AccountId AccountId `json:"accountID,omitempty"`
+	Amount    Uint64    `json:"amount,omitempty"`
+}
+
 // SaleEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -4638,6 +4655,8 @@ func (u SaleEntryExt) GetSaleTypeExt() (result SaleTypeExt, ok bool) {
 //    	uint64 maxAmountToBeSold;
 //    	longstring details; // sale specific details
 //    	SaleQuoteAsset quoteAssets<100>;
+//    	SaleParticip participants<>;
+//    	uint64 maxAmountPerParticip;
 //
 //    	BalanceID baseBalance;
 //
@@ -4652,20 +4671,22 @@ func (u SaleEntryExt) GetSaleTypeExt() (result SaleTypeExt, ok bool) {
 //    };
 //
 type SaleEntry struct {
-	SaleId            Uint64           `json:"saleID,omitempty"`
-	OwnerId           AccountId        `json:"ownerID,omitempty"`
-	BaseAsset         AssetCode        `json:"baseAsset,omitempty"`
-	StartTime         Uint64           `json:"startTime,omitempty"`
-	EndTime           Uint64           `json:"endTime,omitempty"`
-	DefaultQuoteAsset AssetCode        `json:"defaultQuoteAsset,omitempty"`
-	SoftCap           Uint64           `json:"softCap,omitempty"`
-	HardCap           Uint64           `json:"hardCap,omitempty"`
-	CurrentCapInBase  Uint64           `json:"currentCapInBase,omitempty"`
-	MaxAmountToBeSold Uint64           `json:"maxAmountToBeSold,omitempty"`
-	Details           Longstring       `json:"details,omitempty"`
-	QuoteAssets       []SaleQuoteAsset `json:"quoteAssets,omitempty" xdrmaxsize:"100"`
-	BaseBalance       BalanceId        `json:"baseBalance,omitempty"`
-	Ext               SaleEntryExt     `json:"ext,omitempty"`
+	SaleId               Uint64           `json:"saleID,omitempty"`
+	OwnerId              AccountId        `json:"ownerID,omitempty"`
+	BaseAsset            AssetCode        `json:"baseAsset,omitempty"`
+	StartTime            Uint64           `json:"startTime,omitempty"`
+	EndTime              Uint64           `json:"endTime,omitempty"`
+	DefaultQuoteAsset    AssetCode        `json:"defaultQuoteAsset,omitempty"`
+	SoftCap              Uint64           `json:"softCap,omitempty"`
+	HardCap              Uint64           `json:"hardCap,omitempty"`
+	CurrentCapInBase     Uint64           `json:"currentCapInBase,omitempty"`
+	MaxAmountToBeSold    Uint64           `json:"maxAmountToBeSold,omitempty"`
+	Details              Longstring       `json:"details,omitempty"`
+	QuoteAssets          []SaleQuoteAsset `json:"quoteAssets,omitempty" xdrmaxsize:"100"`
+	Participants         []SaleParticip   `json:"participants,omitempty"`
+	MaxAmountPerParticip Uint64           `json:"maxAmountPerParticip,omitempty"`
+	BaseBalance          BalanceId        `json:"baseBalance,omitempty"`
+	Ext                  SaleEntryExt     `json:"ext,omitempty"`
 }
 
 // StatisticsEntryExt is an XDR NestedUnion defines as:
@@ -4865,9 +4886,9 @@ func (e *ThresholdIndexes) UnmarshalJSON(data []byte) error {
 //        INVOICE = 14,
 //    	REVIEWABLE_REQUEST = 15,
 //    	EXTERNAL_SYSTEM_ACCOUNT_ID = 16,
-//        SALE = 17,
-//        ACCOUNT_KYC = 18,
-//        EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY = 19,
+//    	SALE = 17,
+//    	ACCOUNT_KYC = 18,
+//    	EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY = 19,
 //        KEY_VALUE = 20
 //    };
 //
@@ -15173,34 +15194,34 @@ func (u ManageBalanceResult) GetSuccess() (result ManageBalanceSuccess, ok bool)
 //   enum ManageExternalSystemAccountIdPoolEntryAction
 //    {
 //        CREATE = 0,
-//        DELETE = 1
+//        REMOVE = 1
 //    };
 //
 type ManageExternalSystemAccountIdPoolEntryAction int32
 
 const (
 	ManageExternalSystemAccountIdPoolEntryActionCreate ManageExternalSystemAccountIdPoolEntryAction = 0
-	ManageExternalSystemAccountIdPoolEntryActionDelete ManageExternalSystemAccountIdPoolEntryAction = 1
+	ManageExternalSystemAccountIdPoolEntryActionRemove ManageExternalSystemAccountIdPoolEntryAction = 1
 )
 
 var ManageExternalSystemAccountIdPoolEntryActionAll = []ManageExternalSystemAccountIdPoolEntryAction{
 	ManageExternalSystemAccountIdPoolEntryActionCreate,
-	ManageExternalSystemAccountIdPoolEntryActionDelete,
+	ManageExternalSystemAccountIdPoolEntryActionRemove,
 }
 
 var manageExternalSystemAccountIdPoolEntryActionMap = map[int32]string{
 	0: "ManageExternalSystemAccountIdPoolEntryActionCreate",
-	1: "ManageExternalSystemAccountIdPoolEntryActionDelete",
+	1: "ManageExternalSystemAccountIdPoolEntryActionRemove",
 }
 
 var manageExternalSystemAccountIdPoolEntryActionShortMap = map[int32]string{
 	0: "create",
-	1: "delete",
+	1: "remove",
 }
 
 var manageExternalSystemAccountIdPoolEntryActionRevMap = map[string]int32{
 	"ManageExternalSystemAccountIdPoolEntryActionCreate": 0,
-	"ManageExternalSystemAccountIdPoolEntryActionDelete": 1,
+	"ManageExternalSystemAccountIdPoolEntryActionRemove": 1,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -15388,7 +15409,7 @@ type DeleteExternalSystemAccountIdPoolEntryActionInput struct {
 //        {
 //        case CREATE:
 //            CreateExternalSystemAccountIdPoolEntryActionInput createExternalSystemAccountIdPoolEntryActionInput;
-//        case DELETE:
+//        case REMOVE:
 //            DeleteExternalSystemAccountIdPoolEntryActionInput deleteExternalSystemAccountIdPoolEntryActionInput;
 //        }
 //
@@ -15410,7 +15431,7 @@ func (u ManageExternalSystemAccountIdPoolEntryOpActionInput) ArmForSwitch(sw int
 	switch ManageExternalSystemAccountIdPoolEntryAction(sw) {
 	case ManageExternalSystemAccountIdPoolEntryActionCreate:
 		return "CreateExternalSystemAccountIdPoolEntryActionInput", true
-	case ManageExternalSystemAccountIdPoolEntryActionDelete:
+	case ManageExternalSystemAccountIdPoolEntryActionRemove:
 		return "DeleteExternalSystemAccountIdPoolEntryActionInput", true
 	}
 	return "-", false
@@ -15427,7 +15448,7 @@ func NewManageExternalSystemAccountIdPoolEntryOpActionInput(action ManageExterna
 			return
 		}
 		result.CreateExternalSystemAccountIdPoolEntryActionInput = &tv
-	case ManageExternalSystemAccountIdPoolEntryActionDelete:
+	case ManageExternalSystemAccountIdPoolEntryActionRemove:
 		tv, ok := value.(DeleteExternalSystemAccountIdPoolEntryActionInput)
 		if !ok {
 			err = fmt.Errorf("invalid value, must be DeleteExternalSystemAccountIdPoolEntryActionInput")
@@ -15534,7 +15555,7 @@ func NewManageExternalSystemAccountIdPoolEntryOpExt(v LedgerVersion, value inter
 //        {
 //        case CREATE:
 //            CreateExternalSystemAccountIdPoolEntryActionInput createExternalSystemAccountIdPoolEntryActionInput;
-//        case DELETE:
+//        case REMOVE:
 //            DeleteExternalSystemAccountIdPoolEntryActionInput deleteExternalSystemAccountIdPoolEntryActionInput;
 //        } actionInput;
 //
@@ -16703,7 +16724,8 @@ type ManageOfferOp struct {
 //    	UPDATE_IS_NOT_ALLOWED = -21, // update of the offer is not allowed
 //    	INVALID_AMOUNT = -22, // amount must be positive
 //    	SALE_IS_NOT_ACTIVE = -23,
-//    	REQUIRES_KYC = -24 // source must have KYC in order to participate
+//    	REQUIRES_KYC = -24, // source must have KYC in order to participate
+//    	LIMIT_EXCEEDED = -25
 //
 //    };
 //
@@ -16735,6 +16757,7 @@ const (
 	ManageOfferResultCodeInvalidAmount            ManageOfferResultCode = -22
 	ManageOfferResultCodeSaleIsNotActive          ManageOfferResultCode = -23
 	ManageOfferResultCodeRequiresKyc              ManageOfferResultCode = -24
+	ManageOfferResultCodeLimitExceeded            ManageOfferResultCode = -25
 )
 
 var ManageOfferResultCodeAll = []ManageOfferResultCode{
@@ -16763,6 +16786,7 @@ var ManageOfferResultCodeAll = []ManageOfferResultCode{
 	ManageOfferResultCodeInvalidAmount,
 	ManageOfferResultCodeSaleIsNotActive,
 	ManageOfferResultCodeRequiresKyc,
+	ManageOfferResultCodeLimitExceeded,
 }
 
 var manageOfferResultCodeMap = map[int32]string{
@@ -16791,6 +16815,7 @@ var manageOfferResultCodeMap = map[int32]string{
 	-22: "ManageOfferResultCodeInvalidAmount",
 	-23: "ManageOfferResultCodeSaleIsNotActive",
 	-24: "ManageOfferResultCodeRequiresKyc",
+	-25: "ManageOfferResultCodeLimitExceeded",
 }
 
 var manageOfferResultCodeShortMap = map[int32]string{
@@ -16819,6 +16844,7 @@ var manageOfferResultCodeShortMap = map[int32]string{
 	-22: "invalid_amount",
 	-23: "sale_is_not_active",
 	-24: "requires_kyc",
+	-25: "limit_exceeded",
 }
 
 var manageOfferResultCodeRevMap = map[string]int32{
@@ -16847,6 +16873,7 @@ var manageOfferResultCodeRevMap = map[string]int32{
 	"ManageOfferResultCodeInvalidAmount":            -22,
 	"ManageOfferResultCodeSaleIsNotActive":          -23,
 	"ManageOfferResultCodeRequiresKyc":              -24,
+	"ManageOfferResultCodeLimitExceeded":            -25,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -18164,7 +18191,7 @@ func NewFeeDataV2Ext(v LedgerVersion, value interface{}) (result FeeDataV2Ext, e
 //        // Cross asset fees
 //        AssetCode feeAsset;
 //
-//           // reserved for future use
+//    	// reserved for future use
 //        union switch (LedgerVersion v)
 //        {
 //        case EMPTY_VERSION:
@@ -18528,9 +18555,9 @@ type PaymentOpV2 struct {
 //        MALFORMED = -1, // bad input
 //        UNDERFUNDED = -2, // not enough funds in source account
 //        LINE_FULL = -3, // destination would go above their limit
-//           DESTINATION_BALANCE_NOT_FOUND = -4,
+//    	DESTINATION_BALANCE_NOT_FOUND = -4,
 //        BALANCE_ASSETS_MISMATCHED = -5,
-//           SRC_BALANCE_NOT_FOUND = -6, // source balance not found
+//    	SRC_BALANCE_NOT_FOUND = -6, // source balance not found
 //        REFERENCE_DUPLICATION = -7,
 //        STATS_OVERFLOW = -8,
 //        LIMITS_EXCEEDED = -9,
@@ -19474,7 +19501,7 @@ func NewReviewPaymentRequestOpExt(v LedgerVersion, value interface{}) (result Re
 //        uint64 paymentID;
 //
 //    	bool accept;
-//        string256* rejectReason;
+//        longstring* rejectReason;
 //    	// reserved for future use
 //    	union switch (LedgerVersion v)
 //    	{
@@ -19487,7 +19514,7 @@ func NewReviewPaymentRequestOpExt(v LedgerVersion, value interface{}) (result Re
 type ReviewPaymentRequestOp struct {
 	PaymentId    Uint64                    `json:"paymentID,omitempty"`
 	Accept       bool                      `json:"accept,omitempty"`
-	RejectReason *String256                `json:"rejectReason,omitempty"`
+	RejectReason *Longstring               `json:"rejectReason,omitempty"`
 	Ext          ReviewPaymentRequestOpExt `json:"ext,omitempty"`
 }
 
@@ -20439,7 +20466,7 @@ func NewReviewRequestOpExt(v LedgerVersion, value interface{}) (result ReviewReq
 //    		void;
 //    	} requestDetails;
 //    	ReviewRequestOpAction action;
-//    	string256 reason;
+//    	longstring reason;
 //    	// reserved for future use
 //        union switch (LedgerVersion v)
 //        {
@@ -20454,7 +20481,7 @@ type ReviewRequestOp struct {
 	RequestHash    Hash                          `json:"requestHash,omitempty"`
 	RequestDetails ReviewRequestOpRequestDetails `json:"requestDetails,omitempty"`
 	Action         ReviewRequestOpAction         `json:"action,omitempty"`
-	Reason         String256                     `json:"reason,omitempty"`
+	Reason         Longstring                    `json:"reason,omitempty"`
 	Ext            ReviewRequestOpExt            `json:"ext,omitempty"`
 }
 
@@ -20888,12 +20915,12 @@ type SetFeesOp struct {
 //    		NOT_FOUND = -8,
 //    		SUB_TYPE_NOT_EXIST = -9,
 //    		INVALID_FEE_VERSION = -10, // version of fee entry is greater than ledger version
-//            INVALID_FEE_ASSET = -11,
-//            FEE_ASSET_NOT_ALLOWED = -12, // feeAsset can be set only if feeType is PAYMENT
-//            CROSS_ASSET_FEE_NOT_ALLOWED = -13, // feeAsset on payment fee type can differ from asset only if payment fee subtype is OUTGOING
-//            FEE_ASSET_NOT_FOUND = -14,
-//            ASSET_PAIR_NOT_FOUND = -15, // cannot create cross asset fee entry without existing asset pair
-//            INVALID_ASSET_PAIR_PRICE = -16
+//    		INVALID_FEE_ASSET = -11,
+//    		FEE_ASSET_NOT_ALLOWED = -12, // feeAsset can be set only if feeType is PAYMENT
+//    		CROSS_ASSET_FEE_NOT_ALLOWED = -13, // feeAsset on payment fee type can differ from asset only if payment fee subtype is OUTGOING
+//    		FEE_ASSET_NOT_FOUND = -14,
+//    		ASSET_PAIR_NOT_FOUND = -15, // cannot create cross asset fee entry without existing asset pair
+//    		INVALID_ASSET_PAIR_PRICE = -16
 //        };
 //
 type SetFeesResultCode int32
@@ -23263,7 +23290,7 @@ func NewAmlAlertRequestExt(v LedgerVersion, value interface{}) (result AmlAlertR
 //   struct AMLAlertRequest {
 //        BalanceID balanceID;
 //        uint64 amount;
-//        string256 reason;
+//        longstring reason;
 //    	union switch (LedgerVersion v)
 //        {
 //        case EMPTY_VERSION:
@@ -23275,7 +23302,7 @@ func NewAmlAlertRequestExt(v LedgerVersion, value interface{}) (result AmlAlertR
 type AmlAlertRequest struct {
 	BalanceId BalanceId          `json:"balanceID,omitempty"`
 	Amount    Uint64             `json:"amount,omitempty"`
-	Reason    String256          `json:"reason,omitempty"`
+	Reason    Longstring         `json:"reason,omitempty"`
 	Ext       AmlAlertRequestExt `json:"ext,omitempty"`
 }
 
@@ -23844,6 +23871,7 @@ func (u SaleCreationRequestExt) GetExtV2() (result SaleCreationRequestExtV2, ok 
 //    	uint64 softCap; // minimum amount of quote asset to be received at which sale will be considered a successful
 //    	uint64 hardCap; // max amount of quote asset to be received
 //    	longstring details; // sale specific details
+//    	uint64 maxAmountPerParticip;
 //
 //    	SaleCreationRequestQuoteAsset quoteAssets<100>;
 //
@@ -23863,15 +23891,16 @@ func (u SaleCreationRequestExt) GetExtV2() (result SaleCreationRequestExtV2, ok 
 //    };
 //
 type SaleCreationRequest struct {
-	BaseAsset         AssetCode                       `json:"baseAsset,omitempty"`
-	DefaultQuoteAsset AssetCode                       `json:"defaultQuoteAsset,omitempty"`
-	StartTime         Uint64                          `json:"startTime,omitempty"`
-	EndTime           Uint64                          `json:"endTime,omitempty"`
-	SoftCap           Uint64                          `json:"softCap,omitempty"`
-	HardCap           Uint64                          `json:"hardCap,omitempty"`
-	Details           Longstring                      `json:"details,omitempty"`
-	QuoteAssets       []SaleCreationRequestQuoteAsset `json:"quoteAssets,omitempty" xdrmaxsize:"100"`
-	Ext               SaleCreationRequestExt          `json:"ext,omitempty"`
+	BaseAsset            AssetCode                       `json:"baseAsset,omitempty"`
+	DefaultQuoteAsset    AssetCode                       `json:"defaultQuoteAsset,omitempty"`
+	StartTime            Uint64                          `json:"startTime,omitempty"`
+	EndTime              Uint64                          `json:"endTime,omitempty"`
+	SoftCap              Uint64                          `json:"softCap,omitempty"`
+	HardCap              Uint64                          `json:"hardCap,omitempty"`
+	Details              Longstring                      `json:"details,omitempty"`
+	MaxAmountPerParticip Uint64                          `json:"maxAmountPerParticip,omitempty"`
+	QuoteAssets          []SaleCreationRequestQuoteAsset `json:"quoteAssets,omitempty" xdrmaxsize:"100"`
+	Ext                  SaleCreationRequestExt          `json:"ext,omitempty"`
 }
 
 // UpdateKycRequestExt is an XDR NestedUnion defines as:
@@ -24333,17 +24362,17 @@ type WithdrawalRequest struct {
 //        case MANAGE_INVOICE:
 //            ManageInvoiceOp manageInvoiceOp;
 //    	case REVIEW_REQUEST:
-//            ReviewRequestOp reviewRequestOp;
-//        case CREATE_SALE_REQUEST:
-//            CreateSaleCreationRequestOp createSaleCreationRequestOp;
-//        case CHECK_SALE_STATE:
-//            CheckSaleStateOp checkSaleStateOp;
-//        case CREATE_AML_ALERT:
-//            CreateAMLAlertRequestOp createAMLAlertRequestOp;
-//        case MANAGE_KEY_VALUE:
-//            ManageKeyValueOp manageKeyValueOp;
-//        case CREATE_KYC_REQUEST:
-//            CreateUpdateKYCRequestOp createUpdateKYCRequestOp;
+//    		ReviewRequestOp reviewRequestOp;
+//    	case CREATE_SALE_REQUEST:
+//    		CreateSaleCreationRequestOp createSaleCreationRequestOp;
+//    	case CHECK_SALE_STATE:
+//    		CheckSaleStateOp checkSaleStateOp;
+//    	case CREATE_AML_ALERT:
+//    	    CreateAMLAlertRequestOp createAMLAlertRequestOp;
+//    	case MANAGE_KEY_VALUE:
+//    	    ManageKeyValueOp manageKeyValueOp;
+//    	case CREATE_KYC_REQUEST:
+//    		CreateUpdateKYCRequestOp createUpdateKYCRequestOp;
 //        case MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
 //            ManageExternalSystemAccountIdPoolEntryOp manageExternalSystemAccountIdPoolEntryOp;
 //        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
@@ -25334,17 +25363,17 @@ func (u OperationBody) GetManageSaleOp() (result ManageSaleOp, ok bool) {
 //        case MANAGE_INVOICE:
 //            ManageInvoiceOp manageInvoiceOp;
 //    	case REVIEW_REQUEST:
-//            ReviewRequestOp reviewRequestOp;
-//        case CREATE_SALE_REQUEST:
-//            CreateSaleCreationRequestOp createSaleCreationRequestOp;
-//        case CHECK_SALE_STATE:
-//            CheckSaleStateOp checkSaleStateOp;
-//        case CREATE_AML_ALERT:
-//            CreateAMLAlertRequestOp createAMLAlertRequestOp;
-//        case MANAGE_KEY_VALUE:
-//            ManageKeyValueOp manageKeyValueOp;
-//        case CREATE_KYC_REQUEST:
-//            CreateUpdateKYCRequestOp createUpdateKYCRequestOp;
+//    		ReviewRequestOp reviewRequestOp;
+//    	case CREATE_SALE_REQUEST:
+//    		CreateSaleCreationRequestOp createSaleCreationRequestOp;
+//    	case CHECK_SALE_STATE:
+//    		CheckSaleStateOp checkSaleStateOp;
+//    	case CREATE_AML_ALERT:
+//    	    CreateAMLAlertRequestOp createAMLAlertRequestOp;
+//    	case MANAGE_KEY_VALUE:
+//    	    ManageKeyValueOp manageKeyValueOp;
+//    	case CREATE_KYC_REQUEST:
+//    		CreateUpdateKYCRequestOp createUpdateKYCRequestOp;
 //        case MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
 //            ManageExternalSystemAccountIdPoolEntryOp manageExternalSystemAccountIdPoolEntryOp;
 //        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
@@ -25934,19 +25963,19 @@ func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
 //    	case MANAGE_OFFER:
 //    		ManageOfferResult manageOfferResult;
 //    	case MANAGE_INVOICE:
-//            ManageInvoiceResult manageInvoiceResult;
-//        case REVIEW_REQUEST:
-//            ReviewRequestResult reviewRequestResult;
-//        case CREATE_SALE_REQUEST:
-//            CreateSaleCreationRequestResult createSaleCreationRequestResult;
-//        case CHECK_SALE_STATE:
-//            CheckSaleStateResult checkSaleStateResult;
-//        case CREATE_AML_ALERT:
-//            CreateAMLAlertRequestResult createAMLAlertRequestResult;
-//        case MANAGE_KEY_VALUE:
-//            ManageKeyValueResult manageKeyValueResult;
-//        case CREATE_KYC_REQUEST:
-//            CreateUpdateKYCRequestResult createUpdateKYCRequestResult;
+//    		ManageInvoiceResult manageInvoiceResult;
+//    	case REVIEW_REQUEST:
+//    		ReviewRequestResult reviewRequestResult;
+//    	case CREATE_SALE_REQUEST:
+//    		CreateSaleCreationRequestResult createSaleCreationRequestResult;
+//    	case CHECK_SALE_STATE:
+//    		CheckSaleStateResult checkSaleStateResult;
+//    	case CREATE_AML_ALERT:
+//    	    CreateAMLAlertRequestResult createAMLAlertRequestResult;
+//    	case MANAGE_KEY_VALUE:
+//    	    ManageKeyValueResult manageKeyValueResult;
+//    	case CREATE_KYC_REQUEST:
+//    	    CreateUpdateKYCRequestResult createUpdateKYCRequestResult;
 //        case MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
 //            ManageExternalSystemAccountIdPoolEntryResult manageExternalSystemAccountIdPoolEntryResult;
 //        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
@@ -26931,19 +26960,19 @@ func (u OperationResultTr) GetManageSaleResult() (result ManageSaleResult, ok bo
 //    	case MANAGE_OFFER:
 //    		ManageOfferResult manageOfferResult;
 //    	case MANAGE_INVOICE:
-//            ManageInvoiceResult manageInvoiceResult;
-//        case REVIEW_REQUEST:
-//            ReviewRequestResult reviewRequestResult;
-//        case CREATE_SALE_REQUEST:
-//            CreateSaleCreationRequestResult createSaleCreationRequestResult;
-//        case CHECK_SALE_STATE:
-//            CheckSaleStateResult checkSaleStateResult;
-//        case CREATE_AML_ALERT:
-//            CreateAMLAlertRequestResult createAMLAlertRequestResult;
-//        case MANAGE_KEY_VALUE:
-//            ManageKeyValueResult manageKeyValueResult;
-//        case CREATE_KYC_REQUEST:
-//            CreateUpdateKYCRequestResult createUpdateKYCRequestResult;
+//    		ManageInvoiceResult manageInvoiceResult;
+//    	case REVIEW_REQUEST:
+//    		ReviewRequestResult reviewRequestResult;
+//    	case CREATE_SALE_REQUEST:
+//    		CreateSaleCreationRequestResult createSaleCreationRequestResult;
+//    	case CHECK_SALE_STATE:
+//    		CheckSaleStateResult checkSaleStateResult;
+//    	case CREATE_AML_ALERT:
+//    	    CreateAMLAlertRequestResult createAMLAlertRequestResult;
+//    	case MANAGE_KEY_VALUE:
+//    	    ManageKeyValueResult manageKeyValueResult;
+//    	case CREATE_KYC_REQUEST:
+//    	    CreateUpdateKYCRequestResult createUpdateKYCRequestResult;
 //        case MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY:
 //            ManageExternalSystemAccountIdPoolEntryResult manageExternalSystemAccountIdPoolEntryResult;
 //        case BIND_EXTERNAL_SYSTEM_ACCOUNT_ID:
@@ -27624,7 +27653,7 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	UNIQUE_BALANCE_CREATION = 5, // allows to specify in manage balance that balance should not be created if one for such asset and account exists
 //    	ASSET_PREISSUER_MIGRATION = 6,
 //    	ASSET_PREISSUER_MIGRATED = 7,
-//        USE_KYC_LEVEL = 8,
+//    	USE_KYC_LEVEL = 8,
 //    	ERROR_ON_NON_ZERO_TASKS_TO_REMOVE_IN_REJECT_KYC = 9,
 //    	ALLOW_ACCOUNT_MANAGER_TO_CHANGE_KYC = 10,
 //    	CHANGE_ASSET_ISSUER_BAD_AUTH_EXTRA_FIXED = 11,
@@ -27636,33 +27665,43 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ALLOW_SYNDICATE_TO_UPDATE_KYC = 17,
 //    	DO_NOT_BUILD_ACCOUNT_IF_VERSION_EQUALS_OR_GREATER = 18,
 //    	ALLOW_TO_SPECIFY_REQUIRED_BASE_ASSET_AMOUNT_FOR_HARD_CAP = 19,
-//    	KYC_RULES = 20
+//    	KYC_RULES = 20,
+//    	ALLOW_TO_CREATE_SEVERAL_SALES = 21,
+//    	KEY_VALUE_POOL_ENTRY_EXPIRES_AT = 22,
+//    	KEY_VALUE_UPDATE = 23,
+//    	ALLOW_TO_CANCEL_SALE_PARTICIP_WITHOUT_SPECIFING_BALANCE = 24,
+//    	DETAILS_MAX_LENGTH_EXTENDED = 25
 //    };
 //
 type LedgerVersion int32
 
 const (
-	LedgerVersionEmptyVersion                                    LedgerVersion = 0
-	LedgerVersionPassExternalSysAccIdInCreateAcc                 LedgerVersion = 1
-	LedgerVersionDetailedLedgerChanges                           LedgerVersion = 2
-	LedgerVersionNewSignerTypes                                  LedgerVersion = 3
-	LedgerVersionTypedSale                                       LedgerVersion = 4
-	LedgerVersionUniqueBalanceCreation                           LedgerVersion = 5
-	LedgerVersionAssetPreissuerMigration                         LedgerVersion = 6
-	LedgerVersionAssetPreissuerMigrated                          LedgerVersion = 7
-	LedgerVersionUseKycLevel                                     LedgerVersion = 8
-	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc          LedgerVersion = 9
-	LedgerVersionAllowAccountManagerToChangeKyc                  LedgerVersion = 10
-	LedgerVersionChangeAssetIssuerBadAuthExtraFixed              LedgerVersion = 11
-	LedgerVersionAutoCreateCommissionBalanceOnTransfer           LedgerVersion = 12
-	LedgerVersionAllowRejectRequestOfBlockedRequestor            LedgerVersion = 13
-	LedgerVersionAssetUpdateCheckReferenceExists                 LedgerVersion = 14
-	LedgerVersionCrossAssetFee                                   LedgerVersion = 15
-	LedgerVersionUsePaymentV2                                    LedgerVersion = 16
-	LedgerVersionAllowSyndicateToUpdateKyc                       LedgerVersion = 17
-	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater       LedgerVersion = 18
-	LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap LedgerVersion = 19
-	LedgerVersionKycRules                                        LedgerVersion = 20
+	LedgerVersionEmptyVersion                                     LedgerVersion = 0
+	LedgerVersionPassExternalSysAccIdInCreateAcc                  LedgerVersion = 1
+	LedgerVersionDetailedLedgerChanges                            LedgerVersion = 2
+	LedgerVersionNewSignerTypes                                   LedgerVersion = 3
+	LedgerVersionTypedSale                                        LedgerVersion = 4
+	LedgerVersionUniqueBalanceCreation                            LedgerVersion = 5
+	LedgerVersionAssetPreissuerMigration                          LedgerVersion = 6
+	LedgerVersionAssetPreissuerMigrated                           LedgerVersion = 7
+	LedgerVersionUseKycLevel                                      LedgerVersion = 8
+	LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc           LedgerVersion = 9
+	LedgerVersionAllowAccountManagerToChangeKyc                   LedgerVersion = 10
+	LedgerVersionChangeAssetIssuerBadAuthExtraFixed               LedgerVersion = 11
+	LedgerVersionAutoCreateCommissionBalanceOnTransfer            LedgerVersion = 12
+	LedgerVersionAllowRejectRequestOfBlockedRequestor             LedgerVersion = 13
+	LedgerVersionAssetUpdateCheckReferenceExists                  LedgerVersion = 14
+	LedgerVersionCrossAssetFee                                    LedgerVersion = 15
+	LedgerVersionUsePaymentV2                                     LedgerVersion = 16
+	LedgerVersionAllowSyndicateToUpdateKyc                        LedgerVersion = 17
+	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater        LedgerVersion = 18
+	LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap  LedgerVersion = 19
+	LedgerVersionKycRules                                         LedgerVersion = 20
+	LedgerVersionAllowToCreateSeveralSales                        LedgerVersion = 21
+	LedgerVersionKeyValuePoolEntryExpiresAt                       LedgerVersion = 22
+	LedgerVersionKeyValueUpdate                                   LedgerVersion = 23
+	LedgerVersionAllowToCancelSaleParticipWithoutSpecifingBalance LedgerVersion = 24
+	LedgerVersionDetailsMaxLengthExtended                         LedgerVersion = 25
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -27687,6 +27726,11 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater,
 	LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap,
 	LedgerVersionKycRules,
+	LedgerVersionAllowToCreateSeveralSales,
+	LedgerVersionKeyValuePoolEntryExpiresAt,
+	LedgerVersionKeyValueUpdate,
+	LedgerVersionAllowToCancelSaleParticipWithoutSpecifingBalance,
+	LedgerVersionDetailsMaxLengthExtended,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -27711,6 +27755,11 @@ var ledgerVersionMap = map[int32]string{
 	18: "LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater",
 	19: "LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap",
 	20: "LedgerVersionKycRules",
+	21: "LedgerVersionAllowToCreateSeveralSales",
+	22: "LedgerVersionKeyValuePoolEntryExpiresAt",
+	23: "LedgerVersionKeyValueUpdate",
+	24: "LedgerVersionAllowToCancelSaleParticipWithoutSpecifingBalance",
+	25: "LedgerVersionDetailsMaxLengthExtended",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -27735,30 +27784,40 @@ var ledgerVersionShortMap = map[int32]string{
 	18: "do_not_build_account_if_version_equals_or_greater",
 	19: "allow_to_specify_required_base_asset_amount_for_hard_cap",
 	20: "kyc_rules",
+	21: "allow_to_create_several_sales",
+	22: "key_value_pool_entry_expires_at",
+	23: "key_value_update",
+	24: "allow_to_cancel_sale_particip_without_specifing_balance",
+	25: "details_max_length_extended",
 }
 
 var ledgerVersionRevMap = map[string]int32{
-	"LedgerVersionEmptyVersion":                                    0,
-	"LedgerVersionPassExternalSysAccIdInCreateAcc":                 1,
-	"LedgerVersionDetailedLedgerChanges":                           2,
-	"LedgerVersionNewSignerTypes":                                  3,
-	"LedgerVersionTypedSale":                                       4,
-	"LedgerVersionUniqueBalanceCreation":                           5,
-	"LedgerVersionAssetPreissuerMigration":                         6,
-	"LedgerVersionAssetPreissuerMigrated":                          7,
-	"LedgerVersionUseKycLevel":                                     8,
-	"LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc":          9,
-	"LedgerVersionAllowAccountManagerToChangeKyc":                  10,
-	"LedgerVersionChangeAssetIssuerBadAuthExtraFixed":              11,
-	"LedgerVersionAutoCreateCommissionBalanceOnTransfer":           12,
-	"LedgerVersionAllowRejectRequestOfBlockedRequestor":            13,
-	"LedgerVersionAssetUpdateCheckReferenceExists":                 14,
-	"LedgerVersionCrossAssetFee":                                   15,
-	"LedgerVersionUsePaymentV2":                                    16,
-	"LedgerVersionAllowSyndicateToUpdateKyc":                       17,
-	"LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater":       18,
-	"LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap": 19,
-	"LedgerVersionKycRules":                                        20,
+	"LedgerVersionEmptyVersion":                                     0,
+	"LedgerVersionPassExternalSysAccIdInCreateAcc":                  1,
+	"LedgerVersionDetailedLedgerChanges":                            2,
+	"LedgerVersionNewSignerTypes":                                   3,
+	"LedgerVersionTypedSale":                                        4,
+	"LedgerVersionUniqueBalanceCreation":                            5,
+	"LedgerVersionAssetPreissuerMigration":                          6,
+	"LedgerVersionAssetPreissuerMigrated":                           7,
+	"LedgerVersionUseKycLevel":                                      8,
+	"LedgerVersionErrorOnNonZeroTasksToRemoveInRejectKyc":           9,
+	"LedgerVersionAllowAccountManagerToChangeKyc":                   10,
+	"LedgerVersionChangeAssetIssuerBadAuthExtraFixed":               11,
+	"LedgerVersionAutoCreateCommissionBalanceOnTransfer":            12,
+	"LedgerVersionAllowRejectRequestOfBlockedRequestor":             13,
+	"LedgerVersionAssetUpdateCheckReferenceExists":                  14,
+	"LedgerVersionCrossAssetFee":                                    15,
+	"LedgerVersionUsePaymentV2":                                     16,
+	"LedgerVersionAllowSyndicateToUpdateKyc":                        17,
+	"LedgerVersionDoNotBuildAccountIfVersionEqualsOrGreater":        18,
+	"LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap":  19,
+	"LedgerVersionKycRules":                                         20,
+	"LedgerVersionAllowToCreateSeveralSales":                        21,
+	"LedgerVersionKeyValuePoolEntryExpiresAt":                       22,
+	"LedgerVersionKeyValueUpdate":                                   23,
+	"LedgerVersionAllowToCancelSaleParticipWithoutSpecifingBalance": 24,
+	"LedgerVersionDetailsMaxLengthExtended":                         25,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -28139,8 +28198,8 @@ type Fee struct {
 //    	REVIEW_REQUEST = 18,
 //    	CREATE_SALE_REQUEST = 19,
 //    	CHECK_SALE_STATE = 20,
-//    	CREATE_AML_ALERT = 21,
-//    	CREATE_KYC_REQUEST = 22,
+//        CREATE_AML_ALERT = 21,
+//        CREATE_KYC_REQUEST = 22,
 //        PAYMENT_V2 = 23,
 //        MANAGE_EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_ENTRY = 24,
 //        BIND_EXTERNAL_SYSTEM_ACCOUNT_ID = 25,

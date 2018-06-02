@@ -2,8 +2,8 @@ package keypair
 
 import (
 	"github.com/agl/ed25519"
-	"gitlab.com/tokend/go/strkey"
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/lbhack/go/strkey"
+	"gitlab.com/lbhack/go/xdr"
 )
 
 // FromAddress represents a keypair to which only the address is know.  This KP

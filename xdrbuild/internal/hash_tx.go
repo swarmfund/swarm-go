@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"gitlab.com/tokend/go/network"
+	"gitlab.com/lbhack/go/network"
 )
 
 var HashTX = network.HashTransaction

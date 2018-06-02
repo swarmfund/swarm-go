@@ -2,7 +2,7 @@ package xdrbuild
 
 import (
 	"github.com/go-ozzo/ozzo-validation"
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/lbhack/go/xdr"
 )
 
 type BindExternalSystemAccountIDOp struct {

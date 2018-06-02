@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/tokend/go/xdr"
+	"gitlab.com/lbhack/go/xdr"
 )
 
 func TestReviewRequestOp_XDR(t *testing.T) {

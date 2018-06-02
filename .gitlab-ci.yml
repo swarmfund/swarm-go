@@ -6,7 +6,7 @@ stages:
 test:
   stage: test
   variables:
-    APP_PATH: gitlab.com/tokend/go
+    APP_PATH: gitlab.com/lbhack/go
   script:
     - mkdir -p $GOPATH/src/$APP_PATH
     - cp -rf ./* $GOPATH/src/$APP_PATH
