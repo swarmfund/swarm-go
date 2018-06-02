@@ -1,7 +1,7 @@
 package xdrbuild
 
 import (
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/xdr"
 )
 
 type manageExternalPoolEntryOp struct {

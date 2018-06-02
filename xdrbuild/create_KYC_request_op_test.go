@@ -2,8 +2,8 @@ package xdrbuild
 
 import (
 	"testing"
-	"gitlab.com/lbhack/go/keypair"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/keypair"
+	"gitlab.com/tokend/go/xdr"
 	"github.com/stretchr/testify/assert"
 )
 

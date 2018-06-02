@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"gitlab.com/lbhack/go/strkey"
+	"gitlab.com/tokend/go/strkey"
 )
 
 // Address returns the strkey encoded form of this AccountId.  This method will

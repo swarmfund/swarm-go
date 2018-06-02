@@ -5,7 +5,7 @@ import (
 
 	. "github.com/go-ozzo/ozzo-validation"
 	"gitlab.com/distributed_lab/logan/v3/errors"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/xdr"
 )
 
 var (

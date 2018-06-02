@@ -3,7 +3,7 @@ package doorman
 import (
 	"net/http"
 
-	"gitlab.com/lbhack/go/doorman/data"
+	"gitlab.com/tokend/go/doorman/data"
 )
 
 type SignerConstraint func(*http.Request, Doorman) error

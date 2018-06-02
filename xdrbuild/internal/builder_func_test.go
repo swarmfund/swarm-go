@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/xdr"
 )
 
 func TestOperationFunc_XDR(t *testing.T) {

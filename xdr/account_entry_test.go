@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "gitlab.com/lbhack/go/xdr"
+	. "gitlab.com/tokend/go/xdr"
 )
 
 var _ = Describe("xdr.AccountEntry#SignerSummary()", func() {

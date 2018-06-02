@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"gitlab.com/lbhack/go/strkey"
+	"gitlab.com/tokend/go/strkey"
 )
 
 func (bid *BalanceId) AsString() string {

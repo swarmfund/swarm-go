@@ -1,7 +1,7 @@
 package strkey_test
 
 import (
-	. "gitlab.com/lbhack/go/strkey"
+	. "gitlab.com/tokend/go/strkey"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

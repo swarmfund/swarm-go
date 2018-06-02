@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"gitlab.com/lbhack/go/hash"
-	"gitlab.com/lbhack/go/keypair"
-	"gitlab.com/lbhack/go/signcontrol/internal/httpsignatures"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/hash"
+	"gitlab.com/tokend/go/keypair"
+	"gitlab.com/tokend/go/signcontrol/internal/httpsignatures"
+	"gitlab.com/tokend/go/xdr"
 )
 
 const (

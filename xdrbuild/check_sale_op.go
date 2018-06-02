@@ -2,7 +2,7 @@ package xdrbuild
 
 import (
 	"github.com/go-ozzo/ozzo-validation"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/xdr"
 )
 
 type CheckSaleOp struct {

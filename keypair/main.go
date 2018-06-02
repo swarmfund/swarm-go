@@ -5,9 +5,9 @@ import (
 	"errors"
 	"io"
 
-	"gitlab.com/lbhack/go/network"
-	"gitlab.com/lbhack/go/strkey"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/network"
+	"gitlab.com/tokend/go/strkey"
+	"gitlab.com/tokend/go/xdr"
 )
 
 var (

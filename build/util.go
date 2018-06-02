@@ -3,8 +3,8 @@ package build
 import (
 	"errors"
 
-	"gitlab.com/lbhack/go/keypair"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/keypair"
+	"gitlab.com/tokend/go/xdr"
 )
 
 func setAccountId(addressOrSeed string, aid *xdr.AccountId) error {

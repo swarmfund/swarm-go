@@ -3,7 +3,7 @@ package xdrbuild
 import (
 	"github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/xdr"
 )
 
 type CreateAccountOp struct {

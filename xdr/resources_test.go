@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/xdr"
 )
 
 func TestFlag(t *testing.T) {

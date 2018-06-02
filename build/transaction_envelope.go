@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"gitlab.com/lbhack/go/keypair"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/keypair"
+	"gitlab.com/tokend/go/xdr"
 	"github.com/pkg/errors"
 )
 

@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 
 	"github.com/pkg/errors"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/xdr"
 )
 
 type ReviewRequestDetails interface {

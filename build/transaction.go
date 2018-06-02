@@ -5,8 +5,8 @@ import (
 
 	"errors"
 
-	"gitlab.com/lbhack/go/network"
-	"gitlab.com/lbhack/go/xdr"
+	"gitlab.com/tokend/go/network"
+	"gitlab.com/tokend/go/xdr"
 )
 
 // Transaction groups the creation of a new TransactionBuilder with a call

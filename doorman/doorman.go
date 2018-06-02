@@ -3,9 +3,9 @@ package doorman
 import (
 	"net/http"
 
-	"gitlab.com/lbhack/go/doorman/data"
-	"gitlab.com/lbhack/go/resources"
-	"gitlab.com/lbhack/go/signcontrol"
+	"gitlab.com/tokend/go/doorman/data"
+	"gitlab.com/tokend/go/resources"
+	"gitlab.com/tokend/go/signcontrol"
 )
 
 // Doorman interface only purpose is to simplify tests
