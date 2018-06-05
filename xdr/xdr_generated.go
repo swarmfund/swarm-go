@@ -17932,6 +17932,8 @@ func (e *ManageSaleResultCode) UnmarshalJSON(data []byte) error {
 //   union switch (ManageSaleAction action) {
 //        case CREATE_UPDATE_DETAILS_REQUEST:
 //            uint64 requestID;
+//        case CANCEL:
+//            void;
 //        }
 //
 type ManageSaleResultSuccessResponse struct {
@@ -17951,6 +17953,8 @@ func (u ManageSaleResultSuccessResponse) ArmForSwitch(sw int32) (string, bool) {
 	switch ManageSaleAction(sw) {
 	case ManageSaleActionCreateUpdateDetailsRequest:
 		return "RequestId", true
+	case ManageSaleActionCancel:
+		return "", true
 	}
 	return "-", false
 }
@@ -17966,6 +17970,8 @@ func NewManageSaleResultSuccessResponse(action ManageSaleAction, value interface
 			return
 		}
 		result.RequestId = &tv
+	case ManageSaleActionCancel:
+		// void
 	}
 	return
 }
@@ -18040,6 +18046,8 @@ func NewManageSaleResultSuccessExt(v LedgerVersion, value interface{}) (result M
 //        union switch (ManageSaleAction action) {
 //        case CREATE_UPDATE_DETAILS_REQUEST:
 //            uint64 requestID;
+//        case CANCEL:
+//            void;
 //        } response;
 //
 //        //reserved for future use
