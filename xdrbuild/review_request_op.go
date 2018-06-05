@@ -92,7 +92,7 @@ func (op ReviewRequestOp) XDR() (*xdr.Operation, error) {
 				RequestHash:    xdrhash,
 				Action:         op.Action,
 				RequestDetails: details,
-				Reason:         xdr.String256(op.Reason),
+				Reason:         xdr.Longstring(op.Reason),
 			},
 		},
 	}
