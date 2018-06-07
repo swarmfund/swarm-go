@@ -1282,19 +1282,23 @@ func (e *AccountPolicies) UnmarshalJSON(data []byte) error {
 //    	MASTER = 4,            // master account
 //        NOT_VERIFIED = 5,
 //    	SYNDICATE = 6, // can create asset
-//    	EXCHANGE = 7
+//    	EXCHANGE = 7,
+//    	ACCREDITED_INVESTOR = 8,
+//    	INSTITUTIONAL_INVESTOR = 9
 //    };
 //
 type AccountType int32
 
 const (
-	AccountTypeOperational AccountType = 1
-	AccountTypeGeneral     AccountType = 2
-	AccountTypeCommission  AccountType = 3
-	AccountTypeMaster      AccountType = 4
-	AccountTypeNotVerified AccountType = 5
-	AccountTypeSyndicate   AccountType = 6
-	AccountTypeExchange    AccountType = 7
+	AccountTypeOperational           AccountType = 1
+	AccountTypeGeneral               AccountType = 2
+	AccountTypeCommission            AccountType = 3
+	AccountTypeMaster                AccountType = 4
+	AccountTypeNotVerified           AccountType = 5
+	AccountTypeSyndicate             AccountType = 6
+	AccountTypeExchange              AccountType = 7
+	AccountTypeAccreditedInvestor    AccountType = 8
+	AccountTypeInstitutionalInvestor AccountType = 9
 )
 
 var AccountTypeAll = []AccountType{
@@ -1305,6 +1309,8 @@ var AccountTypeAll = []AccountType{
 	AccountTypeNotVerified,
 	AccountTypeSyndicate,
 	AccountTypeExchange,
+	AccountTypeAccreditedInvestor,
+	AccountTypeInstitutionalInvestor,
 }
 
 var accountTypeMap = map[int32]string{
@@ -1315,6 +1321,8 @@ var accountTypeMap = map[int32]string{
 	5: "AccountTypeNotVerified",
 	6: "AccountTypeSyndicate",
 	7: "AccountTypeExchange",
+	8: "AccountTypeAccreditedInvestor",
+	9: "AccountTypeInstitutionalInvestor",
 }
 
 var accountTypeShortMap = map[int32]string{
@@ -1325,16 +1333,20 @@ var accountTypeShortMap = map[int32]string{
 	5: "not_verified",
 	6: "syndicate",
 	7: "exchange",
+	8: "accredited_investor",
+	9: "institutional_investor",
 }
 
 var accountTypeRevMap = map[string]int32{
-	"AccountTypeOperational": 1,
-	"AccountTypeGeneral":     2,
-	"AccountTypeCommission":  3,
-	"AccountTypeMaster":      4,
-	"AccountTypeNotVerified": 5,
-	"AccountTypeSyndicate":   6,
-	"AccountTypeExchange":    7,
+	"AccountTypeOperational":           1,
+	"AccountTypeGeneral":               2,
+	"AccountTypeCommission":            3,
+	"AccountTypeMaster":                4,
+	"AccountTypeNotVerified":           5,
+	"AccountTypeSyndicate":             6,
+	"AccountTypeExchange":              7,
+	"AccountTypeAccreditedInvestor":    8,
+	"AccountTypeInstitutionalInvestor": 9,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
