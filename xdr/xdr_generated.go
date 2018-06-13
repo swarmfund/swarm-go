@@ -14060,7 +14060,8 @@ func (u ManageAssetPairResult) GetSuccess() (result ManageAssetPairSuccess, ok b
 //        CREATE_ASSET_CREATION_REQUEST = 0,
 //        CREATE_ASSET_UPDATE_REQUEST = 1,
 //    	CANCEL_ASSET_REQUEST = 2,
-//    	CHANGE_PREISSUED_ASSET_SIGNER = 3
+//    	CHANGE_PREISSUED_ASSET_SIGNER = 3,
+//    	UPDATE_MAX_ISSUANCE = 4
 //    };
 //
 type ManageAssetAction int32
@@ -14070,6 +14071,7 @@ const (
 	ManageAssetActionCreateAssetUpdateRequest   ManageAssetAction = 1
 	ManageAssetActionCancelAssetRequest         ManageAssetAction = 2
 	ManageAssetActionChangePreissuedAssetSigner ManageAssetAction = 3
+	ManageAssetActionUpdateMaxIssuance          ManageAssetAction = 4
 )
 
 var ManageAssetActionAll = []ManageAssetAction{
@@ -14077,6 +14079,7 @@ var ManageAssetActionAll = []ManageAssetAction{
 	ManageAssetActionCreateAssetUpdateRequest,
 	ManageAssetActionCancelAssetRequest,
 	ManageAssetActionChangePreissuedAssetSigner,
+	ManageAssetActionUpdateMaxIssuance,
 }
 
 var manageAssetActionMap = map[int32]string{
@@ -14084,6 +14087,7 @@ var manageAssetActionMap = map[int32]string{
 	1: "ManageAssetActionCreateAssetUpdateRequest",
 	2: "ManageAssetActionCancelAssetRequest",
 	3: "ManageAssetActionChangePreissuedAssetSigner",
+	4: "ManageAssetActionUpdateMaxIssuance",
 }
 
 var manageAssetActionShortMap = map[int32]string{
@@ -14091,6 +14095,7 @@ var manageAssetActionShortMap = map[int32]string{
 	1: "create_asset_update_request",
 	2: "cancel_asset_request",
 	3: "change_preissued_asset_signer",
+	4: "update_max_issuance",
 }
 
 var manageAssetActionRevMap = map[string]int32{
@@ -14098,6 +14103,7 @@ var manageAssetActionRevMap = map[string]int32{
 	"ManageAssetActionCreateAssetUpdateRequest":   1,
 	"ManageAssetActionCancelAssetRequest":         2,
 	"ManageAssetActionChangePreissuedAssetSigner": 3,
+	"ManageAssetActionUpdateMaxIssuance":          4,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -14216,6 +14222,65 @@ type CancelAssetRequest struct {
 	Ext CancelAssetRequestExt `json:"ext,omitempty"`
 }
 
+// UpdateMaxIssuanceExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type UpdateMaxIssuanceExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u UpdateMaxIssuanceExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of UpdateMaxIssuanceExt
+func (u UpdateMaxIssuanceExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewUpdateMaxIssuanceExt creates a new  UpdateMaxIssuanceExt.
+func NewUpdateMaxIssuanceExt(v LedgerVersion, value interface{}) (result UpdateMaxIssuanceExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// UpdateMaxIssuance is an XDR Struct defines as:
+//
+//   struct UpdateMaxIssuance {
+//
+//    	AssetCode assetCode;
+//    	uint64 maxIssuanceAmount;
+//    	// reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type UpdateMaxIssuance struct {
+	AssetCode         AssetCode            `json:"assetCode,omitempty"`
+	MaxIssuanceAmount Uint64               `json:"maxIssuanceAmount,omitempty"`
+	Ext               UpdateMaxIssuanceExt `json:"ext,omitempty"`
+}
+
 // ManageAssetOpRequest is an XDR NestedUnion defines as:
 //
 //   union switch (ManageAssetAction action)
@@ -14228,6 +14293,8 @@ type CancelAssetRequest struct {
 //    		CancelAssetRequest cancelRequest;
 //    	case CHANGE_PREISSUED_ASSET_SIGNER:
 //    		AssetChangePreissuedSigner changePreissuedSigner;
+//    	case UPDATE_MAX_ISSUANCE:
+//    		UpdateMaxIssuance updateMaxIssuance;
 //    	}
 //
 type ManageAssetOpRequest struct {
@@ -14236,6 +14303,7 @@ type ManageAssetOpRequest struct {
 	UpdateAsset           *AssetUpdateRequest         `json:"updateAsset,omitempty"`
 	CancelRequest         *CancelAssetRequest         `json:"cancelRequest,omitempty"`
 	ChangePreissuedSigner *AssetChangePreissuedSigner `json:"changePreissuedSigner,omitempty"`
+	UpdateMaxIssuance     *UpdateMaxIssuance          `json:"updateMaxIssuance,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -14256,6 +14324,8 @@ func (u ManageAssetOpRequest) ArmForSwitch(sw int32) (string, bool) {
 		return "CancelRequest", true
 	case ManageAssetActionChangePreissuedAssetSigner:
 		return "ChangePreissuedSigner", true
+	case ManageAssetActionUpdateMaxIssuance:
+		return "UpdateMaxIssuance", true
 	}
 	return "-", false
 }
@@ -14292,6 +14362,13 @@ func NewManageAssetOpRequest(action ManageAssetAction, value interface{}) (resul
 			return
 		}
 		result.ChangePreissuedSigner = &tv
+	case ManageAssetActionUpdateMaxIssuance:
+		tv, ok := value.(UpdateMaxIssuance)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be UpdateMaxIssuance")
+			return
+		}
+		result.UpdateMaxIssuance = &tv
 	}
 	return
 }
@@ -14396,6 +14473,31 @@ func (u ManageAssetOpRequest) GetChangePreissuedSigner() (result AssetChangePrei
 	return
 }
 
+// MustUpdateMaxIssuance retrieves the UpdateMaxIssuance value from the union,
+// panicing if the value is not set.
+func (u ManageAssetOpRequest) MustUpdateMaxIssuance() UpdateMaxIssuance {
+	val, ok := u.GetUpdateMaxIssuance()
+
+	if !ok {
+		panic("arm UpdateMaxIssuance is not set")
+	}
+
+	return val
+}
+
+// GetUpdateMaxIssuance retrieves the UpdateMaxIssuance value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageAssetOpRequest) GetUpdateMaxIssuance() (result UpdateMaxIssuance, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Action))
+
+	if armName == "UpdateMaxIssuance" {
+		result = *u.UpdateMaxIssuance
+		ok = true
+	}
+
+	return
+}
+
 // ManageAssetOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -14449,6 +14551,8 @@ func NewManageAssetOpExt(v LedgerVersion, value interface{}) (result ManageAsset
 //    		CancelAssetRequest cancelRequest;
 //    	case CHANGE_PREISSUED_ASSET_SIGNER:
 //    		AssetChangePreissuedSigner changePreissuedSigner;
+//    	case UPDATE_MAX_ISSUANCE:
+//    		UpdateMaxIssuance updateMaxIssuance;
 //    	} request;
 //
 //    	// reserved for future use
