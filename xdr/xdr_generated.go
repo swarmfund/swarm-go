@@ -31,6 +31,7 @@
 //  xdr/raw/Stellar-operation-create-KYC-request.x
 //  xdr/raw/Stellar-operation-create-account.x
 //  xdr/raw/Stellar-operation-create-issuance-request.x
+//  xdr/raw/Stellar-operation-create-manage-limits-request.x
 //  xdr/raw/Stellar-operation-create-preissuance-request.x
 //  xdr/raw/Stellar-operation-create-sale-creation-request.x
 //  xdr/raw/Stellar-operation-create-withdrawal-request.x
@@ -12844,6 +12845,302 @@ func (u CreateIssuanceRequestResult) MustSuccess() CreateIssuanceRequestSuccess 
 // GetSuccess retrieves the Success value from the union,
 // returning ok if the union's switch indicated the value is valid.
 func (u CreateIssuanceRequestResult) GetSuccess() (result CreateIssuanceRequestSuccess, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Code))
+
+	if armName == "Success" {
+		result = *u.Success
+		ok = true
+	}
+
+	return
+}
+
+// CreateManageLimitsRequestOpExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//    	{
+//    	case EMPTY_VERSION:
+//    		void;
+//    	}
+//
+type CreateManageLimitsRequestOpExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CreateManageLimitsRequestOpExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CreateManageLimitsRequestOpExt
+func (u CreateManageLimitsRequestOpExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewCreateManageLimitsRequestOpExt creates a new  CreateManageLimitsRequestOpExt.
+func NewCreateManageLimitsRequestOpExt(v LedgerVersion, value interface{}) (result CreateManageLimitsRequestOpExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// CreateManageLimitsRequestOp is an XDR Struct defines as:
+//
+//   struct CreateManageLimitsRequestOp
+//    {
+//        LimitsUpdateRequest manageLimitsRequest;
+//
+//    	// reserved for future use
+//    	union switch (LedgerVersion v)
+//    	{
+//    	case EMPTY_VERSION:
+//    		void;
+//    	}
+//    	ext;
+//
+//    };
+//
+type CreateManageLimitsRequestOp struct {
+	ManageLimitsRequest LimitsUpdateRequest            `json:"manageLimitsRequest,omitempty"`
+	Ext                 CreateManageLimitsRequestOpExt `json:"ext,omitempty"`
+}
+
+// CreateManageLimitsRequestResultCode is an XDR Enum defines as:
+//
+//   enum CreateManageLimitsRequestResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        SUCCESS = 0,
+//        // codes considered as "failure" for the operation
+//    	MANAGE_LIMITS_REQUEST_REFERENCE_DUPLICATION = -1
+//    };
+//
+type CreateManageLimitsRequestResultCode int32
+
+const (
+	CreateManageLimitsRequestResultCodeSuccess                                 CreateManageLimitsRequestResultCode = 0
+	CreateManageLimitsRequestResultCodeManageLimitsRequestReferenceDuplication CreateManageLimitsRequestResultCode = -1
+)
+
+var CreateManageLimitsRequestResultCodeAll = []CreateManageLimitsRequestResultCode{
+	CreateManageLimitsRequestResultCodeSuccess,
+	CreateManageLimitsRequestResultCodeManageLimitsRequestReferenceDuplication,
+}
+
+var createManageLimitsRequestResultCodeMap = map[int32]string{
+	0:  "CreateManageLimitsRequestResultCodeSuccess",
+	-1: "CreateManageLimitsRequestResultCodeManageLimitsRequestReferenceDuplication",
+}
+
+var createManageLimitsRequestResultCodeShortMap = map[int32]string{
+	0:  "success",
+	-1: "manage_limits_request_reference_duplication",
+}
+
+var createManageLimitsRequestResultCodeRevMap = map[string]int32{
+	"CreateManageLimitsRequestResultCodeSuccess":                                 0,
+	"CreateManageLimitsRequestResultCodeManageLimitsRequestReferenceDuplication": -1,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for CreateManageLimitsRequestResultCode
+func (e CreateManageLimitsRequestResultCode) ValidEnum(v int32) bool {
+	_, ok := createManageLimitsRequestResultCodeMap[v]
+	return ok
+}
+func (e CreateManageLimitsRequestResultCode) isFlag() bool {
+	for i := len(CreateManageLimitsRequestResultCodeAll) - 1; i >= 0; i-- {
+		expected := CreateManageLimitsRequestResultCode(2) << uint64(len(CreateManageLimitsRequestResultCodeAll)-1) >> uint64(len(CreateManageLimitsRequestResultCodeAll)-i)
+		if expected != CreateManageLimitsRequestResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e CreateManageLimitsRequestResultCode) String() string {
+	name, _ := createManageLimitsRequestResultCodeMap[int32(e)]
+	return name
+}
+
+func (e CreateManageLimitsRequestResultCode) ShortString() string {
+	name, _ := createManageLimitsRequestResultCodeShortMap[int32(e)]
+	return name
+}
+
+func (e CreateManageLimitsRequestResultCode) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range CreateManageLimitsRequestResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *CreateManageLimitsRequestResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = CreateManageLimitsRequestResultCode(t.Value)
+	return nil
+}
+
+// CreateManageLimitsRequestResultSuccessExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//
+type CreateManageLimitsRequestResultSuccessExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CreateManageLimitsRequestResultSuccessExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CreateManageLimitsRequestResultSuccessExt
+func (u CreateManageLimitsRequestResultSuccessExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewCreateManageLimitsRequestResultSuccessExt creates a new  CreateManageLimitsRequestResultSuccessExt.
+func NewCreateManageLimitsRequestResultSuccessExt(v LedgerVersion, value interface{}) (result CreateManageLimitsRequestResultSuccessExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// CreateManageLimitsRequestResultSuccess is an XDR NestedStruct defines as:
+//
+//   struct {
+//            uint64 manageLimitsRequestID;
+//    		// reserved for future use
+//    		union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//    		ext;
+//    	}
+//
+type CreateManageLimitsRequestResultSuccess struct {
+	ManageLimitsRequestId Uint64                                    `json:"manageLimitsRequestID,omitempty"`
+	Ext                   CreateManageLimitsRequestResultSuccessExt `json:"ext,omitempty"`
+}
+
+// CreateManageLimitsRequestResult is an XDR Union defines as:
+//
+//   union CreateManageLimitsRequestResult switch (CreateManageLimitsRequestResultCode code)
+//    {
+//    case SUCCESS:
+//        struct {
+//            uint64 manageLimitsRequestID;
+//    		// reserved for future use
+//    		union switch (LedgerVersion v)
+//    		{
+//    		case EMPTY_VERSION:
+//    			void;
+//    		}
+//    		ext;
+//    	} success;
+//    default:
+//        void;
+//    };
+//
+type CreateManageLimitsRequestResult struct {
+	Code    CreateManageLimitsRequestResultCode     `json:"code,omitempty"`
+	Success *CreateManageLimitsRequestResultSuccess `json:"success,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CreateManageLimitsRequestResult) SwitchFieldName() string {
+	return "Code"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CreateManageLimitsRequestResult
+func (u CreateManageLimitsRequestResult) ArmForSwitch(sw int32) (string, bool) {
+	switch CreateManageLimitsRequestResultCode(sw) {
+	case CreateManageLimitsRequestResultCodeSuccess:
+		return "Success", true
+	default:
+		return "", true
+	}
+}
+
+// NewCreateManageLimitsRequestResult creates a new  CreateManageLimitsRequestResult.
+func NewCreateManageLimitsRequestResult(code CreateManageLimitsRequestResultCode, value interface{}) (result CreateManageLimitsRequestResult, err error) {
+	result.Code = code
+	switch CreateManageLimitsRequestResultCode(code) {
+	case CreateManageLimitsRequestResultCodeSuccess:
+		tv, ok := value.(CreateManageLimitsRequestResultSuccess)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CreateManageLimitsRequestResultSuccess")
+			return
+		}
+		result.Success = &tv
+	default:
+		// void
+	}
+	return
+}
+
+// MustSuccess retrieves the Success value from the union,
+// panicing if the value is not set.
+func (u CreateManageLimitsRequestResult) MustSuccess() CreateManageLimitsRequestResultSuccess {
+	val, ok := u.GetSuccess()
+
+	if !ok {
+		panic("arm Success is not set")
+	}
+
+	return val
+}
+
+// GetSuccess retrieves the Success value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u CreateManageLimitsRequestResult) GetSuccess() (result CreateManageLimitsRequestResultSuccess, ok bool) {
 	armName, _ := u.ArmForSwitch(int32(u.Code))
 
 	if armName == "Success" {
