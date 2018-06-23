@@ -4240,6 +4240,107 @@ type SaleAnteEntry struct {
 	Ext                  SaleAnteEntryExt `json:"ext,omitempty"`
 }
 
+// SaleState is an XDR Enum defines as:
+//
+//   enum SaleState {
+//    	NONE = 0, // default state
+//    	VOTING = 1, // not allowed to invest
+//    	PROMOTION = 2 // not allowed to invest, but allowed to change all the details
+//    };
+//
+type SaleState int32
+
+const (
+	SaleStateNone      SaleState = 0
+	SaleStateVoting    SaleState = 1
+	SaleStatePromotion SaleState = 2
+)
+
+var SaleStateAll = []SaleState{
+	SaleStateNone,
+	SaleStateVoting,
+	SaleStatePromotion,
+}
+
+var saleStateMap = map[int32]string{
+	0: "SaleStateNone",
+	1: "SaleStateVoting",
+	2: "SaleStatePromotion",
+}
+
+var saleStateShortMap = map[int32]string{
+	0: "none",
+	1: "voting",
+	2: "promotion",
+}
+
+var saleStateRevMap = map[string]int32{
+	"SaleStateNone":      0,
+	"SaleStateVoting":    1,
+	"SaleStatePromotion": 2,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for SaleState
+func (e SaleState) ValidEnum(v int32) bool {
+	_, ok := saleStateMap[v]
+	return ok
+}
+func (e SaleState) isFlag() bool {
+	for i := len(SaleStateAll) - 1; i >= 0; i-- {
+		expected := SaleState(2) << uint64(len(SaleStateAll)-1) >> uint64(len(SaleStateAll)-i)
+		if expected != SaleStateAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e SaleState) String() string {
+	name, _ := saleStateMap[int32(e)]
+	return name
+}
+
+func (e SaleState) ShortString() string {
+	name, _ := saleStateShortMap[int32(e)]
+	return name
+}
+
+func (e SaleState) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range SaleStateAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *SaleState) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = SaleState(t.Value)
+	return nil
+}
+
 // SaleType is an XDR Enum defines as:
 //
 //   enum SaleType {
@@ -4565,6 +4666,18 @@ type SaleTypeExt struct {
 	TypedSale SaleTypeExtTypedSale `json:"typedSale,omitempty"`
 }
 
+// StatableSaleExt is an XDR Struct defines as:
+//
+//   struct StatableSaleExt {
+//    	SaleTypeExt saleTypeExt;
+//    	SaleState state;
+//    };
+//
+type StatableSaleExt struct {
+	SaleTypeExt SaleTypeExt `json:"saleTypeExt,omitempty"`
+	State       SaleState   `json:"state,omitempty"`
+}
+
 // SaleQuoteAssetExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -4634,11 +4747,14 @@ type SaleQuoteAsset struct {
 //            void;
 //    	case TYPED_SALE:
 //    		SaleTypeExt saleTypeExt;
+//    	case STATABLE_SALES:
+//    		StatableSaleExt statableSaleExt;
 //        }
 //
 type SaleEntryExt struct {
-	V           LedgerVersion `json:"v,omitempty"`
-	SaleTypeExt *SaleTypeExt  `json:"saleTypeExt,omitempty"`
+	V               LedgerVersion    `json:"v,omitempty"`
+	SaleTypeExt     *SaleTypeExt     `json:"saleTypeExt,omitempty"`
+	StatableSaleExt *StatableSaleExt `json:"statableSaleExt,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -4655,6 +4771,8 @@ func (u SaleEntryExt) ArmForSwitch(sw int32) (string, bool) {
 		return "", true
 	case LedgerVersionTypedSale:
 		return "SaleTypeExt", true
+	case LedgerVersionStatableSales:
+		return "StatableSaleExt", true
 	}
 	return "-", false
 }
@@ -4672,6 +4790,13 @@ func NewSaleEntryExt(v LedgerVersion, value interface{}) (result SaleEntryExt, e
 			return
 		}
 		result.SaleTypeExt = &tv
+	case LedgerVersionStatableSales:
+		tv, ok := value.(StatableSaleExt)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be StatableSaleExt")
+			return
+		}
+		result.StatableSaleExt = &tv
 	}
 	return
 }
@@ -4695,6 +4820,31 @@ func (u SaleEntryExt) GetSaleTypeExt() (result SaleTypeExt, ok bool) {
 
 	if armName == "SaleTypeExt" {
 		result = *u.SaleTypeExt
+		ok = true
+	}
+
+	return
+}
+
+// MustStatableSaleExt retrieves the StatableSaleExt value from the union,
+// panicing if the value is not set.
+func (u SaleEntryExt) MustStatableSaleExt() StatableSaleExt {
+	val, ok := u.GetStatableSaleExt()
+
+	if !ok {
+		panic("arm StatableSaleExt is not set")
+	}
+
+	return val
+}
+
+// GetStatableSaleExt retrieves the StatableSaleExt value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u SaleEntryExt) GetStatableSaleExt() (result StatableSaleExt, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "StatableSaleExt" {
+		result = *u.StatableSaleExt
 		ok = true
 	}
 
@@ -4726,6 +4876,8 @@ func (u SaleEntryExt) GetSaleTypeExt() (result SaleTypeExt, ok bool) {
 //            void;
 //    	case TYPED_SALE:
 //    		SaleTypeExt saleTypeExt;
+//    	case STATABLE_SALES:
+//    		StatableSaleExt statableSaleExt;
 //        }
 //        ext;
 //    };
@@ -14274,7 +14426,8 @@ func (u ManageAssetPairResult) GetSuccess() (result ManageAssetPairSuccess, ok b
 //        CREATE_ASSET_CREATION_REQUEST = 0,
 //        CREATE_ASSET_UPDATE_REQUEST = 1,
 //    	CANCEL_ASSET_REQUEST = 2,
-//    	CHANGE_PREISSUED_ASSET_SIGNER = 3
+//    	CHANGE_PREISSUED_ASSET_SIGNER = 3,
+//    	UPDATE_MAX_ISSUANCE = 4
 //    };
 //
 type ManageAssetAction int32
@@ -14284,6 +14437,7 @@ const (
 	ManageAssetActionCreateAssetUpdateRequest   ManageAssetAction = 1
 	ManageAssetActionCancelAssetRequest         ManageAssetAction = 2
 	ManageAssetActionChangePreissuedAssetSigner ManageAssetAction = 3
+	ManageAssetActionUpdateMaxIssuance          ManageAssetAction = 4
 )
 
 var ManageAssetActionAll = []ManageAssetAction{
@@ -14291,6 +14445,7 @@ var ManageAssetActionAll = []ManageAssetAction{
 	ManageAssetActionCreateAssetUpdateRequest,
 	ManageAssetActionCancelAssetRequest,
 	ManageAssetActionChangePreissuedAssetSigner,
+	ManageAssetActionUpdateMaxIssuance,
 }
 
 var manageAssetActionMap = map[int32]string{
@@ -14298,6 +14453,7 @@ var manageAssetActionMap = map[int32]string{
 	1: "ManageAssetActionCreateAssetUpdateRequest",
 	2: "ManageAssetActionCancelAssetRequest",
 	3: "ManageAssetActionChangePreissuedAssetSigner",
+	4: "ManageAssetActionUpdateMaxIssuance",
 }
 
 var manageAssetActionShortMap = map[int32]string{
@@ -14305,6 +14461,7 @@ var manageAssetActionShortMap = map[int32]string{
 	1: "create_asset_update_request",
 	2: "cancel_asset_request",
 	3: "change_preissued_asset_signer",
+	4: "update_max_issuance",
 }
 
 var manageAssetActionRevMap = map[string]int32{
@@ -14312,6 +14469,7 @@ var manageAssetActionRevMap = map[string]int32{
 	"ManageAssetActionCreateAssetUpdateRequest":   1,
 	"ManageAssetActionCancelAssetRequest":         2,
 	"ManageAssetActionChangePreissuedAssetSigner": 3,
+	"ManageAssetActionUpdateMaxIssuance":          4,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -14430,6 +14588,65 @@ type CancelAssetRequest struct {
 	Ext CancelAssetRequestExt `json:"ext,omitempty"`
 }
 
+// UpdateMaxIssuanceExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type UpdateMaxIssuanceExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u UpdateMaxIssuanceExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of UpdateMaxIssuanceExt
+func (u UpdateMaxIssuanceExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewUpdateMaxIssuanceExt creates a new  UpdateMaxIssuanceExt.
+func NewUpdateMaxIssuanceExt(v LedgerVersion, value interface{}) (result UpdateMaxIssuanceExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// UpdateMaxIssuance is an XDR Struct defines as:
+//
+//   struct UpdateMaxIssuance {
+//
+//    	AssetCode assetCode;
+//    	uint64 maxIssuanceAmount;
+//    	// reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type UpdateMaxIssuance struct {
+	AssetCode         AssetCode            `json:"assetCode,omitempty"`
+	MaxIssuanceAmount Uint64               `json:"maxIssuanceAmount,omitempty"`
+	Ext               UpdateMaxIssuanceExt `json:"ext,omitempty"`
+}
+
 // ManageAssetOpRequest is an XDR NestedUnion defines as:
 //
 //   union switch (ManageAssetAction action)
@@ -14442,6 +14659,8 @@ type CancelAssetRequest struct {
 //    		CancelAssetRequest cancelRequest;
 //    	case CHANGE_PREISSUED_ASSET_SIGNER:
 //    		AssetChangePreissuedSigner changePreissuedSigner;
+//    	case UPDATE_MAX_ISSUANCE:
+//    		UpdateMaxIssuance updateMaxIssuance;
 //    	}
 //
 type ManageAssetOpRequest struct {
@@ -14450,6 +14669,7 @@ type ManageAssetOpRequest struct {
 	UpdateAsset           *AssetUpdateRequest         `json:"updateAsset,omitempty"`
 	CancelRequest         *CancelAssetRequest         `json:"cancelRequest,omitempty"`
 	ChangePreissuedSigner *AssetChangePreissuedSigner `json:"changePreissuedSigner,omitempty"`
+	UpdateMaxIssuance     *UpdateMaxIssuance          `json:"updateMaxIssuance,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -14470,6 +14690,8 @@ func (u ManageAssetOpRequest) ArmForSwitch(sw int32) (string, bool) {
 		return "CancelRequest", true
 	case ManageAssetActionChangePreissuedAssetSigner:
 		return "ChangePreissuedSigner", true
+	case ManageAssetActionUpdateMaxIssuance:
+		return "UpdateMaxIssuance", true
 	}
 	return "-", false
 }
@@ -14506,6 +14728,13 @@ func NewManageAssetOpRequest(action ManageAssetAction, value interface{}) (resul
 			return
 		}
 		result.ChangePreissuedSigner = &tv
+	case ManageAssetActionUpdateMaxIssuance:
+		tv, ok := value.(UpdateMaxIssuance)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be UpdateMaxIssuance")
+			return
+		}
+		result.UpdateMaxIssuance = &tv
 	}
 	return
 }
@@ -14610,6 +14839,31 @@ func (u ManageAssetOpRequest) GetChangePreissuedSigner() (result AssetChangePrei
 	return
 }
 
+// MustUpdateMaxIssuance retrieves the UpdateMaxIssuance value from the union,
+// panicing if the value is not set.
+func (u ManageAssetOpRequest) MustUpdateMaxIssuance() UpdateMaxIssuance {
+	val, ok := u.GetUpdateMaxIssuance()
+
+	if !ok {
+		panic("arm UpdateMaxIssuance is not set")
+	}
+
+	return val
+}
+
+// GetUpdateMaxIssuance retrieves the UpdateMaxIssuance value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageAssetOpRequest) GetUpdateMaxIssuance() (result UpdateMaxIssuance, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Action))
+
+	if armName == "UpdateMaxIssuance" {
+		result = *u.UpdateMaxIssuance
+		ok = true
+	}
+
+	return
+}
+
 // ManageAssetOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -14663,6 +14917,8 @@ func NewManageAssetOpExt(v LedgerVersion, value interface{}) (result ManageAsset
 //    		CancelAssetRequest cancelRequest;
 //    	case CHANGE_PREISSUED_ASSET_SIGNER:
 //    		AssetChangePreissuedSigner changePreissuedSigner;
+//    	case UPDATE_MAX_ISSUANCE:
+//    		UpdateMaxIssuance updateMaxIssuance;
 //    	} request;
 //
 //    	// reserved for future use
@@ -17761,7 +18017,8 @@ func (u ManageOfferResult) GetCurrentPriceRestriction() (result ManageOfferResul
 //   enum ManageSaleAction
 //    {
 //        CREATE_UPDATE_DETAILS_REQUEST = 1,
-//        CANCEL = 2
+//        CANCEL = 2,
+//    	SET_STATE = 3
 //    };
 //
 type ManageSaleAction int32
@@ -17769,26 +18026,31 @@ type ManageSaleAction int32
 const (
 	ManageSaleActionCreateUpdateDetailsRequest ManageSaleAction = 1
 	ManageSaleActionCancel                     ManageSaleAction = 2
+	ManageSaleActionSetState                   ManageSaleAction = 3
 )
 
 var ManageSaleActionAll = []ManageSaleAction{
 	ManageSaleActionCreateUpdateDetailsRequest,
 	ManageSaleActionCancel,
+	ManageSaleActionSetState,
 }
 
 var manageSaleActionMap = map[int32]string{
 	1: "ManageSaleActionCreateUpdateDetailsRequest",
 	2: "ManageSaleActionCancel",
+	3: "ManageSaleActionSetState",
 }
 
 var manageSaleActionShortMap = map[int32]string{
 	1: "create_update_details_request",
 	2: "cancel",
+	3: "set_state",
 }
 
 var manageSaleActionRevMap = map[string]int32{
 	"ManageSaleActionCreateUpdateDetailsRequest": 1,
 	"ManageSaleActionCancel":                     2,
+	"ManageSaleActionSetState":                   3,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -17917,11 +18179,14 @@ type UpdateSaleDetailsData struct {
 //            UpdateSaleDetailsData updateSaleDetailsData;
 //        case CANCEL:
 //            void;
+//    	case SET_STATE:
+//    		SaleState saleState;
 //        }
 //
 type ManageSaleOpData struct {
 	Action                ManageSaleAction       `json:"action,omitempty"`
 	UpdateSaleDetailsData *UpdateSaleDetailsData `json:"updateSaleDetailsData,omitempty"`
+	SaleState             *SaleState             `json:"saleState,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -17938,6 +18203,8 @@ func (u ManageSaleOpData) ArmForSwitch(sw int32) (string, bool) {
 		return "UpdateSaleDetailsData", true
 	case ManageSaleActionCancel:
 		return "", true
+	case ManageSaleActionSetState:
+		return "SaleState", true
 	}
 	return "-", false
 }
@@ -17955,6 +18222,13 @@ func NewManageSaleOpData(action ManageSaleAction, value interface{}) (result Man
 		result.UpdateSaleDetailsData = &tv
 	case ManageSaleActionCancel:
 		// void
+	case ManageSaleActionSetState:
+		tv, ok := value.(SaleState)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be SaleState")
+			return
+		}
+		result.SaleState = &tv
 	}
 	return
 }
@@ -17978,6 +18252,31 @@ func (u ManageSaleOpData) GetUpdateSaleDetailsData() (result UpdateSaleDetailsDa
 
 	if armName == "UpdateSaleDetailsData" {
 		result = *u.UpdateSaleDetailsData
+		ok = true
+	}
+
+	return
+}
+
+// MustSaleState retrieves the SaleState value from the union,
+// panicing if the value is not set.
+func (u ManageSaleOpData) MustSaleState() SaleState {
+	val, ok := u.GetSaleState()
+
+	if !ok {
+		panic("arm SaleState is not set")
+	}
+
+	return val
+}
+
+// GetSaleState retrieves the SaleState value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageSaleOpData) GetSaleState() (result SaleState, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Action))
+
+	if armName == "SaleState" {
+		result = *u.SaleState
 		ok = true
 	}
 
@@ -18033,6 +18332,8 @@ func NewManageSaleOpExt(v LedgerVersion, value interface{}) (result ManageSaleOp
 //            UpdateSaleDetailsData updateSaleDetailsData;
 //        case CANCEL:
 //            void;
+//    	case SET_STATE:
+//    		SaleState saleState;
 //        } data;
 //
 //        // reserved for future use
@@ -18058,7 +18359,8 @@ type ManageSaleOp struct {
 //        SALE_NOT_FOUND = -1, // sale not found
 //        INVALID_NEW_DETAILS = -2, // newDetails field is invalid JSON
 //        UPDATE_DETAILS_REQUEST_ALREADY_EXISTS = -3,
-//        UPDATE_DETAILS_REQUEST_NOT_FOUND = -4
+//        UPDATE_DETAILS_REQUEST_NOT_FOUND = -4,
+//    	NOT_ALLOWED = -5 // it's not allowed to set state for non master account
 //    };
 //
 type ManageSaleResultCode int32
@@ -18069,6 +18371,7 @@ const (
 	ManageSaleResultCodeInvalidNewDetails                 ManageSaleResultCode = -2
 	ManageSaleResultCodeUpdateDetailsRequestAlreadyExists ManageSaleResultCode = -3
 	ManageSaleResultCodeUpdateDetailsRequestNotFound      ManageSaleResultCode = -4
+	ManageSaleResultCodeNotAllowed                        ManageSaleResultCode = -5
 )
 
 var ManageSaleResultCodeAll = []ManageSaleResultCode{
@@ -18077,6 +18380,7 @@ var ManageSaleResultCodeAll = []ManageSaleResultCode{
 	ManageSaleResultCodeInvalidNewDetails,
 	ManageSaleResultCodeUpdateDetailsRequestAlreadyExists,
 	ManageSaleResultCodeUpdateDetailsRequestNotFound,
+	ManageSaleResultCodeNotAllowed,
 }
 
 var manageSaleResultCodeMap = map[int32]string{
@@ -18085,6 +18389,7 @@ var manageSaleResultCodeMap = map[int32]string{
 	-2: "ManageSaleResultCodeInvalidNewDetails",
 	-3: "ManageSaleResultCodeUpdateDetailsRequestAlreadyExists",
 	-4: "ManageSaleResultCodeUpdateDetailsRequestNotFound",
+	-5: "ManageSaleResultCodeNotAllowed",
 }
 
 var manageSaleResultCodeShortMap = map[int32]string{
@@ -18093,6 +18398,7 @@ var manageSaleResultCodeShortMap = map[int32]string{
 	-2: "invalid_new_details",
 	-3: "update_details_request_already_exists",
 	-4: "update_details_request_not_found",
+	-5: "not_allowed",
 }
 
 var manageSaleResultCodeRevMap = map[string]int32{
@@ -18101,6 +18407,7 @@ var manageSaleResultCodeRevMap = map[string]int32{
 	"ManageSaleResultCodeInvalidNewDetails":                 -2,
 	"ManageSaleResultCodeUpdateDetailsRequestAlreadyExists": -3,
 	"ManageSaleResultCodeUpdateDetailsRequestNotFound":      -4,
+	"ManageSaleResultCodeNotAllowed":                        -5,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -18171,6 +18478,8 @@ func (e *ManageSaleResultCode) UnmarshalJSON(data []byte) error {
 //            uint64 requestID;
 //        case CANCEL:
 //            void;
+//    	case SET_STATE:
+//    		void;
 //        }
 //
 type ManageSaleResultSuccessResponse struct {
@@ -18192,6 +18501,8 @@ func (u ManageSaleResultSuccessResponse) ArmForSwitch(sw int32) (string, bool) {
 		return "RequestId", true
 	case ManageSaleActionCancel:
 		return "", true
+	case ManageSaleActionSetState:
+		return "", true
 	}
 	return "-", false
 }
@@ -18208,6 +18519,8 @@ func NewManageSaleResultSuccessResponse(action ManageSaleAction, value interface
 		}
 		result.RequestId = &tv
 	case ManageSaleActionCancel:
+		// void
+	case ManageSaleActionSetState:
 		// void
 	}
 	return
@@ -18285,6 +18598,8 @@ func NewManageSaleResultSuccessExt(v LedgerVersion, value interface{}) (result M
 //            uint64 requestID;
 //        case CANCEL:
 //            void;
+//    	case SET_STATE:
+//    		void;
 //        } response;
 //
 //        //reserved for future use
@@ -23977,6 +24292,20 @@ type SaleCreationRequestExtV2 struct {
 	RequiredBaseAssetForHardCap Uint64      `json:"requiredBaseAssetForHardCap,omitempty"`
 }
 
+// SaleCreationRequestExtV3 is an XDR NestedStruct defines as:
+//
+//   struct {
+//    			SaleTypeExt saleTypeExt;
+//                uint64 requiredBaseAssetForHardCap;
+//    			SaleState state;
+//    		}
+//
+type SaleCreationRequestExtV3 struct {
+	SaleTypeExt                 SaleTypeExt `json:"saleTypeExt,omitempty"`
+	RequiredBaseAssetForHardCap Uint64      `json:"requiredBaseAssetForHardCap,omitempty"`
+	State                       SaleState   `json:"state,omitempty"`
+}
+
 // SaleCreationRequestExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -23990,12 +24319,19 @@ type SaleCreationRequestExtV2 struct {
 //                SaleTypeExt saleTypeExt;
 //                uint64 requiredBaseAssetForHardCap;
 //            } extV2;
+//    	case STATABLE_SALES:
+//    		struct {
+//    			SaleTypeExt saleTypeExt;
+//                uint64 requiredBaseAssetForHardCap;
+//    			SaleState state;
+//    		} extV3;
 //        }
 //
 type SaleCreationRequestExt struct {
 	V           LedgerVersion             `json:"v,omitempty"`
 	SaleTypeExt *SaleTypeExt              `json:"saleTypeExt,omitempty"`
 	ExtV2       *SaleCreationRequestExtV2 `json:"extV2,omitempty"`
+	ExtV3       *SaleCreationRequestExtV3 `json:"extV3,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -24014,6 +24350,8 @@ func (u SaleCreationRequestExt) ArmForSwitch(sw int32) (string, bool) {
 		return "SaleTypeExt", true
 	case LedgerVersionAllowToSpecifyRequiredBaseAssetAmountForHardCap:
 		return "ExtV2", true
+	case LedgerVersionStatableSales:
+		return "ExtV3", true
 	}
 	return "-", false
 }
@@ -24038,6 +24376,13 @@ func NewSaleCreationRequestExt(v LedgerVersion, value interface{}) (result SaleC
 			return
 		}
 		result.ExtV2 = &tv
+	case LedgerVersionStatableSales:
+		tv, ok := value.(SaleCreationRequestExtV3)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be SaleCreationRequestExtV3")
+			return
+		}
+		result.ExtV3 = &tv
 	}
 	return
 }
@@ -24092,6 +24437,31 @@ func (u SaleCreationRequestExt) GetExtV2() (result SaleCreationRequestExtV2, ok 
 	return
 }
 
+// MustExtV3 retrieves the ExtV3 value from the union,
+// panicing if the value is not set.
+func (u SaleCreationRequestExt) MustExtV3() SaleCreationRequestExtV3 {
+	val, ok := u.GetExtV3()
+
+	if !ok {
+		panic("arm ExtV3 is not set")
+	}
+
+	return val
+}
+
+// GetExtV3 retrieves the ExtV3 value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u SaleCreationRequestExt) GetExtV3() (result SaleCreationRequestExtV3, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "ExtV3" {
+		result = *u.ExtV3
+		ok = true
+	}
+
+	return
+}
+
 // SaleCreationRequest is an XDR Struct defines as:
 //
 //   struct SaleCreationRequest {
@@ -24116,6 +24486,12 @@ func (u SaleCreationRequestExt) GetExtV2() (result SaleCreationRequestExtV2, ok 
 //                SaleTypeExt saleTypeExt;
 //                uint64 requiredBaseAssetForHardCap;
 //            } extV2;
+//    	case STATABLE_SALES:
+//    		struct {
+//    			SaleTypeExt saleTypeExt;
+//                uint64 requiredBaseAssetForHardCap;
+//    			SaleState state;
+//    		} extV3;
 //        }
 //        ext;
 //    };
@@ -27901,7 +28277,9 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ALLOW_TO_CANCEL_SALE_PARTICIP_WITHOUT_SPECIFING_BALANCE = 24,
 //    	DETAILS_MAX_LENGTH_EXTENDED = 25,
 //    	ALLOW_MASTER_TO_MANAGE_SALE = 26,
-//    	USE_SALE_ANTE = 27
+//    	USE_SALE_ANTE = 27,
+//    	FIX_ASSET_PAIRS_CREATION_IN_SALE_CREATION = 28,
+//    	STATABLE_SALES = 29
 //    };
 //
 type LedgerVersion int32
@@ -27935,6 +28313,8 @@ const (
 	LedgerVersionDetailsMaxLengthExtended                         LedgerVersion = 25
 	LedgerVersionAllowMasterToManageSale                          LedgerVersion = 26
 	LedgerVersionUseSaleAnte                                      LedgerVersion = 27
+	LedgerVersionFixAssetPairsCreationInSaleCreation              LedgerVersion = 28
+	LedgerVersionStatableSales                                    LedgerVersion = 29
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -27966,6 +28346,8 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionDetailsMaxLengthExtended,
 	LedgerVersionAllowMasterToManageSale,
 	LedgerVersionUseSaleAnte,
+	LedgerVersionFixAssetPairsCreationInSaleCreation,
+	LedgerVersionStatableSales,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -27997,6 +28379,8 @@ var ledgerVersionMap = map[int32]string{
 	25: "LedgerVersionDetailsMaxLengthExtended",
 	26: "LedgerVersionAllowMasterToManageSale",
 	27: "LedgerVersionUseSaleAnte",
+	28: "LedgerVersionFixAssetPairsCreationInSaleCreation",
+	29: "LedgerVersionStatableSales",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -28028,6 +28412,8 @@ var ledgerVersionShortMap = map[int32]string{
 	25: "details_max_length_extended",
 	26: "allow_master_to_manage_sale",
 	27: "use_sale_ante",
+	28: "fix_asset_pairs_creation_in_sale_creation",
+	29: "statable_sales",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -28059,6 +28445,8 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionDetailsMaxLengthExtended":                         25,
 	"LedgerVersionAllowMasterToManageSale":                          26,
 	"LedgerVersionUseSaleAnte":                                      27,
+	"LedgerVersionFixAssetPairsCreationInSaleCreation":              28,
+	"LedgerVersionStatableSales":                                    29,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
