@@ -18139,34 +18139,34 @@ func (u ManageKeyValueResult) GetSuccess() (result ManageKeyValueSuccess, ok boo
 //   enum ManageLimitsAction
 //    {
 //        CREATE = 0,
-//        DELETE = 1
+//        REMOVE = 1
 //    };
 //
 type ManageLimitsAction int32
 
 const (
 	ManageLimitsActionCreate ManageLimitsAction = 0
-	ManageLimitsActionDelete ManageLimitsAction = 1
+	ManageLimitsActionRemove ManageLimitsAction = 1
 )
 
 var ManageLimitsActionAll = []ManageLimitsAction{
 	ManageLimitsActionCreate,
-	ManageLimitsActionDelete,
+	ManageLimitsActionRemove,
 }
 
 var manageLimitsActionMap = map[int32]string{
 	0: "ManageLimitsActionCreate",
-	1: "ManageLimitsActionDelete",
+	1: "ManageLimitsActionRemove",
 }
 
 var manageLimitsActionShortMap = map[int32]string{
 	0: "create",
-	1: "delete",
+	1: "remove",
 }
 
 var manageLimitsActionRevMap = map[string]int32{
 	"ManageLimitsActionCreate": 0,
-	"ManageLimitsActionDelete": 1,
+	"ManageLimitsActionRemove": 1,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -18264,7 +18264,7 @@ type LimitsCreateDetails struct {
 //        {
 //        case CREATE:
 //            LimitsCreateDetails limitsCreateDetails;
-//        case DELETE:
+//        case REMOVE:
 //            uint64 id;
 //        }
 //
@@ -18286,7 +18286,7 @@ func (u ManageLimitsOpDetails) ArmForSwitch(sw int32) (string, bool) {
 	switch ManageLimitsAction(sw) {
 	case ManageLimitsActionCreate:
 		return "LimitsCreateDetails", true
-	case ManageLimitsActionDelete:
+	case ManageLimitsActionRemove:
 		return "Id", true
 	}
 	return "-", false
@@ -18303,7 +18303,7 @@ func NewManageLimitsOpDetails(action ManageLimitsAction, value interface{}) (res
 			return
 		}
 		result.LimitsCreateDetails = &tv
-	case ManageLimitsActionDelete:
+	case ManageLimitsActionRemove:
 		tv, ok := value.(Uint64)
 		if !ok {
 			err = fmt.Errorf("invalid value, must be Uint64")
@@ -18410,7 +18410,7 @@ func NewManageLimitsOpExt(v LedgerVersion, value interface{}) (result ManageLimi
 //        {
 //        case CREATE:
 //            LimitsCreateDetails limitsCreateDetails;
-//        case DELETE:
+//        case REMOVE:
 //            uint64 id;
 //        } details;
 //
@@ -18544,7 +18544,7 @@ func (e *ManageLimitsResultCode) UnmarshalJSON(data []byte) error {
 //            {
 //            case CREATE:
 //                uint64 id;
-//            case DELETE:
+//            case REMOVE:
 //                void;
 //            }
 //
@@ -18565,7 +18565,7 @@ func (u ManageLimitsResultSuccessDetails) ArmForSwitch(sw int32) (string, bool) 
 	switch ManageLimitsAction(sw) {
 	case ManageLimitsActionCreate:
 		return "Id", true
-	case ManageLimitsActionDelete:
+	case ManageLimitsActionRemove:
 		return "", true
 	}
 	return "-", false
@@ -18582,7 +18582,7 @@ func NewManageLimitsResultSuccessDetails(action ManageLimitsAction, value interf
 			return
 		}
 		result.Id = &tv
-	case ManageLimitsActionDelete:
+	case ManageLimitsActionRemove:
 		// void
 	}
 	return
@@ -18658,7 +18658,7 @@ func NewManageLimitsResultSuccessExt(v LedgerVersion, value interface{}) (result
 //            {
 //            case CREATE:
 //                uint64 id;
-//            case DELETE:
+//            case REMOVE:
 //                void;
 //            } details;
 //
@@ -18686,7 +18686,7 @@ type ManageLimitsResultSuccess struct {
 //            {
 //            case CREATE:
 //                uint64 id;
-//            case DELETE:
+//            case REMOVE:
 //                void;
 //            } details;
 //
