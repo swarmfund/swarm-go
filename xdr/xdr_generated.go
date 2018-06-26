@@ -25563,10 +25563,13 @@ type IssuanceRequest struct {
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case LIMITS_UPDATE_REQUEST_DEPRECATED_DOCUMENT_HASH:
+//            longstring details;
 //        }
 //
 type LimitsUpdateRequestExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V       LedgerVersion `json:"v,omitempty"`
+	Details *Longstring   `json:"details,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -25581,6 +25584,8 @@ func (u LimitsUpdateRequestExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash:
+		return "Details", true
 	}
 	return "-", false
 }
@@ -25591,27 +25596,61 @@ func NewLimitsUpdateRequestExt(v LedgerVersion, value interface{}) (result Limit
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash:
+		tv, ok := value.(Longstring)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be Longstring")
+			return
+		}
+		result.Details = &tv
 	}
+	return
+}
+
+// MustDetails retrieves the Details value from the union,
+// panicing if the value is not set.
+func (u LimitsUpdateRequestExt) MustDetails() Longstring {
+	val, ok := u.GetDetails()
+
+	if !ok {
+		panic("arm Details is not set")
+	}
+
+	return val
+}
+
+// GetDetails retrieves the Details value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u LimitsUpdateRequestExt) GetDetails() (result Longstring, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "Details" {
+		result = *u.Details
+		ok = true
+	}
+
 	return
 }
 
 // LimitsUpdateRequest is an XDR Struct defines as:
 //
 //   struct LimitsUpdateRequest {
-//        Hash documentHash;
+//        Hash deprecatedDocumentHash;
 //
 //        // reserved for future use
 //        union switch (LedgerVersion v)
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case LIMITS_UPDATE_REQUEST_DEPRECATED_DOCUMENT_HASH:
+//            longstring details;
 //        }
 //        ext;
 //    };
 //
 type LimitsUpdateRequest struct {
-	DocumentHash Hash                   `json:"documentHash,omitempty"`
-	Ext          LimitsUpdateRequestExt `json:"ext,omitempty"`
+	DeprecatedDocumentHash Hash                   `json:"deprecatedDocumentHash,omitempty"`
+	Ext                    LimitsUpdateRequestExt `json:"ext,omitempty"`
 }
 
 // SaleCreationRequestQuoteAssetExt is an XDR NestedUnion defines as:
@@ -29749,7 +29788,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	USE_SALE_ANTE = 27,
 //    	FIX_ASSET_PAIRS_CREATION_IN_SALE_CREATION = 28,
 //    	STATABLE_SALES = 29,
-//    	CREATE_ONLY_STATISTICS_V2 = 30
+//    	CREATE_ONLY_STATISTICS_V2 = 30,
+//    	LIMITS_UPDATE_REQUEST_DEPRECATED_DOCUMENT_HASH = 31
 //    };
 //
 type LedgerVersion int32
@@ -29786,6 +29826,7 @@ const (
 	LedgerVersionFixAssetPairsCreationInSaleCreation              LedgerVersion = 28
 	LedgerVersionStatableSales                                    LedgerVersion = 29
 	LedgerVersionCreateOnlyStatisticsV2                           LedgerVersion = 30
+	LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash        LedgerVersion = 31
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -29820,6 +29861,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionFixAssetPairsCreationInSaleCreation,
 	LedgerVersionStatableSales,
 	LedgerVersionCreateOnlyStatisticsV2,
+	LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -29854,6 +29896,7 @@ var ledgerVersionMap = map[int32]string{
 	28: "LedgerVersionFixAssetPairsCreationInSaleCreation",
 	29: "LedgerVersionStatableSales",
 	30: "LedgerVersionCreateOnlyStatisticsV2",
+	31: "LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -29888,6 +29931,7 @@ var ledgerVersionShortMap = map[int32]string{
 	28: "fix_asset_pairs_creation_in_sale_creation",
 	29: "statable_sales",
 	30: "create_only_statistics_v2",
+	31: "limits_update_request_deprecated_document_hash",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -29922,6 +29966,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionFixAssetPairsCreationInSaleCreation":              28,
 	"LedgerVersionStatableSales":                                    29,
 	"LedgerVersionCreateOnlyStatisticsV2":                           30,
+	"LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash":        31,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
