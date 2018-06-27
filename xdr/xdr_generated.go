@@ -29789,7 +29789,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	FIX_ASSET_PAIRS_CREATION_IN_SALE_CREATION = 28,
 //    	STATABLE_SALES = 29,
 //    	CREATE_ONLY_STATISTICS_V2 = 30,
-//    	LIMITS_UPDATE_REQUEST_DEPRECATED_DOCUMENT_HASH = 31
+//    	LIMITS_UPDATE_REQUEST_DEPRECATED_DOCUMENT_HASH = 31,
+//    	FIX_PAYMENT_V2_FEE = 32
 //    };
 //
 type LedgerVersion int32
@@ -29827,6 +29828,7 @@ const (
 	LedgerVersionStatableSales                                    LedgerVersion = 29
 	LedgerVersionCreateOnlyStatisticsV2                           LedgerVersion = 30
 	LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash        LedgerVersion = 31
+	LedgerVersionFixPaymentV2Fee                                  LedgerVersion = 32
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -29862,6 +29864,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionStatableSales,
 	LedgerVersionCreateOnlyStatisticsV2,
 	LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash,
+	LedgerVersionFixPaymentV2Fee,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -29897,6 +29900,7 @@ var ledgerVersionMap = map[int32]string{
 	29: "LedgerVersionStatableSales",
 	30: "LedgerVersionCreateOnlyStatisticsV2",
 	31: "LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash",
+	32: "LedgerVersionFixPaymentV2Fee",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -29932,6 +29936,7 @@ var ledgerVersionShortMap = map[int32]string{
 	29: "statable_sales",
 	30: "create_only_statistics_v2",
 	31: "limits_update_request_deprecated_document_hash",
+	32: "fix_payment_v2_fee",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -29967,6 +29972,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionStatableSales":                                    29,
 	"LedgerVersionCreateOnlyStatisticsV2":                           30,
 	"LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash":        31,
+	"LedgerVersionFixPaymentV2Fee":                                  32,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
