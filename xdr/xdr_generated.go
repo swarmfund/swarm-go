@@ -59,6 +59,7 @@
 //  xdr/raw/Stellar-reviewable-request-limits-update.x
 //  xdr/raw/Stellar-reviewable-request-sale.x
 //  xdr/raw/Stellar-reviewable-request-update-KYC.x
+//  xdr/raw/Stellar-reviewable-request-update-promotion.x
 //  xdr/raw/Stellar-reviewable-request-update-sale-details.x
 //  xdr/raw/Stellar-reviewable-request-withdrawal.x
 //  xdr/raw/Stellar-transaction.x
@@ -3755,7 +3756,8 @@ type ReferenceEntry struct {
 //    	TWO_STEP_WITHDRAWAL = 7,
 //        AML_ALERT = 8,
 //    	UPDATE_KYC = 9,
-//    	UPDATE_SALE_DETAILS = 10
+//    	UPDATE_SALE_DETAILS = 10,
+//    	UPDATE_PROMOTION = 11
 //    };
 //
 type ReviewableRequestType int32
@@ -3772,6 +3774,7 @@ const (
 	ReviewableRequestTypeAmlAlert          ReviewableRequestType = 8
 	ReviewableRequestTypeUpdateKyc         ReviewableRequestType = 9
 	ReviewableRequestTypeUpdateSaleDetails ReviewableRequestType = 10
+	ReviewableRequestTypeUpdatePromotion   ReviewableRequestType = 11
 )
 
 var ReviewableRequestTypeAll = []ReviewableRequestType{
@@ -3786,6 +3789,7 @@ var ReviewableRequestTypeAll = []ReviewableRequestType{
 	ReviewableRequestTypeAmlAlert,
 	ReviewableRequestTypeUpdateKyc,
 	ReviewableRequestTypeUpdateSaleDetails,
+	ReviewableRequestTypeUpdatePromotion,
 }
 
 var reviewableRequestTypeMap = map[int32]string{
@@ -3800,6 +3804,7 @@ var reviewableRequestTypeMap = map[int32]string{
 	8:  "ReviewableRequestTypeAmlAlert",
 	9:  "ReviewableRequestTypeUpdateKyc",
 	10: "ReviewableRequestTypeUpdateSaleDetails",
+	11: "ReviewableRequestTypeUpdatePromotion",
 }
 
 var reviewableRequestTypeShortMap = map[int32]string{
@@ -3814,6 +3819,7 @@ var reviewableRequestTypeShortMap = map[int32]string{
 	8:  "aml_alert",
 	9:  "update_kyc",
 	10: "update_sale_details",
+	11: "update_promotion",
 }
 
 var reviewableRequestTypeRevMap = map[string]int32{
@@ -3828,6 +3834,7 @@ var reviewableRequestTypeRevMap = map[string]int32{
 	"ReviewableRequestTypeAmlAlert":          8,
 	"ReviewableRequestTypeUpdateKyc":         9,
 	"ReviewableRequestTypeUpdateSaleDetails": 10,
+	"ReviewableRequestTypeUpdatePromotion":   11,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -3916,6 +3923,8 @@ func (e *ReviewableRequestType) UnmarshalJSON(data []byte) error {
 //                UpdateKYCRequest updateKYCRequest;
 //            case UPDATE_SALE_DETAILS:
 //                UpdateSaleDetailsRequest updateSaleDetailsRequest;
+//            case UPDATE_PROMOTION:
+//                PromotionUpdateRequest promotionUpdateRequest;
 //    	}
 //
 type ReviewableRequestEntryBody struct {
@@ -3931,6 +3940,7 @@ type ReviewableRequestEntryBody struct {
 	AmlAlertRequest          *AmlAlertRequest          `json:"amlAlertRequest,omitempty"`
 	UpdateKycRequest         *UpdateKycRequest         `json:"updateKYCRequest,omitempty"`
 	UpdateSaleDetailsRequest *UpdateSaleDetailsRequest `json:"updateSaleDetailsRequest,omitempty"`
+	PromotionUpdateRequest   *PromotionUpdateRequest   `json:"promotionUpdateRequest,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -3965,6 +3975,8 @@ func (u ReviewableRequestEntryBody) ArmForSwitch(sw int32) (string, bool) {
 		return "UpdateKycRequest", true
 	case ReviewableRequestTypeUpdateSaleDetails:
 		return "UpdateSaleDetailsRequest", true
+	case ReviewableRequestTypeUpdatePromotion:
+		return "PromotionUpdateRequest", true
 	}
 	return "-", false
 }
@@ -4050,6 +4062,13 @@ func NewReviewableRequestEntryBody(aType ReviewableRequestType, value interface{
 			return
 		}
 		result.UpdateSaleDetailsRequest = &tv
+	case ReviewableRequestTypeUpdatePromotion:
+		tv, ok := value.(PromotionUpdateRequest)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be PromotionUpdateRequest")
+			return
+		}
+		result.PromotionUpdateRequest = &tv
 	}
 	return
 }
@@ -4329,6 +4348,31 @@ func (u ReviewableRequestEntryBody) GetUpdateSaleDetailsRequest() (result Update
 	return
 }
 
+// MustPromotionUpdateRequest retrieves the PromotionUpdateRequest value from the union,
+// panicing if the value is not set.
+func (u ReviewableRequestEntryBody) MustPromotionUpdateRequest() PromotionUpdateRequest {
+	val, ok := u.GetPromotionUpdateRequest()
+
+	if !ok {
+		panic("arm PromotionUpdateRequest is not set")
+	}
+
+	return val
+}
+
+// GetPromotionUpdateRequest retrieves the PromotionUpdateRequest value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewableRequestEntryBody) GetPromotionUpdateRequest() (result PromotionUpdateRequest, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "PromotionUpdateRequest" {
+		result = *u.PromotionUpdateRequest
+		ok = true
+	}
+
+	return
+}
+
 // ReviewableRequestEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -4401,6 +4445,8 @@ func NewReviewableRequestEntryExt(v LedgerVersion, value interface{}) (result Re
 //                UpdateKYCRequest updateKYCRequest;
 //            case UPDATE_SALE_DETAILS:
 //                UpdateSaleDetailsRequest updateSaleDetailsRequest;
+//            case UPDATE_PROMOTION:
+//                PromotionUpdateRequest promotionUpdateRequest;
 //    	} body;
 //
 //    	// reserved for future use
@@ -19705,39 +19751,45 @@ func (u ManageOfferResult) GetCurrentPriceRestriction() (result ManageOfferResul
 //    {
 //        CREATE_UPDATE_DETAILS_REQUEST = 1,
 //        CANCEL = 2,
-//    	SET_STATE = 3
+//    	SET_STATE = 3,
+//    	CREATE_PROMOTION_UPDATE_REQUEST = 4
 //    };
 //
 type ManageSaleAction int32
 
 const (
-	ManageSaleActionCreateUpdateDetailsRequest ManageSaleAction = 1
-	ManageSaleActionCancel                     ManageSaleAction = 2
-	ManageSaleActionSetState                   ManageSaleAction = 3
+	ManageSaleActionCreateUpdateDetailsRequest   ManageSaleAction = 1
+	ManageSaleActionCancel                       ManageSaleAction = 2
+	ManageSaleActionSetState                     ManageSaleAction = 3
+	ManageSaleActionCreatePromotionUpdateRequest ManageSaleAction = 4
 )
 
 var ManageSaleActionAll = []ManageSaleAction{
 	ManageSaleActionCreateUpdateDetailsRequest,
 	ManageSaleActionCancel,
 	ManageSaleActionSetState,
+	ManageSaleActionCreatePromotionUpdateRequest,
 }
 
 var manageSaleActionMap = map[int32]string{
 	1: "ManageSaleActionCreateUpdateDetailsRequest",
 	2: "ManageSaleActionCancel",
 	3: "ManageSaleActionSetState",
+	4: "ManageSaleActionCreatePromotionUpdateRequest",
 }
 
 var manageSaleActionShortMap = map[int32]string{
 	1: "create_update_details_request",
 	2: "cancel",
 	3: "set_state",
+	4: "create_promotion_update_request",
 }
 
 var manageSaleActionRevMap = map[string]int32{
-	"ManageSaleActionCreateUpdateDetailsRequest": 1,
-	"ManageSaleActionCancel":                     2,
-	"ManageSaleActionSetState":                   3,
+	"ManageSaleActionCreateUpdateDetailsRequest":   1,
+	"ManageSaleActionCancel":                       2,
+	"ManageSaleActionSetState":                     3,
+	"ManageSaleActionCreatePromotionUpdateRequest": 4,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -19859,6 +19911,63 @@ type UpdateSaleDetailsData struct {
 	Ext        UpdateSaleDetailsDataExt `json:"ext,omitempty"`
 }
 
+// PromotionUpdateDataExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type PromotionUpdateDataExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PromotionUpdateDataExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PromotionUpdateDataExt
+func (u PromotionUpdateDataExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewPromotionUpdateDataExt creates a new  PromotionUpdateDataExt.
+func NewPromotionUpdateDataExt(v LedgerVersion, value interface{}) (result PromotionUpdateDataExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// PromotionUpdateData is an XDR Struct defines as:
+//
+//   struct PromotionUpdateData {
+//        uint64 requestID; // if requestID is 0 - create request, else - update
+//        SaleCreationRequest newPromotionData;
+//
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        } ext;
+//    };
+//
+type PromotionUpdateData struct {
+	RequestId        Uint64                 `json:"requestID,omitempty"`
+	NewPromotionData SaleCreationRequest    `json:"newPromotionData,omitempty"`
+	Ext              PromotionUpdateDataExt `json:"ext,omitempty"`
+}
+
 // ManageSaleOpData is an XDR NestedUnion defines as:
 //
 //   union switch (ManageSaleAction action) {
@@ -19868,12 +19977,15 @@ type UpdateSaleDetailsData struct {
 //            void;
 //    	case SET_STATE:
 //    		SaleState saleState;
+//        case CREATE_PROMOTION_UPDATE_REQUEST:
+//            PromotionUpdateData promotionUpdateData;
 //        }
 //
 type ManageSaleOpData struct {
 	Action                ManageSaleAction       `json:"action,omitempty"`
 	UpdateSaleDetailsData *UpdateSaleDetailsData `json:"updateSaleDetailsData,omitempty"`
 	SaleState             *SaleState             `json:"saleState,omitempty"`
+	PromotionUpdateData   *PromotionUpdateData   `json:"promotionUpdateData,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -19892,6 +20004,8 @@ func (u ManageSaleOpData) ArmForSwitch(sw int32) (string, bool) {
 		return "", true
 	case ManageSaleActionSetState:
 		return "SaleState", true
+	case ManageSaleActionCreatePromotionUpdateRequest:
+		return "PromotionUpdateData", true
 	}
 	return "-", false
 }
@@ -19916,6 +20030,13 @@ func NewManageSaleOpData(action ManageSaleAction, value interface{}) (result Man
 			return
 		}
 		result.SaleState = &tv
+	case ManageSaleActionCreatePromotionUpdateRequest:
+		tv, ok := value.(PromotionUpdateData)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be PromotionUpdateData")
+			return
+		}
+		result.PromotionUpdateData = &tv
 	}
 	return
 }
@@ -19964,6 +20085,31 @@ func (u ManageSaleOpData) GetSaleState() (result SaleState, ok bool) {
 
 	if armName == "SaleState" {
 		result = *u.SaleState
+		ok = true
+	}
+
+	return
+}
+
+// MustPromotionUpdateData retrieves the PromotionUpdateData value from the union,
+// panicing if the value is not set.
+func (u ManageSaleOpData) MustPromotionUpdateData() PromotionUpdateData {
+	val, ok := u.GetPromotionUpdateData()
+
+	if !ok {
+		panic("arm PromotionUpdateData is not set")
+	}
+
+	return val
+}
+
+// GetPromotionUpdateData retrieves the PromotionUpdateData value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageSaleOpData) GetPromotionUpdateData() (result PromotionUpdateData, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Action))
+
+	if armName == "PromotionUpdateData" {
+		result = *u.PromotionUpdateData
 		ok = true
 	}
 
@@ -20021,6 +20167,8 @@ func NewManageSaleOpExt(v LedgerVersion, value interface{}) (result ManageSaleOp
 //            void;
 //    	case SET_STATE:
 //    		SaleState saleState;
+//        case CREATE_PROMOTION_UPDATE_REQUEST:
+//            PromotionUpdateData promotionUpdateData;
 //        } data;
 //
 //        // reserved for future use
@@ -20044,21 +20192,43 @@ type ManageSaleOp struct {
 //        SUCCESS = 0,
 //
 //        SALE_NOT_FOUND = -1, // sale not found
+//
+//        // errors related to action "CREATE_UPDATE_DETAILS_REQUEST"
 //        INVALID_NEW_DETAILS = -2, // newDetails field is invalid JSON
 //        UPDATE_DETAILS_REQUEST_ALREADY_EXISTS = -3,
 //        UPDATE_DETAILS_REQUEST_NOT_FOUND = -4,
-//    	NOT_ALLOWED = -5 // it's not allowed to set state for non master account
+//
+//        // errors related to action "SET_STATE"
+//    	NOT_ALLOWED = -5, // it's not allowed to set state for non master account
+//
+//    	// errors related to action "CREATE_PROMOTION_UPDATE_REQUEST"
+//    	PROMOTION_UPDATE_REQUEST_INVALID_ASSET_PAIR = -6, // one of the assets has invalid code or base asset is equal to quote asset
+//    	PROMOTION_UPDATE_REQUEST_INVALID_PRICE = -7, // price cannot be 0
+//    	PROMOTION_UPDATE_REQUEST_START_END_INVALID = -8, // sale ends before start
+//    	PROMOTION_UPDATE_REQUEST_INVALID_CAP = -9, // hard cap is < soft cap
+//    	PROMOTION_UPDATE_REQUEST_INVALID_DETAILS = -10, // details field is invalid JSON
+//    	INVALID_SALE_STATE = -11, // sale state must be "PROMOTION"
+//    	PROMOTION_UPDATE_REQUEST_ALREADY_EXISTS = -12,
+//    	PROMOTION_UPDATE_REQUEST_NOT_FOUND = -13
 //    };
 //
 type ManageSaleResultCode int32
 
 const (
-	ManageSaleResultCodeSuccess                           ManageSaleResultCode = 0
-	ManageSaleResultCodeSaleNotFound                      ManageSaleResultCode = -1
-	ManageSaleResultCodeInvalidNewDetails                 ManageSaleResultCode = -2
-	ManageSaleResultCodeUpdateDetailsRequestAlreadyExists ManageSaleResultCode = -3
-	ManageSaleResultCodeUpdateDetailsRequestNotFound      ManageSaleResultCode = -4
-	ManageSaleResultCodeNotAllowed                        ManageSaleResultCode = -5
+	ManageSaleResultCodeSuccess                                ManageSaleResultCode = 0
+	ManageSaleResultCodeSaleNotFound                           ManageSaleResultCode = -1
+	ManageSaleResultCodeInvalidNewDetails                      ManageSaleResultCode = -2
+	ManageSaleResultCodeUpdateDetailsRequestAlreadyExists      ManageSaleResultCode = -3
+	ManageSaleResultCodeUpdateDetailsRequestNotFound           ManageSaleResultCode = -4
+	ManageSaleResultCodeNotAllowed                             ManageSaleResultCode = -5
+	ManageSaleResultCodePromotionUpdateRequestInvalidAssetPair ManageSaleResultCode = -6
+	ManageSaleResultCodePromotionUpdateRequestInvalidPrice     ManageSaleResultCode = -7
+	ManageSaleResultCodePromotionUpdateRequestStartEndInvalid  ManageSaleResultCode = -8
+	ManageSaleResultCodePromotionUpdateRequestInvalidCap       ManageSaleResultCode = -9
+	ManageSaleResultCodePromotionUpdateRequestInvalidDetails   ManageSaleResultCode = -10
+	ManageSaleResultCodeInvalidSaleState                       ManageSaleResultCode = -11
+	ManageSaleResultCodePromotionUpdateRequestAlreadyExists    ManageSaleResultCode = -12
+	ManageSaleResultCodePromotionUpdateRequestNotFound         ManageSaleResultCode = -13
 )
 
 var ManageSaleResultCodeAll = []ManageSaleResultCode{
@@ -20068,33 +20238,65 @@ var ManageSaleResultCodeAll = []ManageSaleResultCode{
 	ManageSaleResultCodeUpdateDetailsRequestAlreadyExists,
 	ManageSaleResultCodeUpdateDetailsRequestNotFound,
 	ManageSaleResultCodeNotAllowed,
+	ManageSaleResultCodePromotionUpdateRequestInvalidAssetPair,
+	ManageSaleResultCodePromotionUpdateRequestInvalidPrice,
+	ManageSaleResultCodePromotionUpdateRequestStartEndInvalid,
+	ManageSaleResultCodePromotionUpdateRequestInvalidCap,
+	ManageSaleResultCodePromotionUpdateRequestInvalidDetails,
+	ManageSaleResultCodeInvalidSaleState,
+	ManageSaleResultCodePromotionUpdateRequestAlreadyExists,
+	ManageSaleResultCodePromotionUpdateRequestNotFound,
 }
 
 var manageSaleResultCodeMap = map[int32]string{
-	0:  "ManageSaleResultCodeSuccess",
-	-1: "ManageSaleResultCodeSaleNotFound",
-	-2: "ManageSaleResultCodeInvalidNewDetails",
-	-3: "ManageSaleResultCodeUpdateDetailsRequestAlreadyExists",
-	-4: "ManageSaleResultCodeUpdateDetailsRequestNotFound",
-	-5: "ManageSaleResultCodeNotAllowed",
+	0:   "ManageSaleResultCodeSuccess",
+	-1:  "ManageSaleResultCodeSaleNotFound",
+	-2:  "ManageSaleResultCodeInvalidNewDetails",
+	-3:  "ManageSaleResultCodeUpdateDetailsRequestAlreadyExists",
+	-4:  "ManageSaleResultCodeUpdateDetailsRequestNotFound",
+	-5:  "ManageSaleResultCodeNotAllowed",
+	-6:  "ManageSaleResultCodePromotionUpdateRequestInvalidAssetPair",
+	-7:  "ManageSaleResultCodePromotionUpdateRequestInvalidPrice",
+	-8:  "ManageSaleResultCodePromotionUpdateRequestStartEndInvalid",
+	-9:  "ManageSaleResultCodePromotionUpdateRequestInvalidCap",
+	-10: "ManageSaleResultCodePromotionUpdateRequestInvalidDetails",
+	-11: "ManageSaleResultCodeInvalidSaleState",
+	-12: "ManageSaleResultCodePromotionUpdateRequestAlreadyExists",
+	-13: "ManageSaleResultCodePromotionUpdateRequestNotFound",
 }
 
 var manageSaleResultCodeShortMap = map[int32]string{
-	0:  "success",
-	-1: "sale_not_found",
-	-2: "invalid_new_details",
-	-3: "update_details_request_already_exists",
-	-4: "update_details_request_not_found",
-	-5: "not_allowed",
+	0:   "success",
+	-1:  "sale_not_found",
+	-2:  "invalid_new_details",
+	-3:  "update_details_request_already_exists",
+	-4:  "update_details_request_not_found",
+	-5:  "not_allowed",
+	-6:  "promotion_update_request_invalid_asset_pair",
+	-7:  "promotion_update_request_invalid_price",
+	-8:  "promotion_update_request_start_end_invalid",
+	-9:  "promotion_update_request_invalid_cap",
+	-10: "promotion_update_request_invalid_details",
+	-11: "invalid_sale_state",
+	-12: "promotion_update_request_already_exists",
+	-13: "promotion_update_request_not_found",
 }
 
 var manageSaleResultCodeRevMap = map[string]int32{
-	"ManageSaleResultCodeSuccess":                           0,
-	"ManageSaleResultCodeSaleNotFound":                      -1,
-	"ManageSaleResultCodeInvalidNewDetails":                 -2,
-	"ManageSaleResultCodeUpdateDetailsRequestAlreadyExists": -3,
-	"ManageSaleResultCodeUpdateDetailsRequestNotFound":      -4,
-	"ManageSaleResultCodeNotAllowed":                        -5,
+	"ManageSaleResultCodeSuccess":                                0,
+	"ManageSaleResultCodeSaleNotFound":                           -1,
+	"ManageSaleResultCodeInvalidNewDetails":                      -2,
+	"ManageSaleResultCodeUpdateDetailsRequestAlreadyExists":      -3,
+	"ManageSaleResultCodeUpdateDetailsRequestNotFound":           -4,
+	"ManageSaleResultCodeNotAllowed":                             -5,
+	"ManageSaleResultCodePromotionUpdateRequestInvalidAssetPair": -6,
+	"ManageSaleResultCodePromotionUpdateRequestInvalidPrice":     -7,
+	"ManageSaleResultCodePromotionUpdateRequestStartEndInvalid":  -8,
+	"ManageSaleResultCodePromotionUpdateRequestInvalidCap":       -9,
+	"ManageSaleResultCodePromotionUpdateRequestInvalidDetails":   -10,
+	"ManageSaleResultCodeInvalidSaleState":                       -11,
+	"ManageSaleResultCodePromotionUpdateRequestAlreadyExists":    -12,
+	"ManageSaleResultCodePromotionUpdateRequestNotFound":         -13,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -20167,11 +20369,14 @@ func (e *ManageSaleResultCode) UnmarshalJSON(data []byte) error {
 //            void;
 //    	case SET_STATE:
 //    		void;
+//        case CREATE_PROMOTION_UPDATE_REQUEST:
+//            uint64 promotionUpdateRequestID;
 //        }
 //
 type ManageSaleResultSuccessResponse struct {
-	Action    ManageSaleAction `json:"action,omitempty"`
-	RequestId *Uint64          `json:"requestID,omitempty"`
+	Action                   ManageSaleAction `json:"action,omitempty"`
+	RequestId                *Uint64          `json:"requestID,omitempty"`
+	PromotionUpdateRequestId *Uint64          `json:"promotionUpdateRequestID,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -20190,6 +20395,8 @@ func (u ManageSaleResultSuccessResponse) ArmForSwitch(sw int32) (string, bool) {
 		return "", true
 	case ManageSaleActionSetState:
 		return "", true
+	case ManageSaleActionCreatePromotionUpdateRequest:
+		return "PromotionUpdateRequestId", true
 	}
 	return "-", false
 }
@@ -20209,6 +20416,13 @@ func NewManageSaleResultSuccessResponse(action ManageSaleAction, value interface
 		// void
 	case ManageSaleActionSetState:
 		// void
+	case ManageSaleActionCreatePromotionUpdateRequest:
+		tv, ok := value.(Uint64)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be Uint64")
+			return
+		}
+		result.PromotionUpdateRequestId = &tv
 	}
 	return
 }
@@ -20232,6 +20446,31 @@ func (u ManageSaleResultSuccessResponse) GetRequestId() (result Uint64, ok bool)
 
 	if armName == "RequestId" {
 		result = *u.RequestId
+		ok = true
+	}
+
+	return
+}
+
+// MustPromotionUpdateRequestId retrieves the PromotionUpdateRequestId value from the union,
+// panicing if the value is not set.
+func (u ManageSaleResultSuccessResponse) MustPromotionUpdateRequestId() Uint64 {
+	val, ok := u.GetPromotionUpdateRequestId()
+
+	if !ok {
+		panic("arm PromotionUpdateRequestId is not set")
+	}
+
+	return val
+}
+
+// GetPromotionUpdateRequestId retrieves the PromotionUpdateRequestId value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageSaleResultSuccessResponse) GetPromotionUpdateRequestId() (result Uint64, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Action))
+
+	if armName == "PromotionUpdateRequestId" {
+		result = *u.PromotionUpdateRequestId
 		ok = true
 	}
 
@@ -20287,6 +20526,8 @@ func NewManageSaleResultSuccessExt(v LedgerVersion, value interface{}) (result M
 //            void;
 //    	case SET_STATE:
 //    		void;
+//        case CREATE_PROMOTION_UPDATE_REQUEST:
+//            uint64 promotionUpdateRequestID;
 //        } response;
 //
 //        //reserved for future use
@@ -22753,8 +22994,11 @@ type ReviewRequestOp struct {
 //    	// Update KYC requests
 //    	NON_ZERO_TASKS_TO_REMOVE_NOT_ALLOWED = -60,
 //
-//    	// Update sale details requests
-//    	SALE_NOT_FOUND = -70
+//    	// Update sale details and promotion update requests
+//    	SALE_NOT_FOUND = -70,
+//
+//    	// Promotion update requests
+//    	INVALID_STATE = -80 // sale state must be "PROMOTION"
 //    };
 //
 type ReviewRequestResultCode int32
@@ -22780,6 +23024,7 @@ const (
 	ReviewRequestResultCodeInsufficientPreissuedForHardCap        ReviewRequestResultCode = -52
 	ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed         ReviewRequestResultCode = -60
 	ReviewRequestResultCodeSaleNotFound                           ReviewRequestResultCode = -70
+	ReviewRequestResultCodeInvalidState                           ReviewRequestResultCode = -80
 )
 
 var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
@@ -22803,6 +23048,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeInsufficientPreissuedForHardCap,
 	ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed,
 	ReviewRequestResultCodeSaleNotFound,
+	ReviewRequestResultCodeInvalidState,
 }
 
 var reviewRequestResultCodeMap = map[int32]string{
@@ -22826,6 +23072,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-52: "ReviewRequestResultCodeInsufficientPreissuedForHardCap",
 	-60: "ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed",
 	-70: "ReviewRequestResultCodeSaleNotFound",
+	-80: "ReviewRequestResultCodeInvalidState",
 }
 
 var reviewRequestResultCodeShortMap = map[int32]string{
@@ -22849,6 +23096,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-52: "insufficient_preissued_for_hard_cap",
 	-60: "non_zero_tasks_to_remove_not_allowed",
 	-70: "sale_not_found",
+	-80: "invalid_state",
 }
 
 var reviewRequestResultCodeRevMap = map[string]int32{
@@ -22872,6 +23120,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeInsufficientPreissuedForHardCap":        -52,
 	"ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed":         -60,
 	"ReviewRequestResultCodeSaleNotFound":                           -70,
+	"ReviewRequestResultCodeInvalidState":                           -80,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -26013,6 +26262,64 @@ type UpdateKycRequest struct {
 	SequenceNumber     Uint32              `json:"sequenceNumber,omitempty"`
 	ExternalDetails    []Longstring        `json:"externalDetails,omitempty"`
 	Ext                UpdateKycRequestExt `json:"ext,omitempty"`
+}
+
+// PromotionUpdateRequestExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type PromotionUpdateRequestExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PromotionUpdateRequestExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PromotionUpdateRequestExt
+func (u PromotionUpdateRequestExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewPromotionUpdateRequestExt creates a new  PromotionUpdateRequestExt.
+func NewPromotionUpdateRequestExt(v LedgerVersion, value interface{}) (result PromotionUpdateRequestExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// PromotionUpdateRequest is an XDR Struct defines as:
+//
+//   struct PromotionUpdateRequest {
+//        uint64 promotionID;
+//        SaleCreationRequest newPromotionData;
+//
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type PromotionUpdateRequest struct {
+	PromotionId      Uint64                    `json:"promotionID,omitempty"`
+	NewPromotionData SaleCreationRequest       `json:"newPromotionData,omitempty"`
+	Ext              PromotionUpdateRequestExt `json:"ext,omitempty"`
 }
 
 // UpdateSaleDetailsRequestExt is an XDR NestedUnion defines as:
