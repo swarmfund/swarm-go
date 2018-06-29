@@ -22998,7 +22998,7 @@ type ReviewRequestOp struct {
 //    	SALE_NOT_FOUND = -70,
 //
 //    	// Promotion update requests
-//    	INVALID_STATE = -80 // sale state must be "PROMOTION"
+//    	INVALID_SALE_STATE = -80 // sale state must be "PROMOTION"
 //    };
 //
 type ReviewRequestResultCode int32
@@ -23024,7 +23024,7 @@ const (
 	ReviewRequestResultCodeInsufficientPreissuedForHardCap        ReviewRequestResultCode = -52
 	ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed         ReviewRequestResultCode = -60
 	ReviewRequestResultCodeSaleNotFound                           ReviewRequestResultCode = -70
-	ReviewRequestResultCodeInvalidState                           ReviewRequestResultCode = -80
+	ReviewRequestResultCodeInvalidSaleState                       ReviewRequestResultCode = -80
 )
 
 var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
@@ -23048,7 +23048,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeInsufficientPreissuedForHardCap,
 	ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed,
 	ReviewRequestResultCodeSaleNotFound,
-	ReviewRequestResultCodeInvalidState,
+	ReviewRequestResultCodeInvalidSaleState,
 }
 
 var reviewRequestResultCodeMap = map[int32]string{
@@ -23072,7 +23072,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-52: "ReviewRequestResultCodeInsufficientPreissuedForHardCap",
 	-60: "ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed",
 	-70: "ReviewRequestResultCodeSaleNotFound",
-	-80: "ReviewRequestResultCodeInvalidState",
+	-80: "ReviewRequestResultCodeInvalidSaleState",
 }
 
 var reviewRequestResultCodeShortMap = map[int32]string{
@@ -23096,7 +23096,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-52: "insufficient_preissued_for_hard_cap",
 	-60: "non_zero_tasks_to_remove_not_allowed",
 	-70: "sale_not_found",
-	-80: "invalid_state",
+	-80: "invalid_sale_state",
 }
 
 var reviewRequestResultCodeRevMap = map[string]int32{
@@ -23120,7 +23120,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeInsufficientPreissuedForHardCap":        -52,
 	"ReviewRequestResultCodeNonZeroTasksToRemoveNotAllowed":         -60,
 	"ReviewRequestResultCodeSaleNotFound":                           -70,
-	"ReviewRequestResultCodeInvalidState":                           -80,
+	"ReviewRequestResultCodeInvalidSaleState":                       -80,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
