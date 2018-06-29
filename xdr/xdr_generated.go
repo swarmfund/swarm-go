@@ -1290,7 +1290,8 @@ func (e *AccountPolicies) UnmarshalJSON(data []byte) error {
 //    	SYNDICATE = 6, // can create asset
 //    	EXCHANGE = 7,
 //    	ACCREDITED_INVESTOR = 8,
-//    	INSTITUTIONAL_INVESTOR = 9
+//    	INSTITUTIONAL_INVESTOR = 9,
+//    	VERIFIED = 10
 //    };
 //
 type AccountType int32
@@ -1305,6 +1306,7 @@ const (
 	AccountTypeExchange              AccountType = 7
 	AccountTypeAccreditedInvestor    AccountType = 8
 	AccountTypeInstitutionalInvestor AccountType = 9
+	AccountTypeVerified              AccountType = 10
 )
 
 var AccountTypeAll = []AccountType{
@@ -1317,30 +1319,33 @@ var AccountTypeAll = []AccountType{
 	AccountTypeExchange,
 	AccountTypeAccreditedInvestor,
 	AccountTypeInstitutionalInvestor,
+	AccountTypeVerified,
 }
 
 var accountTypeMap = map[int32]string{
-	1: "AccountTypeOperational",
-	2: "AccountTypeGeneral",
-	3: "AccountTypeCommission",
-	4: "AccountTypeMaster",
-	5: "AccountTypeNotVerified",
-	6: "AccountTypeSyndicate",
-	7: "AccountTypeExchange",
-	8: "AccountTypeAccreditedInvestor",
-	9: "AccountTypeInstitutionalInvestor",
+	1:  "AccountTypeOperational",
+	2:  "AccountTypeGeneral",
+	3:  "AccountTypeCommission",
+	4:  "AccountTypeMaster",
+	5:  "AccountTypeNotVerified",
+	6:  "AccountTypeSyndicate",
+	7:  "AccountTypeExchange",
+	8:  "AccountTypeAccreditedInvestor",
+	9:  "AccountTypeInstitutionalInvestor",
+	10: "AccountTypeVerified",
 }
 
 var accountTypeShortMap = map[int32]string{
-	1: "operational",
-	2: "general",
-	3: "commission",
-	4: "master",
-	5: "not_verified",
-	6: "syndicate",
-	7: "exchange",
-	8: "accredited_investor",
-	9: "institutional_investor",
+	1:  "operational",
+	2:  "general",
+	3:  "commission",
+	4:  "master",
+	5:  "not_verified",
+	6:  "syndicate",
+	7:  "exchange",
+	8:  "accredited_investor",
+	9:  "institutional_investor",
+	10: "verified",
 }
 
 var accountTypeRevMap = map[string]int32{
@@ -1353,6 +1358,7 @@ var accountTypeRevMap = map[string]int32{
 	"AccountTypeExchange":              7,
 	"AccountTypeAccreditedInvestor":    8,
 	"AccountTypeInstitutionalInvestor": 9,
+	"AccountTypeVerified":              10,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -1832,7 +1838,8 @@ type AssetPairEntry struct {
 //    	WITHDRAWABLE = 8,
 //    	TWO_STEP_WITHDRAWAL = 16,
 //    	REQUIRES_KYC = 32,
-//    	ISSUANCE_MANUAL_REVIEW_REQUIRED = 64
+//    	ISSUANCE_MANUAL_REVIEW_REQUIRED = 64,
+//    	REQUIRES_VERIFICATION = 128
 //    };
 //
 type AssetPolicy int32
@@ -1845,6 +1852,7 @@ const (
 	AssetPolicyTwoStepWithdrawal            AssetPolicy = 16
 	AssetPolicyRequiresKyc                  AssetPolicy = 32
 	AssetPolicyIssuanceManualReviewRequired AssetPolicy = 64
+	AssetPolicyRequiresVerification         AssetPolicy = 128
 )
 
 var AssetPolicyAll = []AssetPolicy{
@@ -1855,26 +1863,29 @@ var AssetPolicyAll = []AssetPolicy{
 	AssetPolicyTwoStepWithdrawal,
 	AssetPolicyRequiresKyc,
 	AssetPolicyIssuanceManualReviewRequired,
+	AssetPolicyRequiresVerification,
 }
 
 var assetPolicyMap = map[int32]string{
-	1:  "AssetPolicyTransferable",
-	2:  "AssetPolicyBaseAsset",
-	4:  "AssetPolicyStatsQuoteAsset",
-	8:  "AssetPolicyWithdrawable",
-	16: "AssetPolicyTwoStepWithdrawal",
-	32: "AssetPolicyRequiresKyc",
-	64: "AssetPolicyIssuanceManualReviewRequired",
+	1:   "AssetPolicyTransferable",
+	2:   "AssetPolicyBaseAsset",
+	4:   "AssetPolicyStatsQuoteAsset",
+	8:   "AssetPolicyWithdrawable",
+	16:  "AssetPolicyTwoStepWithdrawal",
+	32:  "AssetPolicyRequiresKyc",
+	64:  "AssetPolicyIssuanceManualReviewRequired",
+	128: "AssetPolicyRequiresVerification",
 }
 
 var assetPolicyShortMap = map[int32]string{
-	1:  "transferable",
-	2:  "base_asset",
-	4:  "stats_quote_asset",
-	8:  "withdrawable",
-	16: "two_step_withdrawal",
-	32: "requires_kyc",
-	64: "issuance_manual_review_required",
+	1:   "transferable",
+	2:   "base_asset",
+	4:   "stats_quote_asset",
+	8:   "withdrawable",
+	16:  "two_step_withdrawal",
+	32:  "requires_kyc",
+	64:  "issuance_manual_review_required",
+	128: "requires_verification",
 }
 
 var assetPolicyRevMap = map[string]int32{
@@ -1885,6 +1896,7 @@ var assetPolicyRevMap = map[string]int32{
 	"AssetPolicyTwoStepWithdrawal":            16,
 	"AssetPolicyRequiresKyc":                  32,
 	"AssetPolicyIssuanceManualReviewRequired": 64,
+	"AssetPolicyRequiresVerification":         128,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -12782,7 +12794,8 @@ type CreateIssuanceRequestOp struct {
 //    	RECEIVER_FULL_LINE = -7,
 //    	INVALID_EXTERNAL_DETAILS = -8, // external details size exceeds max allowed
 //    	FEE_EXCEEDS_AMOUNT = -9, // fee more than amount to issue
-//        REQUIRES_KYC = -10 // asset requires receiver to have KYC
+//        REQUIRES_KYC = -10, // asset requires receiver to have KYC
+//        REQUIRES_VERIFICATION = -11 //asset requires receiver to be verified
 //    };
 //
 type CreateIssuanceRequestResultCode int32
@@ -12799,6 +12812,7 @@ const (
 	CreateIssuanceRequestResultCodeInvalidExternalDetails   CreateIssuanceRequestResultCode = -8
 	CreateIssuanceRequestResultCodeFeeExceedsAmount         CreateIssuanceRequestResultCode = -9
 	CreateIssuanceRequestResultCodeRequiresKyc              CreateIssuanceRequestResultCode = -10
+	CreateIssuanceRequestResultCodeRequiresVerification     CreateIssuanceRequestResultCode = -11
 )
 
 var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
@@ -12813,6 +12827,7 @@ var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
 	CreateIssuanceRequestResultCodeInvalidExternalDetails,
 	CreateIssuanceRequestResultCodeFeeExceedsAmount,
 	CreateIssuanceRequestResultCodeRequiresKyc,
+	CreateIssuanceRequestResultCodeRequiresVerification,
 }
 
 var createIssuanceRequestResultCodeMap = map[int32]string{
@@ -12827,6 +12842,7 @@ var createIssuanceRequestResultCodeMap = map[int32]string{
 	-8:  "CreateIssuanceRequestResultCodeInvalidExternalDetails",
 	-9:  "CreateIssuanceRequestResultCodeFeeExceedsAmount",
 	-10: "CreateIssuanceRequestResultCodeRequiresKyc",
+	-11: "CreateIssuanceRequestResultCodeRequiresVerification",
 }
 
 var createIssuanceRequestResultCodeShortMap = map[int32]string{
@@ -12841,6 +12857,7 @@ var createIssuanceRequestResultCodeShortMap = map[int32]string{
 	-8:  "invalid_external_details",
 	-9:  "fee_exceeds_amount",
 	-10: "requires_kyc",
+	-11: "requires_verification",
 }
 
 var createIssuanceRequestResultCodeRevMap = map[string]int32{
@@ -12855,6 +12872,7 @@ var createIssuanceRequestResultCodeRevMap = map[string]int32{
 	"CreateIssuanceRequestResultCodeInvalidExternalDetails":   -8,
 	"CreateIssuanceRequestResultCodeFeeExceedsAmount":         -9,
 	"CreateIssuanceRequestResultCodeRequiresKyc":              -10,
+	"CreateIssuanceRequestResultCodeRequiresVerification":     -11,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -18919,7 +18937,8 @@ type ManageOfferOp struct {
 //    	SALE_IS_NOT_ACTIVE = -23,
 //    	REQUIRES_KYC = -24, // source must have KYC in order to participate
 //    	SOURCE_UNDERFUNDED = -25,
-//    	SOURCE_BALANCE_LOCK_OVERFLOW = -26
+//    	SOURCE_BALANCE_LOCK_OVERFLOW = -26,
+//    	REQUIRES_VERIFICATION = -27 // source must be verified in order to participate
 //    };
 //
 type ManageOfferResultCode int32
@@ -18952,6 +18971,7 @@ const (
 	ManageOfferResultCodeRequiresKyc               ManageOfferResultCode = -24
 	ManageOfferResultCodeSourceUnderfunded         ManageOfferResultCode = -25
 	ManageOfferResultCodeSourceBalanceLockOverflow ManageOfferResultCode = -26
+	ManageOfferResultCodeRequiresVerification      ManageOfferResultCode = -27
 )
 
 var ManageOfferResultCodeAll = []ManageOfferResultCode{
@@ -18982,6 +19002,7 @@ var ManageOfferResultCodeAll = []ManageOfferResultCode{
 	ManageOfferResultCodeRequiresKyc,
 	ManageOfferResultCodeSourceUnderfunded,
 	ManageOfferResultCodeSourceBalanceLockOverflow,
+	ManageOfferResultCodeRequiresVerification,
 }
 
 var manageOfferResultCodeMap = map[int32]string{
@@ -19012,6 +19033,7 @@ var manageOfferResultCodeMap = map[int32]string{
 	-24: "ManageOfferResultCodeRequiresKyc",
 	-25: "ManageOfferResultCodeSourceUnderfunded",
 	-26: "ManageOfferResultCodeSourceBalanceLockOverflow",
+	-27: "ManageOfferResultCodeRequiresVerification",
 }
 
 var manageOfferResultCodeShortMap = map[int32]string{
@@ -19042,6 +19064,7 @@ var manageOfferResultCodeShortMap = map[int32]string{
 	-24: "requires_kyc",
 	-25: "source_underfunded",
 	-26: "source_balance_lock_overflow",
+	-27: "requires_verification",
 }
 
 var manageOfferResultCodeRevMap = map[string]int32{
@@ -19072,6 +19095,7 @@ var manageOfferResultCodeRevMap = map[string]int32{
 	"ManageOfferResultCodeRequiresKyc":               -24,
 	"ManageOfferResultCodeSourceUnderfunded":         -25,
 	"ManageOfferResultCodeSourceBalanceLockOverflow": -26,
+	"ManageOfferResultCodeRequiresVerification":      -27,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
