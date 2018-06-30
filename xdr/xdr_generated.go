@@ -23212,12 +23212,15 @@ func (e *ReviewRequestResultCode) UnmarshalJSON(data []byte) error {
 //
 //   union switch (LedgerVersion v)
 //    		{
+//    		case ADD_SALE_ID_REVIEW_REQUEST_RESULT:
+//    		    uint64 saleID;
 //    		case EMPTY_VERSION:
 //    			void;
 //    		}
 //
 type ReviewRequestResultSuccessExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V      LedgerVersion `json:"v,omitempty"`
+	SaleId *Uint64       `json:"saleID,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -23230,6 +23233,8 @@ func (u ReviewRequestResultSuccessExt) SwitchFieldName() string {
 // the value for an instance of ReviewRequestResultSuccessExt
 func (u ReviewRequestResultSuccessExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
+	case LedgerVersionAddSaleIdReviewRequestResult:
+		return "SaleId", true
 	case LedgerVersionEmptyVersion:
 		return "", true
 	}
@@ -23240,9 +23245,41 @@ func (u ReviewRequestResultSuccessExt) ArmForSwitch(sw int32) (string, bool) {
 func NewReviewRequestResultSuccessExt(v LedgerVersion, value interface{}) (result ReviewRequestResultSuccessExt, err error) {
 	result.V = v
 	switch LedgerVersion(v) {
+	case LedgerVersionAddSaleIdReviewRequestResult:
+		tv, ok := value.(Uint64)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be Uint64")
+			return
+		}
+		result.SaleId = &tv
 	case LedgerVersionEmptyVersion:
 		// void
 	}
+	return
+}
+
+// MustSaleId retrieves the SaleId value from the union,
+// panicing if the value is not set.
+func (u ReviewRequestResultSuccessExt) MustSaleId() Uint64 {
+	val, ok := u.GetSaleId()
+
+	if !ok {
+		panic("arm SaleId is not set")
+	}
+
+	return val
+}
+
+// GetSaleId retrieves the SaleId value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewRequestResultSuccessExt) GetSaleId() (result Uint64, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "SaleId" {
+		result = *u.SaleId
+		ok = true
+	}
+
 	return
 }
 
@@ -23252,6 +23289,8 @@ func NewReviewRequestResultSuccessExt(v LedgerVersion, value interface{}) (resul
 //    		// reserved for future use
 //    		union switch (LedgerVersion v)
 //    		{
+//    		case ADD_SALE_ID_REVIEW_REQUEST_RESULT:
+//    		    uint64 saleID;
 //    		case EMPTY_VERSION:
 //    			void;
 //    		}
@@ -23271,6 +23310,8 @@ type ReviewRequestResultSuccess struct {
 //    		// reserved for future use
 //    		union switch (LedgerVersion v)
 //    		{
+//    		case ADD_SALE_ID_REVIEW_REQUEST_RESULT:
+//    		    uint64 saleID;
 //    		case EMPTY_VERSION:
 //    			void;
 //    		}
@@ -30121,7 +30162,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	STATABLE_SALES = 29,
 //    	CREATE_ONLY_STATISTICS_V2 = 30,
 //    	LIMITS_UPDATE_REQUEST_DEPRECATED_DOCUMENT_HASH = 31,
-//    	FIX_PAYMENT_V2_FEE = 32
+//    	FIX_PAYMENT_V2_FEE = 32,
+//    	ADD_SALE_ID_REVIEW_REQUEST_RESULT = 33
 //    };
 //
 type LedgerVersion int32
@@ -30160,6 +30202,7 @@ const (
 	LedgerVersionCreateOnlyStatisticsV2                           LedgerVersion = 30
 	LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash        LedgerVersion = 31
 	LedgerVersionFixPaymentV2Fee                                  LedgerVersion = 32
+	LedgerVersionAddSaleIdReviewRequestResult                     LedgerVersion = 33
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -30196,6 +30239,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionCreateOnlyStatisticsV2,
 	LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash,
 	LedgerVersionFixPaymentV2Fee,
+	LedgerVersionAddSaleIdReviewRequestResult,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -30232,6 +30276,7 @@ var ledgerVersionMap = map[int32]string{
 	30: "LedgerVersionCreateOnlyStatisticsV2",
 	31: "LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash",
 	32: "LedgerVersionFixPaymentV2Fee",
+	33: "LedgerVersionAddSaleIdReviewRequestResult",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -30268,6 +30313,7 @@ var ledgerVersionShortMap = map[int32]string{
 	30: "create_only_statistics_v2",
 	31: "limits_update_request_deprecated_document_hash",
 	32: "fix_payment_v2_fee",
+	33: "add_sale_id_review_request_result",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -30304,6 +30350,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionCreateOnlyStatisticsV2":                           30,
 	"LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash":        31,
 	"LedgerVersionFixPaymentV2Fee":                                  32,
+	"LedgerVersionAddSaleIdReviewRequestResult":                     33,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
