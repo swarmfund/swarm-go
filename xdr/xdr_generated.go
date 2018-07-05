@@ -55,9 +55,9 @@
 //  xdr/raw/Stellar-overlay.x
 //  xdr/raw/Stellar-reviewable-request-AML-alert.x
 //  xdr/raw/Stellar-reviewable-request-asset.x
+//  xdr/raw/Stellar-reviewable-request-invoice.x
 //  xdr/raw/Stellar-reviewable-request-issuance.x
 //  xdr/raw/Stellar-reviewable-request-limits-update.x
-//  xdr/raw/Stellar-reviewable-request-manage-invoice.x
 //  xdr/raw/Stellar-reviewable-request-sale.x
 //  xdr/raw/Stellar-reviewable-request-update-KYC.x
 //  xdr/raw/Stellar-reviewable-request-update-promotion.x
@@ -3780,7 +3780,7 @@ func (e *ReviewableRequestType) UnmarshalJSON(data []byte) error {
 //            case UPDATE_PROMOTION:
 //                PromotionUpdateRequest promotionUpdateRequest;
 //            case INVOICE:
-//                InvoiceRequestEntry invoiceRequestEntry;
+//                InvoiceRequest invoiceRequest;
 //    	}
 //
 type ReviewableRequestEntryBody struct {
@@ -3797,7 +3797,7 @@ type ReviewableRequestEntryBody struct {
 	UpdateKycRequest         *UpdateKycRequest         `json:"updateKYCRequest,omitempty"`
 	UpdateSaleDetailsRequest *UpdateSaleDetailsRequest `json:"updateSaleDetailsRequest,omitempty"`
 	PromotionUpdateRequest   *PromotionUpdateRequest   `json:"promotionUpdateRequest,omitempty"`
-	InvoiceRequestEntry      *InvoiceRequestEntry      `json:"invoiceRequestEntry,omitempty"`
+	InvoiceRequest           *InvoiceRequest           `json:"invoiceRequest,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -3835,7 +3835,7 @@ func (u ReviewableRequestEntryBody) ArmForSwitch(sw int32) (string, bool) {
 	case ReviewableRequestTypeUpdatePromotion:
 		return "PromotionUpdateRequest", true
 	case ReviewableRequestTypeInvoice:
-		return "InvoiceRequestEntry", true
+		return "InvoiceRequest", true
 	}
 	return "-", false
 }
@@ -3929,12 +3929,12 @@ func NewReviewableRequestEntryBody(aType ReviewableRequestType, value interface{
 		}
 		result.PromotionUpdateRequest = &tv
 	case ReviewableRequestTypeInvoice:
-		tv, ok := value.(InvoiceRequestEntry)
+		tv, ok := value.(InvoiceRequest)
 		if !ok {
-			err = fmt.Errorf("invalid value, must be InvoiceRequestEntry")
+			err = fmt.Errorf("invalid value, must be InvoiceRequest")
 			return
 		}
-		result.InvoiceRequestEntry = &tv
+		result.InvoiceRequest = &tv
 	}
 	return
 }
@@ -4239,25 +4239,25 @@ func (u ReviewableRequestEntryBody) GetPromotionUpdateRequest() (result Promotio
 	return
 }
 
-// MustInvoiceRequestEntry retrieves the InvoiceRequestEntry value from the union,
+// MustInvoiceRequest retrieves the InvoiceRequest value from the union,
 // panicing if the value is not set.
-func (u ReviewableRequestEntryBody) MustInvoiceRequestEntry() InvoiceRequestEntry {
-	val, ok := u.GetInvoiceRequestEntry()
+func (u ReviewableRequestEntryBody) MustInvoiceRequest() InvoiceRequest {
+	val, ok := u.GetInvoiceRequest()
 
 	if !ok {
-		panic("arm InvoiceRequestEntry is not set")
+		panic("arm InvoiceRequest is not set")
 	}
 
 	return val
 }
 
-// GetInvoiceRequestEntry retrieves the InvoiceRequestEntry value from the union,
+// GetInvoiceRequest retrieves the InvoiceRequest value from the union,
 // returning ok if the union's switch indicated the value is valid.
-func (u ReviewableRequestEntryBody) GetInvoiceRequestEntry() (result InvoiceRequestEntry, ok bool) {
+func (u ReviewableRequestEntryBody) GetInvoiceRequest() (result InvoiceRequest, ok bool) {
 	armName, _ := u.ArmForSwitch(int32(u.Type))
 
-	if armName == "InvoiceRequestEntry" {
-		result = *u.InvoiceRequestEntry
+	if armName == "InvoiceRequest" {
+		result = *u.InvoiceRequest
 		ok = true
 	}
 
@@ -4339,7 +4339,7 @@ func NewReviewableRequestEntryExt(v LedgerVersion, value interface{}) (result Re
 //            case UPDATE_PROMOTION:
 //                PromotionUpdateRequest promotionUpdateRequest;
 //            case INVOICE:
-//                InvoiceRequestEntry invoiceRequestEntry;
+//                InvoiceRequest invoiceRequest;
 //    	} body;
 //
 //    	// reserved for future use
@@ -26266,6 +26266,71 @@ type AssetChangePreissuedSigner struct {
 	Ext       AssetChangePreissuedSignerExt `json:"ext,omitempty"`
 }
 
+// InvoiceRequestExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type InvoiceRequestExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u InvoiceRequestExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of InvoiceRequestExt
+func (u InvoiceRequestExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewInvoiceRequestExt creates a new  InvoiceRequestExt.
+func NewInvoiceRequestExt(v LedgerVersion, value interface{}) (result InvoiceRequestExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// InvoiceRequest is an XDR Struct defines as:
+//
+//   struct InvoiceRequest
+//    {
+//        BalanceID receiverBalance;
+//        AccountID sender;
+//        uint64 amount; // not allowed to set 0
+//
+//        longstring details;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type InvoiceRequest struct {
+	ReceiverBalance BalanceId         `json:"receiverBalance,omitempty"`
+	Sender          AccountId         `json:"sender,omitempty"`
+	Amount          Uint64            `json:"amount,omitempty"`
+	Details         Longstring        `json:"details,omitempty"`
+	Ext             InvoiceRequestExt `json:"ext,omitempty"`
+}
+
 // PreIssuanceRequestExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -26487,131 +26552,6 @@ func (u LimitsUpdateRequestExt) GetDetails() (result Longstring, ok bool) {
 type LimitsUpdateRequest struct {
 	DeprecatedDocumentHash Hash                   `json:"deprecatedDocumentHash,omitempty"`
 	Ext                    LimitsUpdateRequestExt `json:"ext,omitempty"`
-}
-
-// InvoiceRequestExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//
-type InvoiceRequestExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u InvoiceRequestExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of InvoiceRequestExt
-func (u InvoiceRequestExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewInvoiceRequestExt creates a new  InvoiceRequestExt.
-func NewInvoiceRequestExt(v LedgerVersion, value interface{}) (result InvoiceRequestExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// InvoiceRequest is an XDR Struct defines as:
-//
-//   struct InvoiceRequest
-//    {
-//        BalanceID receiverBalance;
-//        AccountID sender;
-//        uint64 amount; // not allowed to set 0
-//
-//        longstring details;
-//
-//        // reserved for future use
-//        union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
-//    };
-//
-type InvoiceRequest struct {
-	ReceiverBalance BalanceId         `json:"receiverBalance,omitempty"`
-	Sender          AccountId         `json:"sender,omitempty"`
-	Amount          Uint64            `json:"amount,omitempty"`
-	Details         Longstring        `json:"details,omitempty"`
-	Ext             InvoiceRequestExt `json:"ext,omitempty"`
-}
-
-// InvoiceRequestEntryExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//
-type InvoiceRequestEntryExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u InvoiceRequestEntryExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of InvoiceRequestEntryExt
-func (u InvoiceRequestEntryExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewInvoiceRequestEntryExt creates a new  InvoiceRequestEntryExt.
-func NewInvoiceRequestEntryExt(v LedgerVersion, value interface{}) (result InvoiceRequestEntryExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// InvoiceRequestEntry is an XDR Struct defines as:
-//
-//   struct InvoiceRequestEntry
-//    {
-//        AccountID receiverAccount;
-//        InvoiceRequest invoiceRequest;
-//
-//        // reserved for future use
-//        union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
-//    };
-//
-type InvoiceRequestEntry struct {
-	ReceiverAccount AccountId              `json:"receiverAccount,omitempty"`
-	InvoiceRequest  InvoiceRequest         `json:"invoiceRequest,omitempty"`
-	Ext             InvoiceRequestEntryExt `json:"ext,omitempty"`
 }
 
 // SaleCreationRequestQuoteAssetExt is an XDR NestedUnion defines as:
@@ -27413,7 +27353,7 @@ type WithdrawalRequest struct {
 //    		ManageAssetPairOp manageAssetPairOp;
 //    	case MANAGE_OFFER:
 //    		ManageOfferOp manageOfferOp;
-//        case INVOICE_REQUEST:
+//        case MANAGE_INVOICE_REQUEST:
 //            ManageInvoiceRequestOp manageInvoiceRequestOp;
 //    	case REVIEW_REQUEST:
 //    		ReviewRequestOp reviewRequestOp;
@@ -27513,7 +27453,7 @@ func (u OperationBody) ArmForSwitch(sw int32) (string, bool) {
 		return "ManageAssetPairOp", true
 	case OperationTypeManageOffer:
 		return "ManageOfferOp", true
-	case OperationTypeInvoiceRequest:
+	case OperationTypeManageInvoiceRequest:
 		return "ManageInvoiceRequestOp", true
 	case OperationTypeReviewRequest:
 		return "ReviewRequestOp", true
@@ -27652,7 +27592,7 @@ func NewOperationBody(aType OperationType, value interface{}) (result OperationB
 			return
 		}
 		result.ManageOfferOp = &tv
-	case OperationTypeInvoiceRequest:
+	case OperationTypeManageInvoiceRequest:
 		tv, ok := value.(ManageInvoiceRequestOp)
 		if !ok {
 			err = fmt.Errorf("invalid value, must be ManageInvoiceRequestOp")
@@ -28488,7 +28428,7 @@ func (u OperationBody) GetBillPayOp() (result BillPayOp, ok bool) {
 //    		ManageAssetPairOp manageAssetPairOp;
 //    	case MANAGE_OFFER:
 //    		ManageOfferOp manageOfferOp;
-//        case INVOICE_REQUEST:
+//        case MANAGE_INVOICE_REQUEST:
 //            ManageInvoiceRequestOp manageInvoiceRequestOp;
 //    	case REVIEW_REQUEST:
 //    		ReviewRequestOp reviewRequestOp;
@@ -29094,7 +29034,7 @@ func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
 //    		ManageAssetPairResult manageAssetPairResult;
 //    	case MANAGE_OFFER:
 //    		ManageOfferResult manageOfferResult;
-//    	case INVOICE_REQUEST:
+//    	case MANAGE_INVOICE_REQUEST:
 //    		ManageInvoiceRequestResult manageInvoiceRequestResult;
 //    	case REVIEW_REQUEST:
 //    		ReviewRequestResult reviewRequestResult;
@@ -29194,7 +29134,7 @@ func (u OperationResultTr) ArmForSwitch(sw int32) (string, bool) {
 		return "ManageAssetPairResult", true
 	case OperationTypeManageOffer:
 		return "ManageOfferResult", true
-	case OperationTypeInvoiceRequest:
+	case OperationTypeManageInvoiceRequest:
 		return "ManageInvoiceRequestResult", true
 	case OperationTypeReviewRequest:
 		return "ReviewRequestResult", true
@@ -29333,7 +29273,7 @@ func NewOperationResultTr(aType OperationType, value interface{}) (result Operat
 			return
 		}
 		result.ManageOfferResult = &tv
-	case OperationTypeInvoiceRequest:
+	case OperationTypeManageInvoiceRequest:
 		tv, ok := value.(ManageInvoiceRequestResult)
 		if !ok {
 			err = fmt.Errorf("invalid value, must be ManageInvoiceRequestResult")
@@ -30165,7 +30105,7 @@ func (u OperationResultTr) GetBillPayResult() (result BillPayResult, ok bool) {
 //    		ManageAssetPairResult manageAssetPairResult;
 //    	case MANAGE_OFFER:
 //    		ManageOfferResult manageOfferResult;
-//    	case INVOICE_REQUEST:
+//    	case MANAGE_INVOICE_REQUEST:
 //    		ManageInvoiceRequestResult manageInvoiceRequestResult;
 //    	case REVIEW_REQUEST:
 //    		ReviewRequestResult reviewRequestResult;
@@ -31458,7 +31398,7 @@ type Fee struct {
 //        DIRECT_DEBIT = 14,
 //    	MANAGE_ASSET_PAIR = 15,
 //    	MANAGE_OFFER = 16,
-//        INVOICE_REQUEST = 17,
+//        MANAGE_INVOICE_REQUEST = 17,
 //    	REVIEW_REQUEST = 18,
 //    	CREATE_SALE_REQUEST = 19,
 //    	CHECK_SALE_STATE = 20,
@@ -31491,7 +31431,7 @@ const (
 	OperationTypeDirectDebit                            OperationType = 14
 	OperationTypeManageAssetPair                        OperationType = 15
 	OperationTypeManageOffer                            OperationType = 16
-	OperationTypeInvoiceRequest                         OperationType = 17
+	OperationTypeManageInvoiceRequest                   OperationType = 17
 	OperationTypeReviewRequest                          OperationType = 18
 	OperationTypeCreateSaleRequest                      OperationType = 19
 	OperationTypeCheckSaleState                         OperationType = 20
@@ -31522,7 +31462,7 @@ var OperationTypeAll = []OperationType{
 	OperationTypeDirectDebit,
 	OperationTypeManageAssetPair,
 	OperationTypeManageOffer,
-	OperationTypeInvoiceRequest,
+	OperationTypeManageInvoiceRequest,
 	OperationTypeReviewRequest,
 	OperationTypeCreateSaleRequest,
 	OperationTypeCheckSaleState,
@@ -31553,7 +31493,7 @@ var operationTypeMap = map[int32]string{
 	14: "OperationTypeDirectDebit",
 	15: "OperationTypeManageAssetPair",
 	16: "OperationTypeManageOffer",
-	17: "OperationTypeInvoiceRequest",
+	17: "OperationTypeManageInvoiceRequest",
 	18: "OperationTypeReviewRequest",
 	19: "OperationTypeCreateSaleRequest",
 	20: "OperationTypeCheckSaleState",
@@ -31584,7 +31524,7 @@ var operationTypeShortMap = map[int32]string{
 	14: "direct_debit",
 	15: "manage_asset_pair",
 	16: "manage_offer",
-	17: "invoice_request",
+	17: "manage_invoice_request",
 	18: "review_request",
 	19: "create_sale_request",
 	20: "check_sale_state",
@@ -31615,7 +31555,7 @@ var operationTypeRevMap = map[string]int32{
 	"OperationTypeDirectDebit":                            14,
 	"OperationTypeManageAssetPair":                        15,
 	"OperationTypeManageOffer":                            16,
-	"OperationTypeInvoiceRequest":                         17,
+	"OperationTypeManageInvoiceRequest":                   17,
 	"OperationTypeReviewRequest":                          18,
 	"OperationTypeCreateSaleRequest":                      19,
 	"OperationTypeCheckSaleState":                         20,
