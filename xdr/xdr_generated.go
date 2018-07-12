@@ -30438,7 +30438,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	CREATE_ONLY_STATISTICS_V2 = 30,
 //    	LIMITS_UPDATE_REQUEST_DEPRECATED_DOCUMENT_HASH = 31,
 //    	FIX_PAYMENT_V2_FEE = 32,
-//    	ADD_SALE_ID_REVIEW_REQUEST_RESULT = 33
+//    	ADD_SALE_ID_REVIEW_REQUEST_RESULT = 33,
+//    	FIX_SET_SALE_STATE_AND_CHECK_SALE_STATE_OPS = 34 // only master allowed to set sale state, max issuance after sale closure = pending + issued
 //    };
 //
 type LedgerVersion int32
@@ -30478,6 +30479,7 @@ const (
 	LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash        LedgerVersion = 31
 	LedgerVersionFixPaymentV2Fee                                  LedgerVersion = 32
 	LedgerVersionAddSaleIdReviewRequestResult                     LedgerVersion = 33
+	LedgerVersionFixSetSaleStateAndCheckSaleStateOps              LedgerVersion = 34
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -30515,6 +30517,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash,
 	LedgerVersionFixPaymentV2Fee,
 	LedgerVersionAddSaleIdReviewRequestResult,
+	LedgerVersionFixSetSaleStateAndCheckSaleStateOps,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -30552,6 +30555,7 @@ var ledgerVersionMap = map[int32]string{
 	31: "LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash",
 	32: "LedgerVersionFixPaymentV2Fee",
 	33: "LedgerVersionAddSaleIdReviewRequestResult",
+	34: "LedgerVersionFixSetSaleStateAndCheckSaleStateOps",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -30589,6 +30593,7 @@ var ledgerVersionShortMap = map[int32]string{
 	31: "limits_update_request_deprecated_document_hash",
 	32: "fix_payment_v2_fee",
 	33: "add_sale_id_review_request_result",
+	34: "fix_set_sale_state_and_check_sale_state_ops",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -30626,6 +30631,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionLimitsUpdateRequestDeprecatedDocumentHash":        31,
 	"LedgerVersionFixPaymentV2Fee":                                  32,
 	"LedgerVersionAddSaleIdReviewRequestResult":                     33,
+	"LedgerVersionFixSetSaleStateAndCheckSaleStateOps":              34,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
