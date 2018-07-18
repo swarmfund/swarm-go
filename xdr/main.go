@@ -70,6 +70,7 @@ func MarshalBase64(v interface{}) (string, error) {
 	return base64.StdEncoding.EncodeToString(raw.Bytes()), nil
 }
 
+// MustMarshalBase64 return marshaled string, panic if error
 func MustMarshalBase64(v interface{}) string {
 	result, err := MarshalBase64(v)
 	if err != nil {
@@ -78,7 +79,6 @@ func MustMarshalBase64(v interface{}) string {
 
 	return result
 }
-
 
 type countWriter struct {
 	Count int
