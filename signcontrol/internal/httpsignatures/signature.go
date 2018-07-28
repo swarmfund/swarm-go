@@ -135,10 +135,6 @@ func (s *Signature) sign(key interface{}, r *http.Request) error {
 
 // IsValid validates this signature for the given key
 func (s Signature) IsValid(r *http.Request) bool {
-	if !s.Headers.hasDate() {
-		return false
-	}
-
 	signingString, err := s.Headers.signingString(r)
 	if err != nil {
 		return false
