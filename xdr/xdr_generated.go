@@ -3777,7 +3777,8 @@ type ReferenceEntry struct {
 //    	UPDATE_KYC = 9,
 //    	UPDATE_SALE_DETAILS = 10,
 //    	UPDATE_PROMOTION = 11,
-//    	UPDATE_SALE_END_TIME = 12
+//    	UPDATE_SALE_END_TIME = 12,
+//    	NONE = 13 // use this request type in ReviewRequestOp extended result if additional info is not required
 //    };
 //
 type ReviewableRequestType int32
@@ -3796,6 +3797,7 @@ const (
 	ReviewableRequestTypeUpdateSaleDetails ReviewableRequestType = 10
 	ReviewableRequestTypeUpdatePromotion   ReviewableRequestType = 11
 	ReviewableRequestTypeUpdateSaleEndTime ReviewableRequestType = 12
+	ReviewableRequestTypeNone              ReviewableRequestType = 13
 )
 
 var ReviewableRequestTypeAll = []ReviewableRequestType{
@@ -3812,6 +3814,7 @@ var ReviewableRequestTypeAll = []ReviewableRequestType{
 	ReviewableRequestTypeUpdateSaleDetails,
 	ReviewableRequestTypeUpdatePromotion,
 	ReviewableRequestTypeUpdateSaleEndTime,
+	ReviewableRequestTypeNone,
 }
 
 var reviewableRequestTypeMap = map[int32]string{
@@ -3828,6 +3831,7 @@ var reviewableRequestTypeMap = map[int32]string{
 	10: "ReviewableRequestTypeUpdateSaleDetails",
 	11: "ReviewableRequestTypeUpdatePromotion",
 	12: "ReviewableRequestTypeUpdateSaleEndTime",
+	13: "ReviewableRequestTypeNone",
 }
 
 var reviewableRequestTypeShortMap = map[int32]string{
@@ -3844,6 +3848,7 @@ var reviewableRequestTypeShortMap = map[int32]string{
 	10: "update_sale_details",
 	11: "update_promotion",
 	12: "update_sale_end_time",
+	13: "none",
 }
 
 var reviewableRequestTypeRevMap = map[string]int32{
@@ -3860,6 +3865,7 @@ var reviewableRequestTypeRevMap = map[string]int32{
 	"ReviewableRequestTypeUpdateSaleDetails": 10,
 	"ReviewableRequestTypeUpdatePromotion":   11,
 	"ReviewableRequestTypeUpdateSaleEndTime": 12,
+	"ReviewableRequestTypeNone":              13,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -23213,6 +23219,8 @@ type SaleExtended struct {
 //   union switch(ReviewableRequestType requestType) {
 //        case SALE:
 //            SaleExtended saleExtended;
+//        case NONE:
+//            void;
 //        }
 //
 type ExtendedResultTypeExt struct {
@@ -23232,6 +23240,8 @@ func (u ExtendedResultTypeExt) ArmForSwitch(sw int32) (string, bool) {
 	switch ReviewableRequestType(sw) {
 	case ReviewableRequestTypeSale:
 		return "SaleExtended", true
+	case ReviewableRequestTypeNone:
+		return "", true
 	}
 	return "-", false
 }
@@ -23247,6 +23257,8 @@ func NewExtendedResultTypeExt(requestType ReviewableRequestType, value interface
 			return
 		}
 		result.SaleExtended = &tv
+	case ReviewableRequestTypeNone:
+		// void
 	}
 	return
 }
@@ -23322,6 +23334,8 @@ func NewExtendedResultExt(v LedgerVersion, value interface{}) (result ExtendedRe
 //        union switch(ReviewableRequestType requestType) {
 //        case SALE:
 //            SaleExtended saleExtended;
+//        case NONE:
+//            void;
 //        } typeExt;
 //
 //       // Reserved for future use
