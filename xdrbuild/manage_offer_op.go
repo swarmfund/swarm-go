@@ -6,6 +6,9 @@ import (
 	"gitlab.com/tokend/go/xdr"
 )
 
+// ManageOfferOp should not be constructed directly,
+// one should use CreateOffer or DeleteOffer function
+// for constructing a ManageOfferOp instance.
 type ManageOfferOp struct {
 	BaseBalance  string
 	QuoteBalance string
@@ -75,6 +78,19 @@ func (op ManageOfferOp) XDR() (*xdr.Operation, error) {
 	return xdrOp, nil
 }
 
+func (op ManageOfferOp) GetLoganFields() map[string]interface{} {
+	return map[string]interface{}{
+		"base_balance":  op.BaseBalance,
+		"quote_balance": op.QuoteBalance,
+		"is_buy":        op.IsBuy,
+		"amount":        op.Amount,
+		"price":         op.Price,
+		"fee":           op.Fee,
+		"offer_id":      op.OfferID,
+	}
+}
+
+// CreateOffer is a constructor for ManageOfferOp for creating new Offer.
 func CreateOffer(baseBalance, quoteBalance string, isBuy bool, amount int64, price int64, fee int64) *ManageOfferOp {
 	return &ManageOfferOp{
 		BaseBalance:  baseBalance,
@@ -86,6 +102,8 @@ func CreateOffer(baseBalance, quoteBalance string, isBuy bool, amount int64, pri
 	}
 }
 
+// DeleteOffer is a constructor for ManageOfferOp
+// for deleting the Offer with provided offerID.
 func DeleteOffer(offerID uint64) *ManageOfferOp {
 	return &ManageOfferOp{
 		OfferID: offerID,
