@@ -46,16 +46,21 @@ func (op ManageOfferOp) Validate() error {
 }
 
 func (op ManageOfferOp) XDR() (*xdr.Operation, error) {
-	var baseBalance, quoteBalance xdr.BalanceId
-	if len(op.BaseBalance) != 0 {
-		if err := baseBalance.SetString(op.BaseBalance); err != nil {
-			return nil, errors.Wrap(err, "failed to set base BalanceID")
-		}
+	if len(op.BaseBalance) == 0 {
+		// Just a random BalanceID, during Delete Offer the value will not be taken into account, but won't work without a valid BalanceID.
+		op.BaseBalance = "BBQJLW43UPKJSS67OXGAHJKZ4RM7JMQ6P7FCJEOMBC5GMYT3XQARZI54"
 	}
-	if len(op.QuoteBalance) != 0 {
-		if err := quoteBalance.SetString(op.QuoteBalance); err != nil {
-			return nil, errors.Wrap(err, "failed to set quote BalanceID")
-		}
+	if len(op.QuoteBalance) == 0 {
+		// Just a random BalanceID, during Delete Offer the value will not be taken into account, but won't work without a valid BalanceID.
+		op.QuoteBalance = "BBQJLW43UPKJSS67OXGAHJKZ4RM7JMQ6P7FCJEOMBC5GMYT3XQARZI54"
+	}
+
+	var baseBalance, quoteBalance xdr.BalanceId
+	if err := baseBalance.SetString(op.BaseBalance); err != nil {
+		return nil, errors.Wrap(err, "failed to set base BalanceID")
+	}
+	if err := quoteBalance.SetString(op.QuoteBalance); err != nil {
+		return nil, errors.Wrap(err, "failed to set quote BalanceID")
 	}
 
 	xdrOp := &xdr.Operation{
