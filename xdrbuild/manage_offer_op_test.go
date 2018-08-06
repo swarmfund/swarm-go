@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gitlab.com/tokend/go/xdr"
 )
 
 func TestManageOfferOp_XDR(t *testing.T) {
@@ -34,8 +35,12 @@ func TestManageOfferOp_XDR(t *testing.T) {
 		assert.NoError(t, err)
 		body := got.Body.ManageOfferOp
 
-		assert.Nil(t,body.BaseBalance.Ed25519)
-		assert.Nil(t,body.QuoteBalance.Ed25519)
+		var baseBalance, quoteBalance xdr.BalanceId
+		baseBalance.SetString("BBQJLW43UPKJSS67OXGAHJKZ4RM7JMQ6P7FCJEOMBC5GMYT3XQARZI54")
+		quoteBalance.SetString("BBQJLW43UPKJSS67OXGAHJKZ4RM7JMQ6P7FCJEOMBC5GMYT3XQARZI54")
+
+		assert.EqualValues(t,body.BaseBalance, baseBalance)
+		assert.EqualValues(t,body.QuoteBalance, quoteBalance)
 
 		assert.EqualValues(t, int64(0), int64(body.Amount))
 		assert.EqualValues(t, int64(0), int64(body.Price))
