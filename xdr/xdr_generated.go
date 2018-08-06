@@ -2334,7 +2334,8 @@ type ExternalSystemAccountId struct {
 //    	OFFER_FEE = 1,
 //        WITHDRAWAL_FEE = 2,
 //        ISSUANCE_FEE = 3,
-//        INVEST_FEE = 4 // fee to be taken while creating sale participation
+//        INVEST_FEE = 4, // fee to be taken while creating sale participation
+//        OPERATION_FEE = 5
 //    };
 //
 type FeeType int32
@@ -2345,6 +2346,7 @@ const (
 	FeeTypeWithdrawalFee FeeType = 2
 	FeeTypeIssuanceFee   FeeType = 3
 	FeeTypeInvestFee     FeeType = 4
+	FeeTypeOperationFee  FeeType = 5
 )
 
 var FeeTypeAll = []FeeType{
@@ -2353,6 +2355,7 @@ var FeeTypeAll = []FeeType{
 	FeeTypeWithdrawalFee,
 	FeeTypeIssuanceFee,
 	FeeTypeInvestFee,
+	FeeTypeOperationFee,
 }
 
 var feeTypeMap = map[int32]string{
@@ -2361,6 +2364,7 @@ var feeTypeMap = map[int32]string{
 	2: "FeeTypeWithdrawalFee",
 	3: "FeeTypeIssuanceFee",
 	4: "FeeTypeInvestFee",
+	5: "FeeTypeOperationFee",
 }
 
 var feeTypeShortMap = map[int32]string{
@@ -2369,6 +2373,7 @@ var feeTypeShortMap = map[int32]string{
 	2: "withdrawal_fee",
 	3: "issuance_fee",
 	4: "invest_fee",
+	5: "operation_fee",
 }
 
 var feeTypeRevMap = map[string]int32{
@@ -2377,6 +2382,7 @@ var feeTypeRevMap = map[string]int32{
 	"FeeTypeWithdrawalFee": 2,
 	"FeeTypeIssuanceFee":   3,
 	"FeeTypeInvestFee":     4,
+	"FeeTypeOperationFee":  5,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -20713,10 +20719,13 @@ func (u ManageSaleResultSuccessResponse) GetUpdateEndTimeRequestId() (result Uin
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ALLOW_TO_UPDATE_VOTING_SALES_AS_PROMOTION:
+//            bool fulfilled; // can be used for any reviewable request type created with manage sale operation
 //        }
 //
 type ManageSaleResultSuccessExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V         LedgerVersion `json:"v,omitempty"`
+	Fulfilled *bool         `json:"fulfilled,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -20731,6 +20740,8 @@ func (u ManageSaleResultSuccessExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionAllowToUpdateVotingSalesAsPromotion:
+		return "Fulfilled", true
 	}
 	return "-", false
 }
@@ -20741,7 +20752,39 @@ func NewManageSaleResultSuccessExt(v LedgerVersion, value interface{}) (result M
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionAllowToUpdateVotingSalesAsPromotion:
+		tv, ok := value.(bool)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be bool")
+			return
+		}
+		result.Fulfilled = &tv
 	}
+	return
+}
+
+// MustFulfilled retrieves the Fulfilled value from the union,
+// panicing if the value is not set.
+func (u ManageSaleResultSuccessExt) MustFulfilled() bool {
+	val, ok := u.GetFulfilled()
+
+	if !ok {
+		panic("arm Fulfilled is not set")
+	}
+
+	return val
+}
+
+// GetFulfilled retrieves the Fulfilled value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ManageSaleResultSuccessExt) GetFulfilled() (result bool, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "Fulfilled" {
+		result = *u.Fulfilled
+		ok = true
+	}
+
 	return
 }
 
@@ -20762,11 +20805,13 @@ func NewManageSaleResultSuccessExt(v LedgerVersion, value interface{}) (result M
 //    	    uint64 updateEndTimeRequestID;
 //        } response;
 //
-//        //reserved for future use
+//        // reserved for future use
 //        union switch (LedgerVersion v)
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ALLOW_TO_UPDATE_VOTING_SALES_AS_PROMOTION:
+//            bool fulfilled; // can be used for any reviewable request type created with manage sale operation
 //        }
 //        ext;
 //    };
@@ -28431,10 +28476,13 @@ type TimeBounds struct {
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_TRANSACTION_FEE:
+//            uint64 maxTotalFee;
 //        }
 //
 type TransactionExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V           LedgerVersion `json:"v,omitempty"`
+	MaxTotalFee *Uint64       `json:"maxTotalFee,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -28449,6 +28497,8 @@ func (u TransactionExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionAddTransactionFee:
+		return "MaxTotalFee", true
 	}
 	return "-", false
 }
@@ -28459,7 +28509,39 @@ func NewTransactionExt(v LedgerVersion, value interface{}) (result TransactionEx
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionAddTransactionFee:
+		tv, ok := value.(Uint64)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be Uint64")
+			return
+		}
+		result.MaxTotalFee = &tv
 	}
+	return
+}
+
+// MustMaxTotalFee retrieves the MaxTotalFee value from the union,
+// panicing if the value is not set.
+func (u TransactionExt) MustMaxTotalFee() Uint64 {
+	val, ok := u.GetMaxTotalFee()
+
+	if !ok {
+		panic("arm MaxTotalFee is not set")
+	}
+
+	return val
+}
+
+// GetMaxTotalFee retrieves the MaxTotalFee value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u TransactionExt) GetMaxTotalFee() (result Uint64, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "MaxTotalFee" {
+		result = *u.MaxTotalFee
+		ok = true
+	}
+
 	return
 }
 
@@ -28484,6 +28566,8 @@ func NewTransactionExt(v LedgerVersion, value interface{}) (result TransactionEx
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_TRANSACTION_FEE:
+//            uint64 maxTotalFee;
 //        }
 //        ext;
 //    };
@@ -29825,26 +29909,32 @@ func (u OperationResult) GetTr() (result OperationResultTr, ok bool) {
 //
 //        txBAD_AUTH = -5,             // too few valid signatures / wrong network
 //        txNO_ACCOUNT = -6,           // source account not found
-//        txBAD_AUTH_EXTRA = -7,      // unused signatures attached to transaction
-//        txINTERNAL_ERROR = -8,      // an unknown error occured
-//    	txACCOUNT_BLOCKED = -9,     // account is blocked and cannot be source of tx
-//        txDUPLICATION = -10         // if timing is stored
+//        txBAD_AUTH_EXTRA = -7,       // unused signatures attached to transaction
+//        txINTERNAL_ERROR = -8,       // an unknown error occured
+//    	txACCOUNT_BLOCKED = -9,      // account is blocked and cannot be source of tx
+//        txDUPLICATION = -10,         // if timing is stored
+//        txINSUFFICIENT_FEE = -11,    // the actual total fee amount is greater than the max total fee amount, provided by the source
+//        txSOURCE_UNDERFUNDED = -12,  // not enough tx fee asset on source balance
+//        txCOMMISSION_LINE_FULL = -13 // commission tx fee asset balance amount overflow
 //    };
 //
 type TransactionResultCode int32
 
 const (
-	TransactionResultCodeTxSuccess          TransactionResultCode = 0
-	TransactionResultCodeTxFailed           TransactionResultCode = -1
-	TransactionResultCodeTxTooEarly         TransactionResultCode = -2
-	TransactionResultCodeTxTooLate          TransactionResultCode = -3
-	TransactionResultCodeTxMissingOperation TransactionResultCode = -4
-	TransactionResultCodeTxBadAuth          TransactionResultCode = -5
-	TransactionResultCodeTxNoAccount        TransactionResultCode = -6
-	TransactionResultCodeTxBadAuthExtra     TransactionResultCode = -7
-	TransactionResultCodeTxInternalError    TransactionResultCode = -8
-	TransactionResultCodeTxAccountBlocked   TransactionResultCode = -9
-	TransactionResultCodeTxDuplication      TransactionResultCode = -10
+	TransactionResultCodeTxSuccess            TransactionResultCode = 0
+	TransactionResultCodeTxFailed             TransactionResultCode = -1
+	TransactionResultCodeTxTooEarly           TransactionResultCode = -2
+	TransactionResultCodeTxTooLate            TransactionResultCode = -3
+	TransactionResultCodeTxMissingOperation   TransactionResultCode = -4
+	TransactionResultCodeTxBadAuth            TransactionResultCode = -5
+	TransactionResultCodeTxNoAccount          TransactionResultCode = -6
+	TransactionResultCodeTxBadAuthExtra       TransactionResultCode = -7
+	TransactionResultCodeTxInternalError      TransactionResultCode = -8
+	TransactionResultCodeTxAccountBlocked     TransactionResultCode = -9
+	TransactionResultCodeTxDuplication        TransactionResultCode = -10
+	TransactionResultCodeTxInsufficientFee    TransactionResultCode = -11
+	TransactionResultCodeTxSourceUnderfunded  TransactionResultCode = -12
+	TransactionResultCodeTxCommissionLineFull TransactionResultCode = -13
 )
 
 var TransactionResultCodeAll = []TransactionResultCode{
@@ -29859,6 +29949,9 @@ var TransactionResultCodeAll = []TransactionResultCode{
 	TransactionResultCodeTxInternalError,
 	TransactionResultCodeTxAccountBlocked,
 	TransactionResultCodeTxDuplication,
+	TransactionResultCodeTxInsufficientFee,
+	TransactionResultCodeTxSourceUnderfunded,
+	TransactionResultCodeTxCommissionLineFull,
 }
 
 var transactionResultCodeMap = map[int32]string{
@@ -29873,6 +29966,9 @@ var transactionResultCodeMap = map[int32]string{
 	-8:  "TransactionResultCodeTxInternalError",
 	-9:  "TransactionResultCodeTxAccountBlocked",
 	-10: "TransactionResultCodeTxDuplication",
+	-11: "TransactionResultCodeTxInsufficientFee",
+	-12: "TransactionResultCodeTxSourceUnderfunded",
+	-13: "TransactionResultCodeTxCommissionLineFull",
 }
 
 var transactionResultCodeShortMap = map[int32]string{
@@ -29887,20 +29983,26 @@ var transactionResultCodeShortMap = map[int32]string{
 	-8:  "tx_internal_error",
 	-9:  "tx_account_blocked",
 	-10: "tx_duplication",
+	-11: "tx_insufficient_fee",
+	-12: "tx_source_underfunded",
+	-13: "tx_commission_line_full",
 }
 
 var transactionResultCodeRevMap = map[string]int32{
-	"TransactionResultCodeTxSuccess":          0,
-	"TransactionResultCodeTxFailed":           -1,
-	"TransactionResultCodeTxTooEarly":         -2,
-	"TransactionResultCodeTxTooLate":          -3,
-	"TransactionResultCodeTxMissingOperation": -4,
-	"TransactionResultCodeTxBadAuth":          -5,
-	"TransactionResultCodeTxNoAccount":        -6,
-	"TransactionResultCodeTxBadAuthExtra":     -7,
-	"TransactionResultCodeTxInternalError":    -8,
-	"TransactionResultCodeTxAccountBlocked":   -9,
-	"TransactionResultCodeTxDuplication":      -10,
+	"TransactionResultCodeTxSuccess":            0,
+	"TransactionResultCodeTxFailed":             -1,
+	"TransactionResultCodeTxTooEarly":           -2,
+	"TransactionResultCodeTxTooLate":            -3,
+	"TransactionResultCodeTxMissingOperation":   -4,
+	"TransactionResultCodeTxBadAuth":            -5,
+	"TransactionResultCodeTxNoAccount":          -6,
+	"TransactionResultCodeTxBadAuthExtra":       -7,
+	"TransactionResultCodeTxInternalError":      -8,
+	"TransactionResultCodeTxAccountBlocked":     -9,
+	"TransactionResultCodeTxDuplication":        -10,
+	"TransactionResultCodeTxInsufficientFee":    -11,
+	"TransactionResultCodeTxSourceUnderfunded":  -12,
+	"TransactionResultCodeTxCommissionLineFull": -13,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -29962,6 +30064,126 @@ func (e *TransactionResultCode) UnmarshalJSON(data []byte) error {
 	}
 	*e = TransactionResultCode(t.Value)
 	return nil
+}
+
+// OperationFeeExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type OperationFeeExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u OperationFeeExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of OperationFeeExt
+func (u OperationFeeExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewOperationFeeExt creates a new  OperationFeeExt.
+func NewOperationFeeExt(v LedgerVersion, value interface{}) (result OperationFeeExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// OperationFee is an XDR Struct defines as:
+//
+//   struct OperationFee
+//    {
+//        Operation operation;
+//        uint64 amount;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type OperationFee struct {
+	Operation Operation       `json:"operation,omitempty"`
+	Amount    Uint64          `json:"amount,omitempty"`
+	Ext       OperationFeeExt `json:"ext,omitempty"`
+}
+
+// TransactionFeeExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type TransactionFeeExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u TransactionFeeExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of TransactionFeeExt
+func (u TransactionFeeExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewTransactionFeeExt creates a new  TransactionFeeExt.
+func NewTransactionFeeExt(v LedgerVersion, value interface{}) (result TransactionFeeExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// TransactionFee is an XDR Struct defines as:
+//
+//   struct TransactionFee
+//    {
+//        AssetCode assetCode;
+//        OperationFee operationFees<100>;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type TransactionFee struct {
+	AssetCode     AssetCode         `json:"assetCode,omitempty"`
+	OperationFees []OperationFee    `json:"operationFees,omitempty" xdrmaxsize:"100"`
+	Ext           TransactionFeeExt `json:"ext,omitempty"`
 }
 
 // TransactionResultResult is an XDR NestedUnion defines as:
@@ -30054,10 +30276,13 @@ func (u TransactionResultResult) GetResults() (result []OperationResult, ok bool
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_TRANSACTION_FEE:
+//            TransactionFee transactionFee;
 //        }
 //
 type TransactionResultExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V              LedgerVersion   `json:"v,omitempty"`
+	TransactionFee *TransactionFee `json:"transactionFee,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -30072,6 +30297,8 @@ func (u TransactionResultExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionAddTransactionFee:
+		return "TransactionFee", true
 	}
 	return "-", false
 }
@@ -30082,7 +30309,39 @@ func NewTransactionResultExt(v LedgerVersion, value interface{}) (result Transac
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionAddTransactionFee:
+		tv, ok := value.(TransactionFee)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be TransactionFee")
+			return
+		}
+		result.TransactionFee = &tv
 	}
+	return
+}
+
+// MustTransactionFee retrieves the TransactionFee value from the union,
+// panicing if the value is not set.
+func (u TransactionResultExt) MustTransactionFee() TransactionFee {
+	val, ok := u.GetTransactionFee()
+
+	if !ok {
+		panic("arm TransactionFee is not set")
+	}
+
+	return val
+}
+
+// GetTransactionFee retrieves the TransactionFee value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u TransactionResultExt) GetTransactionFee() (result TransactionFee, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "TransactionFee" {
+		result = *u.TransactionFee
+		ok = true
+	}
+
 	return
 }
 
@@ -30107,6 +30366,8 @@ func NewTransactionResultExt(v LedgerVersion, value interface{}) (result Transac
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_TRANSACTION_FEE:
+//            TransactionFee transactionFee;
 //        }
 //        ext;
 //    };
@@ -30439,7 +30700,13 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	LIMITS_UPDATE_REQUEST_DEPRECATED_DOCUMENT_HASH = 31,
 //    	FIX_PAYMENT_V2_FEE = 32,
 //    	ADD_SALE_ID_REVIEW_REQUEST_RESULT = 33,
-//    	FIX_SET_SALE_STATE_AND_CHECK_SALE_STATE_OPS = 34 // only master allowed to set sale state, max issuance after sale closure = pending + issued
+//    	FIX_SET_SALE_STATE_AND_CHECK_SALE_STATE_OPS = 34, // only master allowed to set sale state, max issuance after sale closure = pending + issued
+//    	FIX_UPDATE_MAX_ISSUANCE = 35,
+//    	ALLOW_CLOSE_SALE_WITH_NON_ZERO_BALANCE = 36,
+//    	ALLOW_TO_UPDATE_VOTING_SALES_AS_PROMOTION = 37,
+//    	ALLOW_TO_ISSUE_AFTER_SALE = 38,
+//    	FIX_PAYMENT_V2_SEND_TO_SELF = 39,
+//    	ADD_TRANSACTION_FEE = 40
 //    };
 //
 type LedgerVersion int32
@@ -30480,6 +30747,12 @@ const (
 	LedgerVersionFixPaymentV2Fee                                  LedgerVersion = 32
 	LedgerVersionAddSaleIdReviewRequestResult                     LedgerVersion = 33
 	LedgerVersionFixSetSaleStateAndCheckSaleStateOps              LedgerVersion = 34
+	LedgerVersionFixUpdateMaxIssuance                             LedgerVersion = 35
+	LedgerVersionAllowCloseSaleWithNonZeroBalance                 LedgerVersion = 36
+	LedgerVersionAllowToUpdateVotingSalesAsPromotion              LedgerVersion = 37
+	LedgerVersionAllowToIssueAfterSale                            LedgerVersion = 38
+	LedgerVersionFixPaymentV2SendToSelf                           LedgerVersion = 39
+	LedgerVersionAddTransactionFee                                LedgerVersion = 40
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -30518,6 +30791,12 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionFixPaymentV2Fee,
 	LedgerVersionAddSaleIdReviewRequestResult,
 	LedgerVersionFixSetSaleStateAndCheckSaleStateOps,
+	LedgerVersionFixUpdateMaxIssuance,
+	LedgerVersionAllowCloseSaleWithNonZeroBalance,
+	LedgerVersionAllowToUpdateVotingSalesAsPromotion,
+	LedgerVersionAllowToIssueAfterSale,
+	LedgerVersionFixPaymentV2SendToSelf,
+	LedgerVersionAddTransactionFee,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -30556,6 +30835,12 @@ var ledgerVersionMap = map[int32]string{
 	32: "LedgerVersionFixPaymentV2Fee",
 	33: "LedgerVersionAddSaleIdReviewRequestResult",
 	34: "LedgerVersionFixSetSaleStateAndCheckSaleStateOps",
+	35: "LedgerVersionFixUpdateMaxIssuance",
+	36: "LedgerVersionAllowCloseSaleWithNonZeroBalance",
+	37: "LedgerVersionAllowToUpdateVotingSalesAsPromotion",
+	38: "LedgerVersionAllowToIssueAfterSale",
+	39: "LedgerVersionFixPaymentV2SendToSelf",
+	40: "LedgerVersionAddTransactionFee",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -30594,6 +30879,12 @@ var ledgerVersionShortMap = map[int32]string{
 	32: "fix_payment_v2_fee",
 	33: "add_sale_id_review_request_result",
 	34: "fix_set_sale_state_and_check_sale_state_ops",
+	35: "fix_update_max_issuance",
+	36: "allow_close_sale_with_non_zero_balance",
+	37: "allow_to_update_voting_sales_as_promotion",
+	38: "allow_to_issue_after_sale",
+	39: "fix_payment_v2_send_to_self",
+	40: "add_transaction_fee",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -30632,6 +30923,12 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionFixPaymentV2Fee":                                  32,
 	"LedgerVersionAddSaleIdReviewRequestResult":                     33,
 	"LedgerVersionFixSetSaleStateAndCheckSaleStateOps":              34,
+	"LedgerVersionFixUpdateMaxIssuance":                             35,
+	"LedgerVersionAllowCloseSaleWithNonZeroBalance":                 36,
+	"LedgerVersionAllowToUpdateVotingSalesAsPromotion":              37,
+	"LedgerVersionAllowToIssueAfterSale":                            38,
+	"LedgerVersionFixPaymentV2SendToSelf":                           39,
+	"LedgerVersionAddTransactionFee":                                40,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
