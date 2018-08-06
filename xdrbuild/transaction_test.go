@@ -98,4 +98,16 @@ func TestTransaction_Marshal(t *testing.T) {
 		assert.EqualValues(t, 20, got.Tx.TimeBounds.MaxTime)
 	})
 
+	t.Run("max total fee", func(t *testing.T) {
+		envelope, err := builder.Transaction(source).MaxTotalFee(100).Marshal()
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got xdr.TransactionEnvelope
+		if err := xdr.SafeUnmarshalBase64(envelope, &got); err != nil {
+			t.Fatal(err)
+		}
+		assert.EqualValues(t, 100, got.Tx.Ext.MustMaxTotalFee())
+	})
+
 }
