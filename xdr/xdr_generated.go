@@ -1430,7 +1430,8 @@ func (e *AccountType) UnmarshalJSON(data []byte) error {
 //    	RECOVERY_REQUEST = 1,
 //    	KYC_UPDATE = 2,
 //    	SUSPICIOUS_BEHAVIOR = 4,
-//    	TOO_MANY_KYC_UPDATE_REQUESTS = 8
+//    	TOO_MANY_KYC_UPDATE_REQUESTS = 8,
+//    	WITHDRAWAL = 16
 //    };
 //
 type BlockReasons int32
@@ -1440,6 +1441,7 @@ const (
 	BlockReasonsKycUpdate                BlockReasons = 2
 	BlockReasonsSuspiciousBehavior       BlockReasons = 4
 	BlockReasonsTooManyKycUpdateRequests BlockReasons = 8
+	BlockReasonsWithdrawal               BlockReasons = 16
 )
 
 var BlockReasonsAll = []BlockReasons{
@@ -1447,20 +1449,23 @@ var BlockReasonsAll = []BlockReasons{
 	BlockReasonsKycUpdate,
 	BlockReasonsSuspiciousBehavior,
 	BlockReasonsTooManyKycUpdateRequests,
+	BlockReasonsWithdrawal,
 }
 
 var blockReasonsMap = map[int32]string{
-	1: "BlockReasonsRecoveryRequest",
-	2: "BlockReasonsKycUpdate",
-	4: "BlockReasonsSuspiciousBehavior",
-	8: "BlockReasonsTooManyKycUpdateRequests",
+	1:  "BlockReasonsRecoveryRequest",
+	2:  "BlockReasonsKycUpdate",
+	4:  "BlockReasonsSuspiciousBehavior",
+	8:  "BlockReasonsTooManyKycUpdateRequests",
+	16: "BlockReasonsWithdrawal",
 }
 
 var blockReasonsShortMap = map[int32]string{
-	1: "recovery_request",
-	2: "kyc_update",
-	4: "suspicious_behavior",
-	8: "too_many_kyc_update_requests",
+	1:  "recovery_request",
+	2:  "kyc_update",
+	4:  "suspicious_behavior",
+	8:  "too_many_kyc_update_requests",
+	16: "withdrawal",
 }
 
 var blockReasonsRevMap = map[string]int32{
@@ -1468,6 +1473,7 @@ var blockReasonsRevMap = map[string]int32{
 	"BlockReasonsKycUpdate":                2,
 	"BlockReasonsSuspiciousBehavior":       4,
 	"BlockReasonsTooManyKycUpdateRequests": 8,
+	"BlockReasonsWithdrawal":               16,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
