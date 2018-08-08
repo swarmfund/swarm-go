@@ -1,0 +1,69 @@
+package xdrbuild
+
+import (
+	"encoding/json"
+
+	. "github.com/go-ozzo/ozzo-validation"
+	"github.com/pkg/errors"
+	"gitlab.com/tokend/go/xdr"
+)
+
+type (
+	AssetDetails struct {
+		ExternalSystemType int    `json:"external_system_type,string"`
+		Name               string `json:"name"`
+	}
+	CreateAssetOp struct {
+		AssetSigner       string
+		MaxIssuanceAmount uint64
+		PreIssuanceAmount uint64
+		Policies          uint32
+		Code              string
+		Details           AssetDetails
+	}
+)
+
+func (ca CreateAssetOp) Validate() error {
+	return ValidateStruct(&ca,
+		Field(&ca.Code, Required),
+		Field(&ca.AssetSigner, Required),
+		Field(&ca.Policies, Required),
+		Field(&ca.PreIssuanceAmount, Required),
+		Field(&ca.MaxIssuanceAmount, Required),
+	)
+}
+
+func (ca CreateAssetOp) XDR() (*xdr.Operation, error) {
+	var signer xdr.AccountId
+	err := signer.SetAddress(ca.AssetSigner)
+	if err != nil {
+		return nil, errors.Wrap(err, "invalid signer")
+	}
+
+	details, err := json.Marshal(ca.Details)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't marshal details")
+	}
+
+	op := &xdr.Operation{
+		Body: xdr.OperationBody{
+			Type: xdr.OperationTypeManageAsset,
+			ManageAssetOp: &xdr.ManageAssetOp{
+				RequestId: 0,
+				Request: xdr.ManageAssetOpRequest{
+					Action: xdr.ManageAssetActionCreateAssetCreationRequest,
+					CreateAsset: &xdr.AssetCreationRequest{
+						PreissuedAssetSigner:   signer,
+						Details:                xdr.Longstring(details),
+						MaxIssuanceAmount:      xdr.Uint64(ca.MaxIssuanceAmount),
+						InitialPreissuedAmount: xdr.Uint64(ca.PreIssuanceAmount),
+						Policies:               xdr.Uint32(ca.Policies),
+						Code:                   xdr.AssetCode(ca.Code),
+					},
+				},
+			},
+		},
+	}
+
+	return op, nil
+}
