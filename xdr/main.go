@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"gitlab.com/distributed_lab/logan/v3/errors"
 )
 
 // Keyer represents a type that can be converted into a LedgerKey
@@ -67,6 +68,16 @@ func MarshalBase64(v interface{}) (string, error) {
 	}
 
 	return base64.StdEncoding.EncodeToString(raw.Bytes()), nil
+}
+
+// MustMarshalBase64 return marshaled string, panic if error
+func MustMarshalBase64(v interface{}) string {
+	result, err := MarshalBase64(v)
+	if err != nil {
+		panic(errors.Wrap(err, "failed to marshal base 64"))
+	}
+
+	return result
 }
 
 type countWriter struct {
