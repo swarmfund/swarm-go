@@ -1430,7 +1430,8 @@ func (e *AccountType) UnmarshalJSON(data []byte) error {
 //    	RECOVERY_REQUEST = 1,
 //    	KYC_UPDATE = 2,
 //    	SUSPICIOUS_BEHAVIOR = 4,
-//    	TOO_MANY_KYC_UPDATE_REQUESTS = 8
+//    	TOO_MANY_KYC_UPDATE_REQUESTS = 8,
+//    	WITHDRAWAL = 16
 //    };
 //
 type BlockReasons int32
@@ -1440,6 +1441,7 @@ const (
 	BlockReasonsKycUpdate                BlockReasons = 2
 	BlockReasonsSuspiciousBehavior       BlockReasons = 4
 	BlockReasonsTooManyKycUpdateRequests BlockReasons = 8
+	BlockReasonsWithdrawal               BlockReasons = 16
 )
 
 var BlockReasonsAll = []BlockReasons{
@@ -1447,20 +1449,23 @@ var BlockReasonsAll = []BlockReasons{
 	BlockReasonsKycUpdate,
 	BlockReasonsSuspiciousBehavior,
 	BlockReasonsTooManyKycUpdateRequests,
+	BlockReasonsWithdrawal,
 }
 
 var blockReasonsMap = map[int32]string{
-	1: "BlockReasonsRecoveryRequest",
-	2: "BlockReasonsKycUpdate",
-	4: "BlockReasonsSuspiciousBehavior",
-	8: "BlockReasonsTooManyKycUpdateRequests",
+	1:  "BlockReasonsRecoveryRequest",
+	2:  "BlockReasonsKycUpdate",
+	4:  "BlockReasonsSuspiciousBehavior",
+	8:  "BlockReasonsTooManyKycUpdateRequests",
+	16: "BlockReasonsWithdrawal",
 }
 
 var blockReasonsShortMap = map[int32]string{
-	1: "recovery_request",
-	2: "kyc_update",
-	4: "suspicious_behavior",
-	8: "too_many_kyc_update_requests",
+	1:  "recovery_request",
+	2:  "kyc_update",
+	4:  "suspicious_behavior",
+	8:  "too_many_kyc_update_requests",
+	16: "withdrawal",
 }
 
 var blockReasonsRevMap = map[string]int32{
@@ -1468,6 +1473,7 @@ var blockReasonsRevMap = map[string]int32{
 	"BlockReasonsKycUpdate":                2,
 	"BlockReasonsSuspiciousBehavior":       4,
 	"BlockReasonsTooManyKycUpdateRequests": 8,
+	"BlockReasonsWithdrawal":               16,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -30481,7 +30487,9 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	FIX_SET_SALE_STATE_AND_CHECK_SALE_STATE_OPS = 34, // only master allowed to set sale state, max issuance after sale closure = pending + issued
 //    	FIX_UPDATE_MAX_ISSUANCE = 35,
 //    	ALLOW_CLOSE_SALE_WITH_NON_ZERO_BALANCE = 36,
-//    	ALLOW_TO_UPDATE_VOTING_SALES_AS_PROMOTION = 37
+//    	ALLOW_TO_UPDATE_VOTING_SALES_AS_PROMOTION = 37,
+//    	ALLOW_TO_ISSUE_AFTER_SALE = 38,
+//    	FIX_PAYMENT_V2_SEND_TO_SELF = 39
 //    };
 //
 type LedgerVersion int32
@@ -30525,6 +30533,8 @@ const (
 	LedgerVersionFixUpdateMaxIssuance                             LedgerVersion = 35
 	LedgerVersionAllowCloseSaleWithNonZeroBalance                 LedgerVersion = 36
 	LedgerVersionAllowToUpdateVotingSalesAsPromotion              LedgerVersion = 37
+	LedgerVersionAllowToIssueAfterSale                            LedgerVersion = 38
+	LedgerVersionFixPaymentV2SendToSelf                           LedgerVersion = 39
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -30566,6 +30576,8 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionFixUpdateMaxIssuance,
 	LedgerVersionAllowCloseSaleWithNonZeroBalance,
 	LedgerVersionAllowToUpdateVotingSalesAsPromotion,
+	LedgerVersionAllowToIssueAfterSale,
+	LedgerVersionFixPaymentV2SendToSelf,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -30607,6 +30619,8 @@ var ledgerVersionMap = map[int32]string{
 	35: "LedgerVersionFixUpdateMaxIssuance",
 	36: "LedgerVersionAllowCloseSaleWithNonZeroBalance",
 	37: "LedgerVersionAllowToUpdateVotingSalesAsPromotion",
+	38: "LedgerVersionAllowToIssueAfterSale",
+	39: "LedgerVersionFixPaymentV2SendToSelf",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -30648,6 +30662,8 @@ var ledgerVersionShortMap = map[int32]string{
 	35: "fix_update_max_issuance",
 	36: "allow_close_sale_with_non_zero_balance",
 	37: "allow_to_update_voting_sales_as_promotion",
+	38: "allow_to_issue_after_sale",
+	39: "fix_payment_v2_send_to_self",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -30689,6 +30705,8 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionFixUpdateMaxIssuance":                             35,
 	"LedgerVersionAllowCloseSaleWithNonZeroBalance":                 36,
 	"LedgerVersionAllowToUpdateVotingSalesAsPromotion":              37,
+	"LedgerVersionAllowToIssueAfterSale":                            38,
+	"LedgerVersionFixPaymentV2SendToSelf":                           39,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
