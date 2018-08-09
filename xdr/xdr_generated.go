@@ -15,7 +15,6 @@
 //  xdr/raw/Stellar-ledger-entries-key-value.x
 //  xdr/raw/Stellar-ledger-entries-limits-v2.x
 //  xdr/raw/Stellar-ledger-entries-offer.x
-//  xdr/raw/Stellar-ledger-entries-payment-request.x
 //  xdr/raw/Stellar-ledger-entries-pending-statistics.x
 //  xdr/raw/Stellar-ledger-entries-reference.x
 //  xdr/raw/Stellar-ledger-entries-reviewable-request.x
@@ -50,7 +49,6 @@
 //  xdr/raw/Stellar-operation-manage-sale.x
 //  xdr/raw/Stellar-operation-payment-v2.x
 //  xdr/raw/Stellar-operation-payment.x
-//  xdr/raw/Stellar-operation-review-payment-request.x
 //  xdr/raw/Stellar-operation-review-request.x
 //  xdr/raw/Stellar-operation-set-fees.x
 //  xdr/raw/Stellar-operation-set-options.x
@@ -2214,7 +2212,6 @@ type BalanceEntry struct {
 //        NO_CONFIRMATIONS = 0,
 //        CUSTOMER_CONFIRMED = 1,
 //        CONTRACTOR_CONFIRMED = 2,
-//        BOTH_CONFIRMED = 3,
 //        DISPUTING = 4
 //    };
 //
@@ -2224,7 +2221,6 @@ const (
 	ContractStateNoConfirmations     ContractState = 0
 	ContractStateCustomerConfirmed   ContractState = 1
 	ContractStateContractorConfirmed ContractState = 2
-	ContractStateBothConfirmed       ContractState = 3
 	ContractStateDisputing           ContractState = 4
 )
 
@@ -2232,7 +2228,6 @@ var ContractStateAll = []ContractState{
 	ContractStateNoConfirmations,
 	ContractStateCustomerConfirmed,
 	ContractStateContractorConfirmed,
-	ContractStateBothConfirmed,
 	ContractStateDisputing,
 }
 
@@ -2240,7 +2235,6 @@ var contractStateMap = map[int32]string{
 	0: "ContractStateNoConfirmations",
 	1: "ContractStateCustomerConfirmed",
 	2: "ContractStateContractorConfirmed",
-	3: "ContractStateBothConfirmed",
 	4: "ContractStateDisputing",
 }
 
@@ -2248,7 +2242,6 @@ var contractStateShortMap = map[int32]string{
 	0: "no_confirmations",
 	1: "customer_confirmed",
 	2: "contractor_confirmed",
-	3: "both_confirmed",
 	4: "disputing",
 }
 
@@ -2256,7 +2249,6 @@ var contractStateRevMap = map[string]int32{
 	"ContractStateNoConfirmations":     0,
 	"ContractStateCustomerConfirmed":   1,
 	"ContractStateContractorConfirmed": 2,
-	"ContractStateBothConfirmed":       3,
 	"ContractStateDisputing":           4,
 }
 
@@ -2505,6 +2497,7 @@ func NewContractEntryExt(v LedgerVersion, value interface{}) (result ContractEnt
 //        uint64 startTime;
 //        uint64 endTime;
 //        longstring details<>;
+//        uint64 invoiceRequestsIDs<>;
 //
 //        union switch (ContractState state)
 //        {
@@ -2524,15 +2517,16 @@ func NewContractEntryExt(v LedgerVersion, value interface{}) (result ContractEnt
 //    };
 //
 type ContractEntry struct {
-	ContractId Uint64                 `json:"contractID,omitempty"`
-	Contractor AccountId              `json:"contractor,omitempty"`
-	Customer   AccountId              `json:"customer,omitempty"`
-	Escrow     AccountId              `json:"escrow,omitempty"`
-	StartTime  Uint64                 `json:"startTime,omitempty"`
-	EndTime    Uint64                 `json:"endTime,omitempty"`
-	Details    []Longstring           `json:"details,omitempty"`
-	StateInfo  ContractEntryStateInfo `json:"stateInfo,omitempty"`
-	Ext        ContractEntryExt       `json:"ext,omitempty"`
+	ContractId         Uint64                 `json:"contractID,omitempty"`
+	Contractor         AccountId              `json:"contractor,omitempty"`
+	Customer           AccountId              `json:"customer,omitempty"`
+	Escrow             AccountId              `json:"escrow,omitempty"`
+	StartTime          Uint64                 `json:"startTime,omitempty"`
+	EndTime            Uint64                 `json:"endTime,omitempty"`
+	Details            []Longstring           `json:"details,omitempty"`
+	InvoiceRequestsIDs []Uint64               `json:"invoiceRequestsIDs,omitempty"`
+	StateInfo          ContractEntryStateInfo `json:"stateInfo,omitempty"`
+	Ext                ContractEntryExt       `json:"ext,omitempty"`
 }
 
 // ExternalSystemAccountIdPoolEntryExt is an XDR NestedUnion defines as:
@@ -3628,188 +3622,6 @@ type OfferEntry struct {
 	PercentFee   Int64         `json:"percentFee,omitempty"`
 	Price        Int64         `json:"price,omitempty"`
 	Ext          OfferEntryExt `json:"ext,omitempty"`
-}
-
-// RequestType is an XDR Enum defines as:
-//
-//   enum RequestType
-//    {
-//        REQUEST_TYPE_SALE = 0,
-//        REQUEST_TYPE_WITHDRAWAL = 1,
-//        REQUEST_TYPE_REDEEM = 2,
-//        REQUEST_TYPE_PAYMENT = 3
-//    };
-//
-type RequestType int32
-
-const (
-	RequestTypeRequestTypeSale       RequestType = 0
-	RequestTypeRequestTypeWithdrawal RequestType = 1
-	RequestTypeRequestTypeRedeem     RequestType = 2
-	RequestTypeRequestTypePayment    RequestType = 3
-)
-
-var RequestTypeAll = []RequestType{
-	RequestTypeRequestTypeSale,
-	RequestTypeRequestTypeWithdrawal,
-	RequestTypeRequestTypeRedeem,
-	RequestTypeRequestTypePayment,
-}
-
-var requestTypeMap = map[int32]string{
-	0: "RequestTypeRequestTypeSale",
-	1: "RequestTypeRequestTypeWithdrawal",
-	2: "RequestTypeRequestTypeRedeem",
-	3: "RequestTypeRequestTypePayment",
-}
-
-var requestTypeShortMap = map[int32]string{
-	0: "request_type_sale",
-	1: "request_type_withdrawal",
-	2: "request_type_redeem",
-	3: "request_type_payment",
-}
-
-var requestTypeRevMap = map[string]int32{
-	"RequestTypeRequestTypeSale":       0,
-	"RequestTypeRequestTypeWithdrawal": 1,
-	"RequestTypeRequestTypeRedeem":     2,
-	"RequestTypeRequestTypePayment":    3,
-}
-
-// ValidEnum validates a proposed value for this enum.  Implements
-// the Enum interface for RequestType
-func (e RequestType) ValidEnum(v int32) bool {
-	_, ok := requestTypeMap[v]
-	return ok
-}
-func (e RequestType) isFlag() bool {
-	for i := len(RequestTypeAll) - 1; i >= 0; i-- {
-		expected := RequestType(2) << uint64(len(RequestTypeAll)-1) >> uint64(len(RequestTypeAll)-i)
-		if expected != RequestTypeAll[i] {
-			return false
-		}
-	}
-	return true
-}
-
-// String returns the name of `e`
-func (e RequestType) String() string {
-	name, _ := requestTypeMap[int32(e)]
-	return name
-}
-
-func (e RequestType) ShortString() string {
-	name, _ := requestTypeShortMap[int32(e)]
-	return name
-}
-
-func (e RequestType) MarshalJSON() ([]byte, error) {
-	if e.isFlag() {
-		// marshal as mask
-		result := flag{
-			Value: int32(e),
-		}
-		for _, value := range RequestTypeAll {
-			if (value & e) == value {
-				result.Flags = append(result.Flags, flagValue{
-					Value: int32(value),
-					Name:  value.ShortString(),
-				})
-			}
-		}
-		return json.Marshal(&result)
-	} else {
-		// marshal as enum
-		result := enum{
-			Value:  int32(e),
-			String: e.ShortString(),
-		}
-		return json.Marshal(&result)
-	}
-}
-
-func (e *RequestType) UnmarshalJSON(data []byte) error {
-	var t value
-	if err := json.Unmarshal(data, &t); err != nil {
-		return err
-	}
-	*e = RequestType(t.Value)
-	return nil
-}
-
-// PaymentRequestEntryExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//
-type PaymentRequestEntryExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u PaymentRequestEntryExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of PaymentRequestEntryExt
-func (u PaymentRequestEntryExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewPaymentRequestEntryExt creates a new  PaymentRequestEntryExt.
-func NewPaymentRequestEntryExt(v LedgerVersion, value interface{}) (result PaymentRequestEntryExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// PaymentRequestEntry is an XDR Struct defines as:
-//
-//   struct PaymentRequestEntry
-//    {
-//        uint64 paymentID;
-//        BalanceID sourceBalance;
-//        BalanceID* destinationBalance;
-//        int64 sourceSend;
-//        int64 sourceSendUniversal;
-//        int64 destinationReceive;
-//
-//        uint64 createdAt;
-//
-//        uint64* invoiceID;
-//
-//    	// reserved for future use
-//        union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
-//    };
-//
-type PaymentRequestEntry struct {
-	PaymentId           Uint64                 `json:"paymentID,omitempty"`
-	SourceBalance       BalanceId              `json:"sourceBalance,omitempty"`
-	DestinationBalance  *BalanceId             `json:"destinationBalance,omitempty"`
-	SourceSend          Int64                  `json:"sourceSend,omitempty"`
-	SourceSendUniversal Int64                  `json:"sourceSendUniversal,omitempty"`
-	DestinationReceive  Int64                  `json:"destinationReceive,omitempty"`
-	CreatedAt           Uint64                 `json:"createdAt,omitempty"`
-	InvoiceId           *Uint64                `json:"invoiceID,omitempty"`
-	Ext                 PaymentRequestEntryExt `json:"ext,omitempty"`
 }
 
 // PendingStatisticsEntryExt is an XDR NestedUnion defines as:
@@ -6005,8 +5817,6 @@ func (e *LedgerEntryType) UnmarshalJSON(data []byte) error {
 //            FeeEntry feeState;
 //        case BALANCE:
 //            BalanceEntry balance;
-//        case PAYMENT_REQUEST:
-//            PaymentRequestEntry paymentRequest;
 //        case ASSET:
 //            AssetEntry asset;
 //        case REFERENCE_ENTRY:
@@ -6052,7 +5862,6 @@ type LedgerEntryData struct {
 	Account                          *AccountEntry                     `json:"account,omitempty"`
 	FeeState                         *FeeEntry                         `json:"feeState,omitempty"`
 	Balance                          *BalanceEntry                     `json:"balance,omitempty"`
-	PaymentRequest                   *PaymentRequestEntry              `json:"paymentRequest,omitempty"`
 	Asset                            *AssetEntry                       `json:"asset,omitempty"`
 	Reference                        *ReferenceEntry                   `json:"reference,omitempty"`
 	AccountTypeLimits                *AccountTypeLimitsEntry           `json:"accountTypeLimits,omitempty"`
@@ -6090,8 +5899,6 @@ func (u LedgerEntryData) ArmForSwitch(sw int32) (string, bool) {
 		return "FeeState", true
 	case LedgerEntryTypeBalance:
 		return "Balance", true
-	case LedgerEntryTypePaymentRequest:
-		return "PaymentRequest", true
 	case LedgerEntryTypeAsset:
 		return "Asset", true
 	case LedgerEntryTypeReferenceEntry:
@@ -6159,13 +5966,6 @@ func NewLedgerEntryData(aType LedgerEntryType, value interface{}) (result Ledger
 			return
 		}
 		result.Balance = &tv
-	case LedgerEntryTypePaymentRequest:
-		tv, ok := value.(PaymentRequestEntry)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be PaymentRequestEntry")
-			return
-		}
-		result.PaymentRequest = &tv
 	case LedgerEntryTypeAsset:
 		tv, ok := value.(AssetEntry)
 		if !ok {
@@ -6372,31 +6172,6 @@ func (u LedgerEntryData) GetBalance() (result BalanceEntry, ok bool) {
 
 	if armName == "Balance" {
 		result = *u.Balance
-		ok = true
-	}
-
-	return
-}
-
-// MustPaymentRequest retrieves the PaymentRequest value from the union,
-// panicing if the value is not set.
-func (u LedgerEntryData) MustPaymentRequest() PaymentRequestEntry {
-	val, ok := u.GetPaymentRequest()
-
-	if !ok {
-		panic("arm PaymentRequest is not set")
-	}
-
-	return val
-}
-
-// GetPaymentRequest retrieves the PaymentRequest value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u LedgerEntryData) GetPaymentRequest() (result PaymentRequestEntry, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Type))
-
-	if armName == "PaymentRequest" {
-		result = *u.PaymentRequest
 		ok = true
 	}
 
@@ -6930,8 +6705,6 @@ func NewLedgerEntryExt(v LedgerVersion, value interface{}) (result LedgerEntryEx
 //            FeeEntry feeState;
 //        case BALANCE:
 //            BalanceEntry balance;
-//        case PAYMENT_REQUEST:
-//            PaymentRequestEntry paymentRequest;
 //        case ASSET:
 //            AssetEntry asset;
 //        case REFERENCE_ENTRY:
@@ -7820,62 +7593,6 @@ func NewLedgerKeyBalanceExt(v LedgerVersion, value interface{}) (result LedgerKe
 type LedgerKeyBalance struct {
 	BalanceId BalanceId           `json:"balanceID,omitempty"`
 	Ext       LedgerKeyBalanceExt `json:"ext,omitempty"`
-}
-
-// LedgerKeyPaymentRequestExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//    		{
-//    		case EMPTY_VERSION:
-//    			void;
-//    		}
-//
-type LedgerKeyPaymentRequestExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u LedgerKeyPaymentRequestExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of LedgerKeyPaymentRequestExt
-func (u LedgerKeyPaymentRequestExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewLedgerKeyPaymentRequestExt creates a new  LedgerKeyPaymentRequestExt.
-func NewLedgerKeyPaymentRequestExt(v LedgerVersion, value interface{}) (result LedgerKeyPaymentRequestExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// LedgerKeyPaymentRequest is an XDR NestedStruct defines as:
-//
-//   struct
-//        {
-//    		uint64 paymentID;
-//    		union switch (LedgerVersion v)
-//    		{
-//    		case EMPTY_VERSION:
-//    			void;
-//    		}
-//    		ext;
-//        }
-//
-type LedgerKeyPaymentRequest struct {
-	PaymentId Uint64                     `json:"paymentID,omitempty"`
-	Ext       LedgerKeyPaymentRequestExt `json:"ext,omitempty"`
 }
 
 // LedgerKeyAssetExt is an XDR NestedUnion defines as:
@@ -8930,17 +8647,6 @@ type LedgerKeyContract struct {
 //    		}
 //    		ext;
 //        } balance;
-//    case PAYMENT_REQUEST:
-//        struct
-//        {
-//    		uint64 paymentID;
-//    		union switch (LedgerVersion v)
-//    		{
-//    		case EMPTY_VERSION:
-//    			void;
-//    		}
-//    		ext;
-//        } paymentRequest;
 //    case ASSET:
 //        struct
 //        {
@@ -9139,7 +8845,6 @@ type LedgerKey struct {
 	Account                          *LedgerKeyAccount                          `json:"account,omitempty"`
 	FeeState                         *LedgerKeyFeeState                         `json:"feeState,omitempty"`
 	Balance                          *LedgerKeyBalance                          `json:"balance,omitempty"`
-	PaymentRequest                   *LedgerKeyPaymentRequest                   `json:"paymentRequest,omitempty"`
 	Asset                            *LedgerKeyAsset                            `json:"asset,omitempty"`
 	Reference                        *LedgerKeyReference                        `json:"reference,omitempty"`
 	AccountTypeLimits                *LedgerKeyAccountTypeLimits                `json:"accountTypeLimits,omitempty"`
@@ -9177,8 +8882,6 @@ func (u LedgerKey) ArmForSwitch(sw int32) (string, bool) {
 		return "FeeState", true
 	case LedgerEntryTypeBalance:
 		return "Balance", true
-	case LedgerEntryTypePaymentRequest:
-		return "PaymentRequest", true
 	case LedgerEntryTypeAsset:
 		return "Asset", true
 	case LedgerEntryTypeReferenceEntry:
@@ -9246,13 +8949,6 @@ func NewLedgerKey(aType LedgerEntryType, value interface{}) (result LedgerKey, e
 			return
 		}
 		result.Balance = &tv
-	case LedgerEntryTypePaymentRequest:
-		tv, ok := value.(LedgerKeyPaymentRequest)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be LedgerKeyPaymentRequest")
-			return
-		}
-		result.PaymentRequest = &tv
 	case LedgerEntryTypeAsset:
 		tv, ok := value.(LedgerKeyAsset)
 		if !ok {
@@ -9459,31 +9155,6 @@ func (u LedgerKey) GetBalance() (result LedgerKeyBalance, ok bool) {
 
 	if armName == "Balance" {
 		result = *u.Balance
-		ok = true
-	}
-
-	return
-}
-
-// MustPaymentRequest retrieves the PaymentRequest value from the union,
-// panicing if the value is not set.
-func (u LedgerKey) MustPaymentRequest() LedgerKeyPaymentRequest {
-	val, ok := u.GetPaymentRequest()
-
-	if !ok {
-		panic("arm PaymentRequest is not set")
-	}
-
-	return val
-}
-
-// GetPaymentRequest retrieves the PaymentRequest value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u LedgerKey) GetPaymentRequest() (result LedgerKeyPaymentRequest, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Type))
-
-	if armName == "PaymentRequest" {
-		result = *u.PaymentRequest
 		ok = true
 	}
 
@@ -17357,50 +17028,56 @@ type ManageContractRequestOp struct {
 //        // codes considered as "failure" for the operation
 //        MALFORMED = -1,
 //        NOT_FOUND = -2, // not found contract request, when try to remove
-//        CONTRACT_REQUEST_REFERENCE_DUPLICATION = -3,
-//        NOT_ALLOWED_TO_REMOVE = -4 // only contract creator can remove contract
+//        TOO_MANY_CONTRACTS = -3,
+//        NOT_ALLOWED_TO_REMOVE = -4, // only contract creator can remove contract
+//        DETAILS_TOO_LONG = -5
 //    };
 //
 type ManageContractRequestResultCode int32
 
 const (
-	ManageContractRequestResultCodeSuccess                             ManageContractRequestResultCode = 0
-	ManageContractRequestResultCodeMalformed                           ManageContractRequestResultCode = -1
-	ManageContractRequestResultCodeNotFound                            ManageContractRequestResultCode = -2
-	ManageContractRequestResultCodeContractRequestReferenceDuplication ManageContractRequestResultCode = -3
-	ManageContractRequestResultCodeNotAllowedToRemove                  ManageContractRequestResultCode = -4
+	ManageContractRequestResultCodeSuccess            ManageContractRequestResultCode = 0
+	ManageContractRequestResultCodeMalformed          ManageContractRequestResultCode = -1
+	ManageContractRequestResultCodeNotFound           ManageContractRequestResultCode = -2
+	ManageContractRequestResultCodeTooManyContracts   ManageContractRequestResultCode = -3
+	ManageContractRequestResultCodeNotAllowedToRemove ManageContractRequestResultCode = -4
+	ManageContractRequestResultCodeDetailsTooLong     ManageContractRequestResultCode = -5
 )
 
 var ManageContractRequestResultCodeAll = []ManageContractRequestResultCode{
 	ManageContractRequestResultCodeSuccess,
 	ManageContractRequestResultCodeMalformed,
 	ManageContractRequestResultCodeNotFound,
-	ManageContractRequestResultCodeContractRequestReferenceDuplication,
+	ManageContractRequestResultCodeTooManyContracts,
 	ManageContractRequestResultCodeNotAllowedToRemove,
+	ManageContractRequestResultCodeDetailsTooLong,
 }
 
 var manageContractRequestResultCodeMap = map[int32]string{
 	0:  "ManageContractRequestResultCodeSuccess",
 	-1: "ManageContractRequestResultCodeMalformed",
 	-2: "ManageContractRequestResultCodeNotFound",
-	-3: "ManageContractRequestResultCodeContractRequestReferenceDuplication",
+	-3: "ManageContractRequestResultCodeTooManyContracts",
 	-4: "ManageContractRequestResultCodeNotAllowedToRemove",
+	-5: "ManageContractRequestResultCodeDetailsTooLong",
 }
 
 var manageContractRequestResultCodeShortMap = map[int32]string{
 	0:  "success",
 	-1: "malformed",
 	-2: "not_found",
-	-3: "contract_request_reference_duplication",
+	-3: "too_many_contracts",
 	-4: "not_allowed_to_remove",
+	-5: "details_too_long",
 }
 
 var manageContractRequestResultCodeRevMap = map[string]int32{
-	"ManageContractRequestResultCodeSuccess":                             0,
-	"ManageContractRequestResultCodeMalformed":                           -1,
-	"ManageContractRequestResultCodeNotFound":                            -2,
-	"ManageContractRequestResultCodeContractRequestReferenceDuplication": -3,
-	"ManageContractRequestResultCodeNotAllowedToRemove":                  -4,
+	"ManageContractRequestResultCodeSuccess":            0,
+	"ManageContractRequestResultCodeMalformed":          -1,
+	"ManageContractRequestResultCodeNotFound":           -2,
+	"ManageContractRequestResultCodeTooManyContracts":   -3,
+	"ManageContractRequestResultCodeNotAllowedToRemove": -4,
+	"ManageContractRequestResultCodeDetailsTooLong":     -5,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -18091,8 +17768,8 @@ type ManageContractOp struct {
 //        NOT_ALLOWED = -3, // only contractor or customer can add details
 //        TOO_MANY_CONTRACT_DETAILS = -4,
 //        DETAILS_TOO_LONG = -5,
-//        ALREADY_CONTRACTOR_CONFIRMED = -7,
-//        ALREADY_CUSTOMER_CONFIRMED = -8,
+//        DISPUTE_REASON_TOO_LONG = -6,
+//        ALREADY_CONFIRMED = -7,
 //        INVOICE_NOT_APPROVED = -9, // all contract invoices must be approved
 //        DISPUTE_ALREADY_STARTED = -10,
 //        RESOLVE_DISPUTE_NOW_ALLOWED = -11,
@@ -18103,19 +17780,19 @@ type ManageContractOp struct {
 type ManageContractResultCode int32
 
 const (
-	ManageContractResultCodeSuccess                    ManageContractResultCode = 0
-	ManageContractResultCodeMalformed                  ManageContractResultCode = -1
-	ManageContractResultCodeNotFound                   ManageContractResultCode = -2
-	ManageContractResultCodeNotAllowed                 ManageContractResultCode = -3
-	ManageContractResultCodeTooManyContractDetails     ManageContractResultCode = -4
-	ManageContractResultCodeDetailsTooLong             ManageContractResultCode = -5
-	ManageContractResultCodeAlreadyContractorConfirmed ManageContractResultCode = -7
-	ManageContractResultCodeAlreadyCustomerConfirmed   ManageContractResultCode = -8
-	ManageContractResultCodeInvoiceNotApproved         ManageContractResultCode = -9
-	ManageContractResultCodeDisputeAlreadyStarted      ManageContractResultCode = -10
-	ManageContractResultCodeResolveDisputeNowAllowed   ManageContractResultCode = -11
-	ManageContractResultCodeConfirmNotAllowed          ManageContractResultCode = -12
-	ManageContractResultCodeCustomerBalanceOverflow    ManageContractResultCode = -13
+	ManageContractResultCodeSuccess                  ManageContractResultCode = 0
+	ManageContractResultCodeMalformed                ManageContractResultCode = -1
+	ManageContractResultCodeNotFound                 ManageContractResultCode = -2
+	ManageContractResultCodeNotAllowed               ManageContractResultCode = -3
+	ManageContractResultCodeTooManyContractDetails   ManageContractResultCode = -4
+	ManageContractResultCodeDetailsTooLong           ManageContractResultCode = -5
+	ManageContractResultCodeDisputeReasonTooLong     ManageContractResultCode = -6
+	ManageContractResultCodeAlreadyConfirmed         ManageContractResultCode = -7
+	ManageContractResultCodeInvoiceNotApproved       ManageContractResultCode = -9
+	ManageContractResultCodeDisputeAlreadyStarted    ManageContractResultCode = -10
+	ManageContractResultCodeResolveDisputeNowAllowed ManageContractResultCode = -11
+	ManageContractResultCodeConfirmNotAllowed        ManageContractResultCode = -12
+	ManageContractResultCodeCustomerBalanceOverflow  ManageContractResultCode = -13
 )
 
 var ManageContractResultCodeAll = []ManageContractResultCode{
@@ -18125,8 +17802,8 @@ var ManageContractResultCodeAll = []ManageContractResultCode{
 	ManageContractResultCodeNotAllowed,
 	ManageContractResultCodeTooManyContractDetails,
 	ManageContractResultCodeDetailsTooLong,
-	ManageContractResultCodeAlreadyContractorConfirmed,
-	ManageContractResultCodeAlreadyCustomerConfirmed,
+	ManageContractResultCodeDisputeReasonTooLong,
+	ManageContractResultCodeAlreadyConfirmed,
 	ManageContractResultCodeInvoiceNotApproved,
 	ManageContractResultCodeDisputeAlreadyStarted,
 	ManageContractResultCodeResolveDisputeNowAllowed,
@@ -18141,8 +17818,8 @@ var manageContractResultCodeMap = map[int32]string{
 	-3:  "ManageContractResultCodeNotAllowed",
 	-4:  "ManageContractResultCodeTooManyContractDetails",
 	-5:  "ManageContractResultCodeDetailsTooLong",
-	-7:  "ManageContractResultCodeAlreadyContractorConfirmed",
-	-8:  "ManageContractResultCodeAlreadyCustomerConfirmed",
+	-6:  "ManageContractResultCodeDisputeReasonTooLong",
+	-7:  "ManageContractResultCodeAlreadyConfirmed",
 	-9:  "ManageContractResultCodeInvoiceNotApproved",
 	-10: "ManageContractResultCodeDisputeAlreadyStarted",
 	-11: "ManageContractResultCodeResolveDisputeNowAllowed",
@@ -18157,8 +17834,8 @@ var manageContractResultCodeShortMap = map[int32]string{
 	-3:  "not_allowed",
 	-4:  "too_many_contract_details",
 	-5:  "details_too_long",
-	-7:  "already_contractor_confirmed",
-	-8:  "already_customer_confirmed",
+	-6:  "dispute_reason_too_long",
+	-7:  "already_confirmed",
 	-9:  "invoice_not_approved",
 	-10: "dispute_already_started",
 	-11: "resolve_dispute_now_allowed",
@@ -18167,19 +17844,19 @@ var manageContractResultCodeShortMap = map[int32]string{
 }
 
 var manageContractResultCodeRevMap = map[string]int32{
-	"ManageContractResultCodeSuccess":                    0,
-	"ManageContractResultCodeMalformed":                  -1,
-	"ManageContractResultCodeNotFound":                   -2,
-	"ManageContractResultCodeNotAllowed":                 -3,
-	"ManageContractResultCodeTooManyContractDetails":     -4,
-	"ManageContractResultCodeDetailsTooLong":             -5,
-	"ManageContractResultCodeAlreadyContractorConfirmed": -7,
-	"ManageContractResultCodeAlreadyCustomerConfirmed":   -8,
-	"ManageContractResultCodeInvoiceNotApproved":         -9,
-	"ManageContractResultCodeDisputeAlreadyStarted":      -10,
-	"ManageContractResultCodeResolveDisputeNowAllowed":   -11,
-	"ManageContractResultCodeConfirmNotAllowed":          -12,
-	"ManageContractResultCodeCustomerBalanceOverflow":    -13,
+	"ManageContractResultCodeSuccess":                  0,
+	"ManageContractResultCodeMalformed":                -1,
+	"ManageContractResultCodeNotFound":                 -2,
+	"ManageContractResultCodeNotAllowed":               -3,
+	"ManageContractResultCodeTooManyContractDetails":   -4,
+	"ManageContractResultCodeDetailsTooLong":           -5,
+	"ManageContractResultCodeDisputeReasonTooLong":     -6,
+	"ManageContractResultCodeAlreadyConfirmed":         -7,
+	"ManageContractResultCodeInvoiceNotApproved":       -9,
+	"ManageContractResultCodeDisputeAlreadyStarted":    -10,
+	"ManageContractResultCodeResolveDisputeNowAllowed": -11,
+	"ManageContractResultCodeConfirmNotAllowed":        -12,
+	"ManageContractResultCodeCustomerBalanceOverflow":  -13,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -19362,7 +19039,6 @@ type ManageInvoiceRequestOp struct {
 //        BALANCE_NOT_FOUND = -2, // sender balance not found
 //        NOT_FOUND = -3, // not found invoice request, when try to remove
 //        TOO_MANY_INVOICES = -4,
-//        INVOICE_REQUEST_REFERENCE_DUPLICATION = -5,
 //        NOT_ALLOWED_TO_REMOVE = -6, // only invoice creator can remove invoice
 //        CONTRACT_NOT_FOUND = -7,
 //        ONLY_CONTRACTOR_CAN_ATTACH_INVOICE_TO_CONTRACT = -8,
@@ -19378,7 +19054,6 @@ const (
 	ManageInvoiceRequestResultCodeBalanceNotFound                          ManageInvoiceRequestResultCode = -2
 	ManageInvoiceRequestResultCodeNotFound                                 ManageInvoiceRequestResultCode = -3
 	ManageInvoiceRequestResultCodeTooManyInvoices                          ManageInvoiceRequestResultCode = -4
-	ManageInvoiceRequestResultCodeInvoiceRequestReferenceDuplication       ManageInvoiceRequestResultCode = -5
 	ManageInvoiceRequestResultCodeNotAllowedToRemove                       ManageInvoiceRequestResultCode = -6
 	ManageInvoiceRequestResultCodeContractNotFound                         ManageInvoiceRequestResultCode = -7
 	ManageInvoiceRequestResultCodeOnlyContractorCanAttachInvoiceToContract ManageInvoiceRequestResultCode = -8
@@ -19392,7 +19067,6 @@ var ManageInvoiceRequestResultCodeAll = []ManageInvoiceRequestResultCode{
 	ManageInvoiceRequestResultCodeBalanceNotFound,
 	ManageInvoiceRequestResultCodeNotFound,
 	ManageInvoiceRequestResultCodeTooManyInvoices,
-	ManageInvoiceRequestResultCodeInvoiceRequestReferenceDuplication,
 	ManageInvoiceRequestResultCodeNotAllowedToRemove,
 	ManageInvoiceRequestResultCodeContractNotFound,
 	ManageInvoiceRequestResultCodeOnlyContractorCanAttachInvoiceToContract,
@@ -19406,7 +19080,6 @@ var manageInvoiceRequestResultCodeMap = map[int32]string{
 	-2:  "ManageInvoiceRequestResultCodeBalanceNotFound",
 	-3:  "ManageInvoiceRequestResultCodeNotFound",
 	-4:  "ManageInvoiceRequestResultCodeTooManyInvoices",
-	-5:  "ManageInvoiceRequestResultCodeInvoiceRequestReferenceDuplication",
 	-6:  "ManageInvoiceRequestResultCodeNotAllowedToRemove",
 	-7:  "ManageInvoiceRequestResultCodeContractNotFound",
 	-8:  "ManageInvoiceRequestResultCodeOnlyContractorCanAttachInvoiceToContract",
@@ -19420,7 +19093,6 @@ var manageInvoiceRequestResultCodeShortMap = map[int32]string{
 	-2:  "balance_not_found",
 	-3:  "not_found",
 	-4:  "too_many_invoices",
-	-5:  "invoice_request_reference_duplication",
 	-6:  "not_allowed_to_remove",
 	-7:  "contract_not_found",
 	-8:  "only_contractor_can_attach_invoice_to_contract",
@@ -19434,7 +19106,6 @@ var manageInvoiceRequestResultCodeRevMap = map[string]int32{
 	"ManageInvoiceRequestResultCodeBalanceNotFound":                          -2,
 	"ManageInvoiceRequestResultCodeNotFound":                                 -3,
 	"ManageInvoiceRequestResultCodeTooManyInvoices":                          -4,
-	"ManageInvoiceRequestResultCodeInvoiceRequestReferenceDuplication":       -5,
 	"ManageInvoiceRequestResultCodeNotAllowedToRemove":                       -6,
 	"ManageInvoiceRequestResultCodeContractNotFound":                         -7,
 	"ManageInvoiceRequestResultCodeOnlyContractorCanAttachInvoiceToContract": -8,
@@ -23330,9 +23001,10 @@ type PaymentOpV2 struct {
 //        FEE_ASSET_MISMATCHED = -13,
 //        INSUFFICIENT_FEE_AMOUNT = -14,
 //        BALANCE_TO_CHARGE_FEE_FROM_NOT_FOUND = -15,
-//        PAYMENT_AMOUNT_IS_LESS_THAN_DEST_FEE = -16
+//        PAYMENT_AMOUNT_IS_LESS_THAN_DEST_FEE = -16,
+//        DESTINATION_ACCOUNT_NOT_FOUND = -17
 //
-//        // !!! Add new result code to bill pay op too !!!
+//         // !!! Add new result code to review invoice op too !!!
 //    };
 //
 type PaymentV2ResultCode int32
@@ -23355,6 +23027,7 @@ const (
 	PaymentV2ResultCodeInsufficientFeeAmount          PaymentV2ResultCode = -14
 	PaymentV2ResultCodeBalanceToChargeFeeFromNotFound PaymentV2ResultCode = -15
 	PaymentV2ResultCodePaymentAmountIsLessThanDestFee PaymentV2ResultCode = -16
+	PaymentV2ResultCodeDestinationAccountNotFound     PaymentV2ResultCode = -17
 )
 
 var PaymentV2ResultCodeAll = []PaymentV2ResultCode{
@@ -23375,6 +23048,7 @@ var PaymentV2ResultCodeAll = []PaymentV2ResultCode{
 	PaymentV2ResultCodeInsufficientFeeAmount,
 	PaymentV2ResultCodeBalanceToChargeFeeFromNotFound,
 	PaymentV2ResultCodePaymentAmountIsLessThanDestFee,
+	PaymentV2ResultCodeDestinationAccountNotFound,
 }
 
 var paymentV2ResultCodeMap = map[int32]string{
@@ -23395,6 +23069,7 @@ var paymentV2ResultCodeMap = map[int32]string{
 	-14: "PaymentV2ResultCodeInsufficientFeeAmount",
 	-15: "PaymentV2ResultCodeBalanceToChargeFeeFromNotFound",
 	-16: "PaymentV2ResultCodePaymentAmountIsLessThanDestFee",
+	-17: "PaymentV2ResultCodeDestinationAccountNotFound",
 }
 
 var paymentV2ResultCodeShortMap = map[int32]string{
@@ -23415,6 +23090,7 @@ var paymentV2ResultCodeShortMap = map[int32]string{
 	-14: "insufficient_fee_amount",
 	-15: "balance_to_charge_fee_from_not_found",
 	-16: "payment_amount_is_less_than_dest_fee",
+	-17: "destination_account_not_found",
 }
 
 var paymentV2ResultCodeRevMap = map[string]int32{
@@ -23435,6 +23111,7 @@ var paymentV2ResultCodeRevMap = map[string]int32{
 	"PaymentV2ResultCodeInsufficientFeeAmount":          -14,
 	"PaymentV2ResultCodeBalanceToChargeFeeFromNotFound": -15,
 	"PaymentV2ResultCodePaymentAmountIsLessThanDestFee": -16,
+	"PaymentV2ResultCodeDestinationAccountNotFound":     -17,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -24227,408 +23904,6 @@ func (u PaymentResult) GetPaymentResponse() (result PaymentResponse, ok bool) {
 	return
 }
 
-// ReviewPaymentRequestOpExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//    	{
-//    	case EMPTY_VERSION:
-//    		void;
-//    	}
-//
-type ReviewPaymentRequestOpExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u ReviewPaymentRequestOpExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of ReviewPaymentRequestOpExt
-func (u ReviewPaymentRequestOpExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewReviewPaymentRequestOpExt creates a new  ReviewPaymentRequestOpExt.
-func NewReviewPaymentRequestOpExt(v LedgerVersion, value interface{}) (result ReviewPaymentRequestOpExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// ReviewPaymentRequestOp is an XDR Struct defines as:
-//
-//   struct ReviewPaymentRequestOp
-//    {
-//        uint64 paymentID;
-//
-//    	bool accept;
-//        longstring* rejectReason;
-//    	// reserved for future use
-//    	union switch (LedgerVersion v)
-//    	{
-//    	case EMPTY_VERSION:
-//    		void;
-//    	}
-//    	ext;
-//    };
-//
-type ReviewPaymentRequestOp struct {
-	PaymentId    Uint64                    `json:"paymentID,omitempty"`
-	Accept       bool                      `json:"accept,omitempty"`
-	RejectReason *Longstring               `json:"rejectReason,omitempty"`
-	Ext          ReviewPaymentRequestOpExt `json:"ext,omitempty"`
-}
-
-// ReviewPaymentRequestResultCode is an XDR Enum defines as:
-//
-//   enum ReviewPaymentRequestResultCode
-//    {
-//        // codes considered as "success" for the operation
-//        SUCCESS = 0,
-//
-//        // codes considered as "failure" for the operation
-//    	NOT_FOUND = -1,           // failed to find Recovery request with such ID
-//        LINE_FULL = -2
-//    };
-//
-type ReviewPaymentRequestResultCode int32
-
-const (
-	ReviewPaymentRequestResultCodeSuccess  ReviewPaymentRequestResultCode = 0
-	ReviewPaymentRequestResultCodeNotFound ReviewPaymentRequestResultCode = -1
-	ReviewPaymentRequestResultCodeLineFull ReviewPaymentRequestResultCode = -2
-)
-
-var ReviewPaymentRequestResultCodeAll = []ReviewPaymentRequestResultCode{
-	ReviewPaymentRequestResultCodeSuccess,
-	ReviewPaymentRequestResultCodeNotFound,
-	ReviewPaymentRequestResultCodeLineFull,
-}
-
-var reviewPaymentRequestResultCodeMap = map[int32]string{
-	0:  "ReviewPaymentRequestResultCodeSuccess",
-	-1: "ReviewPaymentRequestResultCodeNotFound",
-	-2: "ReviewPaymentRequestResultCodeLineFull",
-}
-
-var reviewPaymentRequestResultCodeShortMap = map[int32]string{
-	0:  "success",
-	-1: "not_found",
-	-2: "line_full",
-}
-
-var reviewPaymentRequestResultCodeRevMap = map[string]int32{
-	"ReviewPaymentRequestResultCodeSuccess":  0,
-	"ReviewPaymentRequestResultCodeNotFound": -1,
-	"ReviewPaymentRequestResultCodeLineFull": -2,
-}
-
-// ValidEnum validates a proposed value for this enum.  Implements
-// the Enum interface for ReviewPaymentRequestResultCode
-func (e ReviewPaymentRequestResultCode) ValidEnum(v int32) bool {
-	_, ok := reviewPaymentRequestResultCodeMap[v]
-	return ok
-}
-func (e ReviewPaymentRequestResultCode) isFlag() bool {
-	for i := len(ReviewPaymentRequestResultCodeAll) - 1; i >= 0; i-- {
-		expected := ReviewPaymentRequestResultCode(2) << uint64(len(ReviewPaymentRequestResultCodeAll)-1) >> uint64(len(ReviewPaymentRequestResultCodeAll)-i)
-		if expected != ReviewPaymentRequestResultCodeAll[i] {
-			return false
-		}
-	}
-	return true
-}
-
-// String returns the name of `e`
-func (e ReviewPaymentRequestResultCode) String() string {
-	name, _ := reviewPaymentRequestResultCodeMap[int32(e)]
-	return name
-}
-
-func (e ReviewPaymentRequestResultCode) ShortString() string {
-	name, _ := reviewPaymentRequestResultCodeShortMap[int32(e)]
-	return name
-}
-
-func (e ReviewPaymentRequestResultCode) MarshalJSON() ([]byte, error) {
-	if e.isFlag() {
-		// marshal as mask
-		result := flag{
-			Value: int32(e),
-		}
-		for _, value := range ReviewPaymentRequestResultCodeAll {
-			if (value & e) == value {
-				result.Flags = append(result.Flags, flagValue{
-					Value: int32(value),
-					Name:  value.ShortString(),
-				})
-			}
-		}
-		return json.Marshal(&result)
-	} else {
-		// marshal as enum
-		result := enum{
-			Value:  int32(e),
-			String: e.ShortString(),
-		}
-		return json.Marshal(&result)
-	}
-}
-
-func (e *ReviewPaymentRequestResultCode) UnmarshalJSON(data []byte) error {
-	var t value
-	if err := json.Unmarshal(data, &t); err != nil {
-		return err
-	}
-	*e = ReviewPaymentRequestResultCode(t.Value)
-	return nil
-}
-
-// PaymentState is an XDR Enum defines as:
-//
-//   enum PaymentState
-//    {
-//        PENDING = 0,
-//        PROCESSED = 1,
-//        REJECTED = 2
-//    };
-//
-type PaymentState int32
-
-const (
-	PaymentStatePending   PaymentState = 0
-	PaymentStateProcessed PaymentState = 1
-	PaymentStateRejected  PaymentState = 2
-)
-
-var PaymentStateAll = []PaymentState{
-	PaymentStatePending,
-	PaymentStateProcessed,
-	PaymentStateRejected,
-}
-
-var paymentStateMap = map[int32]string{
-	0: "PaymentStatePending",
-	1: "PaymentStateProcessed",
-	2: "PaymentStateRejected",
-}
-
-var paymentStateShortMap = map[int32]string{
-	0: "pending",
-	1: "processed",
-	2: "rejected",
-}
-
-var paymentStateRevMap = map[string]int32{
-	"PaymentStatePending":   0,
-	"PaymentStateProcessed": 1,
-	"PaymentStateRejected":  2,
-}
-
-// ValidEnum validates a proposed value for this enum.  Implements
-// the Enum interface for PaymentState
-func (e PaymentState) ValidEnum(v int32) bool {
-	_, ok := paymentStateMap[v]
-	return ok
-}
-func (e PaymentState) isFlag() bool {
-	for i := len(PaymentStateAll) - 1; i >= 0; i-- {
-		expected := PaymentState(2) << uint64(len(PaymentStateAll)-1) >> uint64(len(PaymentStateAll)-i)
-		if expected != PaymentStateAll[i] {
-			return false
-		}
-	}
-	return true
-}
-
-// String returns the name of `e`
-func (e PaymentState) String() string {
-	name, _ := paymentStateMap[int32(e)]
-	return name
-}
-
-func (e PaymentState) ShortString() string {
-	name, _ := paymentStateShortMap[int32(e)]
-	return name
-}
-
-func (e PaymentState) MarshalJSON() ([]byte, error) {
-	if e.isFlag() {
-		// marshal as mask
-		result := flag{
-			Value: int32(e),
-		}
-		for _, value := range PaymentStateAll {
-			if (value & e) == value {
-				result.Flags = append(result.Flags, flagValue{
-					Value: int32(value),
-					Name:  value.ShortString(),
-				})
-			}
-		}
-		return json.Marshal(&result)
-	} else {
-		// marshal as enum
-		result := enum{
-			Value:  int32(e),
-			String: e.ShortString(),
-		}
-		return json.Marshal(&result)
-	}
-}
-
-func (e *PaymentState) UnmarshalJSON(data []byte) error {
-	var t value
-	if err := json.Unmarshal(data, &t); err != nil {
-		return err
-	}
-	*e = PaymentState(t.Value)
-	return nil
-}
-
-// ReviewPaymentResponseExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//    	{
-//    	case EMPTY_VERSION:
-//    		void;
-//    	}
-//
-type ReviewPaymentResponseExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u ReviewPaymentResponseExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of ReviewPaymentResponseExt
-func (u ReviewPaymentResponseExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewReviewPaymentResponseExt creates a new  ReviewPaymentResponseExt.
-func NewReviewPaymentResponseExt(v LedgerVersion, value interface{}) (result ReviewPaymentResponseExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// ReviewPaymentResponse is an XDR Struct defines as:
-//
-//   struct ReviewPaymentResponse {
-//        PaymentState state;
-//
-//        uint64* relatedInvoiceID;
-//    	// reserved for future use
-//    	union switch (LedgerVersion v)
-//    	{
-//    	case EMPTY_VERSION:
-//    		void;
-//    	}
-//    	ext;
-//    };
-//
-type ReviewPaymentResponse struct {
-	State            PaymentState             `json:"state,omitempty"`
-	RelatedInvoiceId *Uint64                  `json:"relatedInvoiceID,omitempty"`
-	Ext              ReviewPaymentResponseExt `json:"ext,omitempty"`
-}
-
-// ReviewPaymentRequestResult is an XDR Union defines as:
-//
-//   union ReviewPaymentRequestResult switch (ReviewPaymentRequestResultCode code)
-//    {
-//    case SUCCESS:
-//        ReviewPaymentResponse reviewPaymentResponse;
-//    default:
-//        void;
-//    };
-//
-type ReviewPaymentRequestResult struct {
-	Code                  ReviewPaymentRequestResultCode `json:"code,omitempty"`
-	ReviewPaymentResponse *ReviewPaymentResponse         `json:"reviewPaymentResponse,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u ReviewPaymentRequestResult) SwitchFieldName() string {
-	return "Code"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of ReviewPaymentRequestResult
-func (u ReviewPaymentRequestResult) ArmForSwitch(sw int32) (string, bool) {
-	switch ReviewPaymentRequestResultCode(sw) {
-	case ReviewPaymentRequestResultCodeSuccess:
-		return "ReviewPaymentResponse", true
-	default:
-		return "", true
-	}
-}
-
-// NewReviewPaymentRequestResult creates a new  ReviewPaymentRequestResult.
-func NewReviewPaymentRequestResult(code ReviewPaymentRequestResultCode, value interface{}) (result ReviewPaymentRequestResult, err error) {
-	result.Code = code
-	switch ReviewPaymentRequestResultCode(code) {
-	case ReviewPaymentRequestResultCodeSuccess:
-		tv, ok := value.(ReviewPaymentResponse)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be ReviewPaymentResponse")
-			return
-		}
-		result.ReviewPaymentResponse = &tv
-	default:
-		// void
-	}
-	return
-}
-
-// MustReviewPaymentResponse retrieves the ReviewPaymentResponse value from the union,
-// panicing if the value is not set.
-func (u ReviewPaymentRequestResult) MustReviewPaymentResponse() ReviewPaymentResponse {
-	val, ok := u.GetReviewPaymentResponse()
-
-	if !ok {
-		panic("arm ReviewPaymentResponse is not set")
-	}
-
-	return val
-}
-
-// GetReviewPaymentResponse retrieves the ReviewPaymentResponse value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u ReviewPaymentRequestResult) GetReviewPaymentResponse() (result ReviewPaymentResponse, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Code))
-
-	if armName == "ReviewPaymentResponse" {
-		result = *u.ReviewPaymentResponse
-		ok = true
-	}
-
-	return
-}
-
 // ReviewRequestOpAction is an XDR Enum defines as:
 //
 //   enum ReviewRequestOpAction {
@@ -25399,7 +24674,7 @@ type ReviewRequestOp struct {
 //        // Invoice requests
 //        AMOUNT_MISMATCHED = -101, // amount does not match
 //        DESTINATION_BALANCE_MISMATCHED = -102, // invoice balance and payment balance do not match
-//        DESTINATION_ACCOUNT_MISMATCHED = -103, // invoice account and payment account do not match
+//        NOT_ALLOWED_ACCOUNT_DESTINATION = -103,
 //        REQUIRED_SOURCE_PAY_FOR_DESTINATION = -104, // not allowed shift fee responsibility to destination
 //        SOURCE_BALANCE_MISMATCHED = -105, // source balance must match invoice sender account
 //        CONTRACT_NOT_FOUND = -106,
@@ -25421,7 +24696,8 @@ type ReviewRequestOp struct {
 //        FEE_ASSET_MISMATCHED = -122,
 //        INSUFFICIENT_FEE_AMOUNT = -123,
 //        BALANCE_TO_CHARGE_FEE_FROM_NOT_FOUND = -124,
-//        PAYMENT_AMOUNT_IS_LESS_THAN_DEST_FEE = -125
+//        PAYMENT_AMOUNT_IS_LESS_THAN_DEST_FEE = -125,
+//        DESTINATION_ACCOUNT_NOT_FOUND = -126
 //    };
 //
 type ReviewRequestResultCode int32
@@ -25451,7 +24727,7 @@ const (
 	ReviewRequestResultCodeInvalidSaleNewEndTime                    ReviewRequestResultCode = -90
 	ReviewRequestResultCodeAmountMismatched                         ReviewRequestResultCode = -101
 	ReviewRequestResultCodeDestinationBalanceMismatched             ReviewRequestResultCode = -102
-	ReviewRequestResultCodeDestinationAccountMismatched             ReviewRequestResultCode = -103
+	ReviewRequestResultCodeNotAllowedAccountDestination             ReviewRequestResultCode = -103
 	ReviewRequestResultCodeRequiredSourcePayForDestination          ReviewRequestResultCode = -104
 	ReviewRequestResultCodeSourceBalanceMismatched                  ReviewRequestResultCode = -105
 	ReviewRequestResultCodeContractNotFound                         ReviewRequestResultCode = -106
@@ -25473,6 +24749,7 @@ const (
 	ReviewRequestResultCodeInsufficientFeeAmount                    ReviewRequestResultCode = -123
 	ReviewRequestResultCodeBalanceToChargeFeeFromNotFound           ReviewRequestResultCode = -124
 	ReviewRequestResultCodePaymentAmountIsLessThanDestFee           ReviewRequestResultCode = -125
+	ReviewRequestResultCodeDestinationAccountNotFound               ReviewRequestResultCode = -126
 )
 
 var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
@@ -25500,7 +24777,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeInvalidSaleNewEndTime,
 	ReviewRequestResultCodeAmountMismatched,
 	ReviewRequestResultCodeDestinationBalanceMismatched,
-	ReviewRequestResultCodeDestinationAccountMismatched,
+	ReviewRequestResultCodeNotAllowedAccountDestination,
 	ReviewRequestResultCodeRequiredSourcePayForDestination,
 	ReviewRequestResultCodeSourceBalanceMismatched,
 	ReviewRequestResultCodeContractNotFound,
@@ -25522,6 +24799,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeInsufficientFeeAmount,
 	ReviewRequestResultCodeBalanceToChargeFeeFromNotFound,
 	ReviewRequestResultCodePaymentAmountIsLessThanDestFee,
+	ReviewRequestResultCodeDestinationAccountNotFound,
 }
 
 var reviewRequestResultCodeMap = map[int32]string{
@@ -25549,7 +24827,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-90:  "ReviewRequestResultCodeInvalidSaleNewEndTime",
 	-101: "ReviewRequestResultCodeAmountMismatched",
 	-102: "ReviewRequestResultCodeDestinationBalanceMismatched",
-	-103: "ReviewRequestResultCodeDestinationAccountMismatched",
+	-103: "ReviewRequestResultCodeNotAllowedAccountDestination",
 	-104: "ReviewRequestResultCodeRequiredSourcePayForDestination",
 	-105: "ReviewRequestResultCodeSourceBalanceMismatched",
 	-106: "ReviewRequestResultCodeContractNotFound",
@@ -25571,6 +24849,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-123: "ReviewRequestResultCodeInsufficientFeeAmount",
 	-124: "ReviewRequestResultCodeBalanceToChargeFeeFromNotFound",
 	-125: "ReviewRequestResultCodePaymentAmountIsLessThanDestFee",
+	-126: "ReviewRequestResultCodeDestinationAccountNotFound",
 }
 
 var reviewRequestResultCodeShortMap = map[int32]string{
@@ -25598,7 +24877,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-90:  "invalid_sale_new_end_time",
 	-101: "amount_mismatched",
 	-102: "destination_balance_mismatched",
-	-103: "destination_account_mismatched",
+	-103: "not_allowed_account_destination",
 	-104: "required_source_pay_for_destination",
 	-105: "source_balance_mismatched",
 	-106: "contract_not_found",
@@ -25620,6 +24899,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-123: "insufficient_fee_amount",
 	-124: "balance_to_charge_fee_from_not_found",
 	-125: "payment_amount_is_less_than_dest_fee",
+	-126: "destination_account_not_found",
 }
 
 var reviewRequestResultCodeRevMap = map[string]int32{
@@ -25647,7 +24927,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeInvalidSaleNewEndTime":                    -90,
 	"ReviewRequestResultCodeAmountMismatched":                         -101,
 	"ReviewRequestResultCodeDestinationBalanceMismatched":             -102,
-	"ReviewRequestResultCodeDestinationAccountMismatched":             -103,
+	"ReviewRequestResultCodeNotAllowedAccountDestination":             -103,
 	"ReviewRequestResultCodeRequiredSourcePayForDestination":          -104,
 	"ReviewRequestResultCodeSourceBalanceMismatched":                  -105,
 	"ReviewRequestResultCodeContractNotFound":                         -106,
@@ -25669,6 +24949,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeInsufficientFeeAmount":                    -123,
 	"ReviewRequestResultCodeBalanceToChargeFeeFromNotFound":           -124,
 	"ReviewRequestResultCodePaymentAmountIsLessThanDestFee":           -125,
+	"ReviewRequestResultCodeDestinationAccountNotFound":               -126,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -28393,6 +27674,7 @@ func NewContractRequestExt(v LedgerVersion, value interface{}) (result ContractR
 //   struct ContractRequest
 //    {
 //        AccountID customer;
+//        AccountID escrow;
 //        longstring details;
 //
 //        uint64 startTime;
@@ -28409,6 +27691,7 @@ func NewContractRequestExt(v LedgerVersion, value interface{}) (result ContractR
 //
 type ContractRequest struct {
 	Customer  AccountId          `json:"customer,omitempty"`
+	Escrow    AccountId          `json:"escrow,omitempty"`
 	Details   Longstring         `json:"details,omitempty"`
 	StartTime Uint64             `json:"startTime,omitempty"`
 	EndTime   Uint64             `json:"endTime,omitempty"`
@@ -29551,8 +28834,6 @@ type WithdrawalRequest struct {
 //    		CreateWithdrawalRequestOp createWithdrawalRequestOp;
 //    	case MANAGE_BALANCE:
 //    		ManageBalanceOp manageBalanceOp;
-//    	case REVIEW_PAYMENT_REQUEST:
-//    		ReviewPaymentRequestOp reviewPaymentRequestOp;
 //        case MANAGE_ASSET:
 //            ManageAssetOp manageAssetOp;
 //        case CREATE_PREISSUANCE_REQUEST:
@@ -29605,7 +28886,6 @@ type OperationBody struct {
 	ManageAccountOp                          *ManageAccountOp                          `json:"manageAccountOp,omitempty"`
 	CreateWithdrawalRequestOp                *CreateWithdrawalRequestOp                `json:"createWithdrawalRequestOp,omitempty"`
 	ManageBalanceOp                          *ManageBalanceOp                          `json:"manageBalanceOp,omitempty"`
-	ReviewPaymentRequestOp                   *ReviewPaymentRequestOp                   `json:"reviewPaymentRequestOp,omitempty"`
 	ManageAssetOp                            *ManageAssetOp                            `json:"manageAssetOp,omitempty"`
 	CreatePreIssuanceRequest                 *CreatePreIssuanceRequestOp               `json:"createPreIssuanceRequest,omitempty"`
 	ManageLimitsOp                           *ManageLimitsOp                           `json:"manageLimitsOp,omitempty"`
@@ -29654,8 +28934,6 @@ func (u OperationBody) ArmForSwitch(sw int32) (string, bool) {
 		return "CreateWithdrawalRequestOp", true
 	case OperationTypeManageBalance:
 		return "ManageBalanceOp", true
-	case OperationTypeReviewPaymentRequest:
-		return "ReviewPaymentRequestOp", true
 	case OperationTypeManageAsset:
 		return "ManageAssetOp", true
 	case OperationTypeCreatePreissuanceRequest:
@@ -29760,13 +29038,6 @@ func NewOperationBody(aType OperationType, value interface{}) (result OperationB
 			return
 		}
 		result.ManageBalanceOp = &tv
-	case OperationTypeReviewPaymentRequest:
-		tv, ok := value.(ReviewPaymentRequestOp)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be ReviewPaymentRequestOp")
-			return
-		}
-		result.ReviewPaymentRequestOp = &tv
 	case OperationTypeManageAsset:
 		tv, ok := value.(ManageAssetOp)
 		if !ok {
@@ -30105,31 +29376,6 @@ func (u OperationBody) GetManageBalanceOp() (result ManageBalanceOp, ok bool) {
 
 	if armName == "ManageBalanceOp" {
 		result = *u.ManageBalanceOp
-		ok = true
-	}
-
-	return
-}
-
-// MustReviewPaymentRequestOp retrieves the ReviewPaymentRequestOp value from the union,
-// panicing if the value is not set.
-func (u OperationBody) MustReviewPaymentRequestOp() ReviewPaymentRequestOp {
-	val, ok := u.GetReviewPaymentRequestOp()
-
-	if !ok {
-		panic("arm ReviewPaymentRequestOp is not set")
-	}
-
-	return val
-}
-
-// GetReviewPaymentRequestOp retrieves the ReviewPaymentRequestOp value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u OperationBody) GetReviewPaymentRequestOp() (result ReviewPaymentRequestOp, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Type))
-
-	if armName == "ReviewPaymentRequestOp" {
-		result = *u.ReviewPaymentRequestOp
 		ok = true
 	}
 
@@ -30663,8 +29909,6 @@ func (u OperationBody) GetManageContractOp() (result ManageContractOp, ok bool) 
 //    		CreateWithdrawalRequestOp createWithdrawalRequestOp;
 //    	case MANAGE_BALANCE:
 //    		ManageBalanceOp manageBalanceOp;
-//    	case REVIEW_PAYMENT_REQUEST:
-//    		ReviewPaymentRequestOp reviewPaymentRequestOp;
 //        case MANAGE_ASSET:
 //            ManageAssetOp manageAssetOp;
 //        case CREATE_PREISSUANCE_REQUEST:
@@ -31271,8 +30515,6 @@ func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
 //    		CreateWithdrawalRequestResult createWithdrawalRequestResult;
 //        case MANAGE_BALANCE:
 //            ManageBalanceResult manageBalanceResult;
-//        case REVIEW_PAYMENT_REQUEST:
-//            ReviewPaymentRequestResult reviewPaymentRequestResult;
 //        case MANAGE_ASSET:
 //            ManageAssetResult manageAssetResult;
 //        case CREATE_PREISSUANCE_REQUEST:
@@ -31325,7 +30567,6 @@ type OperationResultTr struct {
 	ManageAccountResult                          *ManageAccountResult                          `json:"manageAccountResult,omitempty"`
 	CreateWithdrawalRequestResult                *CreateWithdrawalRequestResult                `json:"createWithdrawalRequestResult,omitempty"`
 	ManageBalanceResult                          *ManageBalanceResult                          `json:"manageBalanceResult,omitempty"`
-	ReviewPaymentRequestResult                   *ReviewPaymentRequestResult                   `json:"reviewPaymentRequestResult,omitempty"`
 	ManageAssetResult                            *ManageAssetResult                            `json:"manageAssetResult,omitempty"`
 	CreatePreIssuanceRequestResult               *CreatePreIssuanceRequestResult               `json:"createPreIssuanceRequestResult,omitempty"`
 	ManageLimitsResult                           *ManageLimitsResult                           `json:"manageLimitsResult,omitempty"`
@@ -31374,8 +30615,6 @@ func (u OperationResultTr) ArmForSwitch(sw int32) (string, bool) {
 		return "CreateWithdrawalRequestResult", true
 	case OperationTypeManageBalance:
 		return "ManageBalanceResult", true
-	case OperationTypeReviewPaymentRequest:
-		return "ReviewPaymentRequestResult", true
 	case OperationTypeManageAsset:
 		return "ManageAssetResult", true
 	case OperationTypeCreatePreissuanceRequest:
@@ -31480,13 +30719,6 @@ func NewOperationResultTr(aType OperationType, value interface{}) (result Operat
 			return
 		}
 		result.ManageBalanceResult = &tv
-	case OperationTypeReviewPaymentRequest:
-		tv, ok := value.(ReviewPaymentRequestResult)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be ReviewPaymentRequestResult")
-			return
-		}
-		result.ReviewPaymentRequestResult = &tv
 	case OperationTypeManageAsset:
 		tv, ok := value.(ManageAssetResult)
 		if !ok {
@@ -31825,31 +31057,6 @@ func (u OperationResultTr) GetManageBalanceResult() (result ManageBalanceResult,
 
 	if armName == "ManageBalanceResult" {
 		result = *u.ManageBalanceResult
-		ok = true
-	}
-
-	return
-}
-
-// MustReviewPaymentRequestResult retrieves the ReviewPaymentRequestResult value from the union,
-// panicing if the value is not set.
-func (u OperationResultTr) MustReviewPaymentRequestResult() ReviewPaymentRequestResult {
-	val, ok := u.GetReviewPaymentRequestResult()
-
-	if !ok {
-		panic("arm ReviewPaymentRequestResult is not set")
-	}
-
-	return val
-}
-
-// GetReviewPaymentRequestResult retrieves the ReviewPaymentRequestResult value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u OperationResultTr) GetReviewPaymentRequestResult() (result ReviewPaymentRequestResult, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.Type))
-
-	if armName == "ReviewPaymentRequestResult" {
-		result = *u.ReviewPaymentRequestResult
 		ok = true
 	}
 
@@ -32379,8 +31586,6 @@ func (u OperationResultTr) GetManageContractResult() (result ManageContractResul
 //    		CreateWithdrawalRequestResult createWithdrawalRequestResult;
 //        case MANAGE_BALANCE:
 //            ManageBalanceResult manageBalanceResult;
-//        case REVIEW_PAYMENT_REQUEST:
-//            ReviewPaymentRequestResult reviewPaymentRequestResult;
 //        case MANAGE_ASSET:
 //            ManageAssetResult manageAssetResult;
 //        case CREATE_PREISSUANCE_REQUEST:
@@ -33125,9 +32330,10 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ALLOW_TO_UPDATE_VOTING_SALES_AS_PROMOTION = 37,
 //    	ALLOW_TO_ISSUE_AFTER_SALE = 38,
 //    	FIX_PAYMENT_V2_SEND_TO_SELF = 39,
-//        USE_ONLY_PAYMENT_V2 = 40,
-//        ADD_REVIEW_INVOICE_REQUEST_PAYMENT_RESPONSE = 41,
-//        ADD_CONTRACT_ID_REVIEW_REQUEST_RESULT = 42
+//    	FIX_PAYMENT_V2_DEST_ACCOUNT_NOT_FOUND = 40,
+//        USE_ONLY_PAYMENT_V2 = 41,
+//        ADD_REVIEW_INVOICE_REQUEST_PAYMENT_RESPONSE = 42,
+//        ADD_CONTRACT_ID_REVIEW_REQUEST_RESULT = 43
 //    };
 //
 type LedgerVersion int32
@@ -33173,9 +32379,10 @@ const (
 	LedgerVersionAllowToUpdateVotingSalesAsPromotion              LedgerVersion = 37
 	LedgerVersionAllowToIssueAfterSale                            LedgerVersion = 38
 	LedgerVersionFixPaymentV2SendToSelf                           LedgerVersion = 39
-	LedgerVersionUseOnlyPaymentV2                                 LedgerVersion = 40
-	LedgerVersionAddReviewInvoiceRequestPaymentResponse           LedgerVersion = 41
-	LedgerVersionAddContractIdReviewRequestResult                 LedgerVersion = 42
+	LedgerVersionFixPaymentV2DestAccountNotFound                  LedgerVersion = 40
+	LedgerVersionUseOnlyPaymentV2                                 LedgerVersion = 41
+	LedgerVersionAddReviewInvoiceRequestPaymentResponse           LedgerVersion = 42
+	LedgerVersionAddContractIdReviewRequestResult                 LedgerVersion = 43
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -33219,6 +32426,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAllowToUpdateVotingSalesAsPromotion,
 	LedgerVersionAllowToIssueAfterSale,
 	LedgerVersionFixPaymentV2SendToSelf,
+	LedgerVersionFixPaymentV2DestAccountNotFound,
 	LedgerVersionUseOnlyPaymentV2,
 	LedgerVersionAddReviewInvoiceRequestPaymentResponse,
 	LedgerVersionAddContractIdReviewRequestResult,
@@ -33265,9 +32473,10 @@ var ledgerVersionMap = map[int32]string{
 	37: "LedgerVersionAllowToUpdateVotingSalesAsPromotion",
 	38: "LedgerVersionAllowToIssueAfterSale",
 	39: "LedgerVersionFixPaymentV2SendToSelf",
-	40: "LedgerVersionUseOnlyPaymentV2",
-	41: "LedgerVersionAddReviewInvoiceRequestPaymentResponse",
-	42: "LedgerVersionAddContractIdReviewRequestResult",
+	40: "LedgerVersionFixPaymentV2DestAccountNotFound",
+	41: "LedgerVersionUseOnlyPaymentV2",
+	42: "LedgerVersionAddReviewInvoiceRequestPaymentResponse",
+	43: "LedgerVersionAddContractIdReviewRequestResult",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -33311,9 +32520,10 @@ var ledgerVersionShortMap = map[int32]string{
 	37: "allow_to_update_voting_sales_as_promotion",
 	38: "allow_to_issue_after_sale",
 	39: "fix_payment_v2_send_to_self",
-	40: "use_only_payment_v2",
-	41: "add_review_invoice_request_payment_response",
-	42: "add_contract_id_review_request_result",
+	40: "fix_payment_v2_dest_account_not_found",
+	41: "use_only_payment_v2",
+	42: "add_review_invoice_request_payment_response",
+	43: "add_contract_id_review_request_result",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -33357,9 +32567,10 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAllowToUpdateVotingSalesAsPromotion":              37,
 	"LedgerVersionAllowToIssueAfterSale":                            38,
 	"LedgerVersionFixPaymentV2SendToSelf":                           39,
-	"LedgerVersionUseOnlyPaymentV2":                                 40,
-	"LedgerVersionAddReviewInvoiceRequestPaymentResponse":           41,
-	"LedgerVersionAddContractIdReviewRequestResult":                 42,
+	"LedgerVersionFixPaymentV2DestAccountNotFound":                  40,
+	"LedgerVersionUseOnlyPaymentV2":                                 41,
+	"LedgerVersionAddReviewInvoiceRequestPaymentResponse":           42,
+	"LedgerVersionAddContractIdReviewRequestResult":                 43,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -33729,7 +32940,6 @@ type Fee struct {
 //    	MANAGE_ACCOUNT = 6,
 //        CREATE_WITHDRAWAL_REQUEST = 7,
 //        MANAGE_BALANCE = 9,
-//        REVIEW_PAYMENT_REQUEST = 10,
 //        MANAGE_ASSET = 11,
 //        CREATE_PREISSUANCE_REQUEST = 12,
 //        MANAGE_LIMITS = 13,
@@ -33763,7 +32973,6 @@ const (
 	OperationTypeManageAccount                          OperationType = 6
 	OperationTypeCreateWithdrawalRequest                OperationType = 7
 	OperationTypeManageBalance                          OperationType = 9
-	OperationTypeReviewPaymentRequest                   OperationType = 10
 	OperationTypeManageAsset                            OperationType = 11
 	OperationTypeCreatePreissuanceRequest               OperationType = 12
 	OperationTypeManageLimits                           OperationType = 13
@@ -33795,7 +33004,6 @@ var OperationTypeAll = []OperationType{
 	OperationTypeManageAccount,
 	OperationTypeCreateWithdrawalRequest,
 	OperationTypeManageBalance,
-	OperationTypeReviewPaymentRequest,
 	OperationTypeManageAsset,
 	OperationTypeCreatePreissuanceRequest,
 	OperationTypeManageLimits,
@@ -33827,7 +33035,6 @@ var operationTypeMap = map[int32]string{
 	6:  "OperationTypeManageAccount",
 	7:  "OperationTypeCreateWithdrawalRequest",
 	9:  "OperationTypeManageBalance",
-	10: "OperationTypeReviewPaymentRequest",
 	11: "OperationTypeManageAsset",
 	12: "OperationTypeCreatePreissuanceRequest",
 	13: "OperationTypeManageLimits",
@@ -33859,7 +33066,6 @@ var operationTypeShortMap = map[int32]string{
 	6:  "manage_account",
 	7:  "create_withdrawal_request",
 	9:  "manage_balance",
-	10: "review_payment_request",
 	11: "manage_asset",
 	12: "create_preissuance_request",
 	13: "manage_limits",
@@ -33891,7 +33097,6 @@ var operationTypeRevMap = map[string]int32{
 	"OperationTypeManageAccount":                          6,
 	"OperationTypeCreateWithdrawalRequest":                7,
 	"OperationTypeManageBalance":                          9,
-	"OperationTypeReviewPaymentRequest":                   10,
 	"OperationTypeManageAsset":                            11,
 	"OperationTypeCreatePreissuanceRequest":               12,
 	"OperationTypeManageLimits":                           13,
