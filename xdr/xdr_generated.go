@@ -2212,7 +2212,9 @@ type BalanceEntry struct {
 //        NO_CONFIRMATIONS = 0,
 //        CUSTOMER_CONFIRMED = 1,
 //        CONTRACTOR_CONFIRMED = 2,
-//        DISPUTING = 4
+//        DISPUTING = 4,
+//        REVERT_RESOLVE = 8,
+//        NOT_REVERT_RESOLVE = 16
 //    };
 //
 type ContractState int32
@@ -2222,6 +2224,8 @@ const (
 	ContractStateCustomerConfirmed   ContractState = 1
 	ContractStateContractorConfirmed ContractState = 2
 	ContractStateDisputing           ContractState = 4
+	ContractStateRevertResolve       ContractState = 8
+	ContractStateNotRevertResolve    ContractState = 16
 )
 
 var ContractStateAll = []ContractState{
@@ -2229,20 +2233,26 @@ var ContractStateAll = []ContractState{
 	ContractStateCustomerConfirmed,
 	ContractStateContractorConfirmed,
 	ContractStateDisputing,
+	ContractStateRevertResolve,
+	ContractStateNotRevertResolve,
 }
 
 var contractStateMap = map[int32]string{
-	0: "ContractStateNoConfirmations",
-	1: "ContractStateCustomerConfirmed",
-	2: "ContractStateContractorConfirmed",
-	4: "ContractStateDisputing",
+	0:  "ContractStateNoConfirmations",
+	1:  "ContractStateCustomerConfirmed",
+	2:  "ContractStateContractorConfirmed",
+	4:  "ContractStateDisputing",
+	8:  "ContractStateRevertResolve",
+	16: "ContractStateNotRevertResolve",
 }
 
 var contractStateShortMap = map[int32]string{
-	0: "no_confirmations",
-	1: "customer_confirmed",
-	2: "contractor_confirmed",
-	4: "disputing",
+	0:  "no_confirmations",
+	1:  "customer_confirmed",
+	2:  "contractor_confirmed",
+	4:  "disputing",
+	8:  "revert_resolve",
+	16: "not_revert_resolve",
 }
 
 var contractStateRevMap = map[string]int32{
@@ -2250,6 +2260,8 @@ var contractStateRevMap = map[string]int32{
 	"ContractStateCustomerConfirmed":   1,
 	"ContractStateContractorConfirmed": 2,
 	"ContractStateDisputing":           4,
+	"ContractStateRevertResolve":       8,
+	"ContractStateNotRevertResolve":    16,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -2372,80 +2384,6 @@ type DisputeDetails struct {
 	Ext      DisputeDetailsExt `json:"ext,omitempty"`
 }
 
-// ContractEntryStateInfo is an XDR NestedUnion defines as:
-//
-//   union switch (ContractState state)
-//        {
-//        case DISPUTING:
-//            DisputeDetails disputeDetails;
-//        default:
-//            void;
-//        }
-//
-type ContractEntryStateInfo struct {
-	State          ContractState   `json:"state,omitempty"`
-	DisputeDetails *DisputeDetails `json:"disputeDetails,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u ContractEntryStateInfo) SwitchFieldName() string {
-	return "State"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of ContractEntryStateInfo
-func (u ContractEntryStateInfo) ArmForSwitch(sw int32) (string, bool) {
-	switch ContractState(sw) {
-	case ContractStateDisputing:
-		return "DisputeDetails", true
-	default:
-		return "", true
-	}
-}
-
-// NewContractEntryStateInfo creates a new  ContractEntryStateInfo.
-func NewContractEntryStateInfo(state ContractState, value interface{}) (result ContractEntryStateInfo, err error) {
-	result.State = state
-	switch ContractState(state) {
-	case ContractStateDisputing:
-		tv, ok := value.(DisputeDetails)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be DisputeDetails")
-			return
-		}
-		result.DisputeDetails = &tv
-	default:
-		// void
-	}
-	return
-}
-
-// MustDisputeDetails retrieves the DisputeDetails value from the union,
-// panicing if the value is not set.
-func (u ContractEntryStateInfo) MustDisputeDetails() DisputeDetails {
-	val, ok := u.GetDisputeDetails()
-
-	if !ok {
-		panic("arm DisputeDetails is not set")
-	}
-
-	return val
-}
-
-// GetDisputeDetails retrieves the DisputeDetails value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u ContractEntryStateInfo) GetDisputeDetails() (result DisputeDetails, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.State))
-
-	if armName == "DisputeDetails" {
-		result = *u.DisputeDetails
-		ok = true
-	}
-
-	return
-}
-
 // ContractEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -2499,14 +2437,8 @@ func NewContractEntryExt(v LedgerVersion, value interface{}) (result ContractEnt
 //        longstring details<>;
 //        uint64 invoiceRequestsIDs<>;
 //
-//        union switch (ContractState state)
-//        {
-//        case DISPUTING:
-//            DisputeDetails disputeDetails;
-//        default:
-//            void;
-//        }
-//        stateInfo;
+//        uint32 state;
+//        DisputeDetails *disputeDetails;
 //
 //        union switch (LedgerVersion v)
 //        {
@@ -2517,16 +2449,17 @@ func NewContractEntryExt(v LedgerVersion, value interface{}) (result ContractEnt
 //    };
 //
 type ContractEntry struct {
-	ContractId         Uint64                 `json:"contractID,omitempty"`
-	Contractor         AccountId              `json:"contractor,omitempty"`
-	Customer           AccountId              `json:"customer,omitempty"`
-	Escrow             AccountId              `json:"escrow,omitempty"`
-	StartTime          Uint64                 `json:"startTime,omitempty"`
-	EndTime            Uint64                 `json:"endTime,omitempty"`
-	Details            []Longstring           `json:"details,omitempty"`
-	InvoiceRequestsIDs []Uint64               `json:"invoiceRequestsIDs,omitempty"`
-	StateInfo          ContractEntryStateInfo `json:"stateInfo,omitempty"`
-	Ext                ContractEntryExt       `json:"ext,omitempty"`
+	ContractId         Uint64           `json:"contractID,omitempty"`
+	Contractor         AccountId        `json:"contractor,omitempty"`
+	Customer           AccountId        `json:"customer,omitempty"`
+	Escrow             AccountId        `json:"escrow,omitempty"`
+	StartTime          Uint64           `json:"startTime,omitempty"`
+	EndTime            Uint64           `json:"endTime,omitempty"`
+	Details            []Longstring     `json:"details,omitempty"`
+	InvoiceRequestsIDs []Uint64         `json:"invoiceRequestsIDs,omitempty"`
+	State              Uint32           `json:"state,omitempty"`
+	DisputeDetails     *DisputeDetails  `json:"disputeDetails,omitempty"`
+	Ext                ContractEntryExt `json:"ext,omitempty"`
 }
 
 // ExternalSystemAccountIdPoolEntryExt is an XDR NestedUnion defines as:
