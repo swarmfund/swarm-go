@@ -32264,9 +32264,10 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ALLOW_TO_ISSUE_AFTER_SALE = 38,
 //    	FIX_PAYMENT_V2_SEND_TO_SELF = 39,
 //    	FIX_PAYMENT_V2_DEST_ACCOUNT_NOT_FOUND = 40,
-//        USE_ONLY_PAYMENT_V2 = 41,
-//        ADD_REVIEW_INVOICE_REQUEST_PAYMENT_RESPONSE = 42,
-//        ADD_CONTRACT_ID_REVIEW_REQUEST_RESULT = 43
+//        FIX_CREATE_KYC_REQUEST_AUTO_APPROVE = 41,
+//        USE_ONLY_PAYMENT_V2 = 42,
+//        ADD_REVIEW_INVOICE_REQUEST_PAYMENT_RESPONSE = 43,
+//        ADD_CONTRACT_ID_REVIEW_REQUEST_RESULT = 44
 //    };
 //
 type LedgerVersion int32
@@ -32313,9 +32314,10 @@ const (
 	LedgerVersionAllowToIssueAfterSale                            LedgerVersion = 38
 	LedgerVersionFixPaymentV2SendToSelf                           LedgerVersion = 39
 	LedgerVersionFixPaymentV2DestAccountNotFound                  LedgerVersion = 40
-	LedgerVersionUseOnlyPaymentV2                                 LedgerVersion = 41
-	LedgerVersionAddReviewInvoiceRequestPaymentResponse           LedgerVersion = 42
-	LedgerVersionAddContractIdReviewRequestResult                 LedgerVersion = 43
+	LedgerVersionFixCreateKycRequestAutoApprove                   LedgerVersion = 41
+	LedgerVersionUseOnlyPaymentV2                                 LedgerVersion = 42
+	LedgerVersionAddReviewInvoiceRequestPaymentResponse           LedgerVersion = 43
+	LedgerVersionAddContractIdReviewRequestResult                 LedgerVersion = 44
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -32360,6 +32362,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAllowToIssueAfterSale,
 	LedgerVersionFixPaymentV2SendToSelf,
 	LedgerVersionFixPaymentV2DestAccountNotFound,
+	LedgerVersionFixCreateKycRequestAutoApprove,
 	LedgerVersionUseOnlyPaymentV2,
 	LedgerVersionAddReviewInvoiceRequestPaymentResponse,
 	LedgerVersionAddContractIdReviewRequestResult,
@@ -32407,9 +32410,10 @@ var ledgerVersionMap = map[int32]string{
 	38: "LedgerVersionAllowToIssueAfterSale",
 	39: "LedgerVersionFixPaymentV2SendToSelf",
 	40: "LedgerVersionFixPaymentV2DestAccountNotFound",
-	41: "LedgerVersionUseOnlyPaymentV2",
-	42: "LedgerVersionAddReviewInvoiceRequestPaymentResponse",
-	43: "LedgerVersionAddContractIdReviewRequestResult",
+	41: "LedgerVersionFixCreateKycRequestAutoApprove",
+	42: "LedgerVersionUseOnlyPaymentV2",
+	43: "LedgerVersionAddReviewInvoiceRequestPaymentResponse",
+	44: "LedgerVersionAddContractIdReviewRequestResult",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -32454,9 +32458,10 @@ var ledgerVersionShortMap = map[int32]string{
 	38: "allow_to_issue_after_sale",
 	39: "fix_payment_v2_send_to_self",
 	40: "fix_payment_v2_dest_account_not_found",
-	41: "use_only_payment_v2",
-	42: "add_review_invoice_request_payment_response",
-	43: "add_contract_id_review_request_result",
+	41: "fix_create_kyc_request_auto_approve",
+	42: "use_only_payment_v2",
+	43: "add_review_invoice_request_payment_response",
+	44: "add_contract_id_review_request_result",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -32501,9 +32506,10 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAllowToIssueAfterSale":                            38,
 	"LedgerVersionFixPaymentV2SendToSelf":                           39,
 	"LedgerVersionFixPaymentV2DestAccountNotFound":                  40,
-	"LedgerVersionUseOnlyPaymentV2":                                 41,
-	"LedgerVersionAddReviewInvoiceRequestPaymentResponse":           42,
-	"LedgerVersionAddContractIdReviewRequestResult":                 43,
+	"LedgerVersionFixCreateKycRequestAutoApprove":                   41,
+	"LedgerVersionUseOnlyPaymentV2":                                 42,
+	"LedgerVersionAddReviewInvoiceRequestPaymentResponse":           43,
+	"LedgerVersionAddContractIdReviewRequestResult":                 44,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
