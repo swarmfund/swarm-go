@@ -30496,7 +30496,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ALLOW_TO_UPDATE_VOTING_SALES_AS_PROMOTION = 37,
 //    	ALLOW_TO_ISSUE_AFTER_SALE = 38,
 //    	FIX_PAYMENT_V2_SEND_TO_SELF = 39,
-//    	FIX_PAYMENT_V2_DEST_ACCOUNT_NOT_FOUND = 40
+//    	FIX_PAYMENT_V2_DEST_ACCOUNT_NOT_FOUND = 40,
+//    	FIX_CREATE_KYC_REQUEST_AUTO_APPROVE = 41
 //    };
 //
 type LedgerVersion int32
@@ -30543,6 +30544,7 @@ const (
 	LedgerVersionAllowToIssueAfterSale                            LedgerVersion = 38
 	LedgerVersionFixPaymentV2SendToSelf                           LedgerVersion = 39
 	LedgerVersionFixPaymentV2DestAccountNotFound                  LedgerVersion = 40
+	LedgerVersionFixCreateKycRequestAutoApprove                   LedgerVersion = 41
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -30587,6 +30589,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAllowToIssueAfterSale,
 	LedgerVersionFixPaymentV2SendToSelf,
 	LedgerVersionFixPaymentV2DestAccountNotFound,
+	LedgerVersionFixCreateKycRequestAutoApprove,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -30631,6 +30634,7 @@ var ledgerVersionMap = map[int32]string{
 	38: "LedgerVersionAllowToIssueAfterSale",
 	39: "LedgerVersionFixPaymentV2SendToSelf",
 	40: "LedgerVersionFixPaymentV2DestAccountNotFound",
+	41: "LedgerVersionFixCreateKycRequestAutoApprove",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -30675,6 +30679,7 @@ var ledgerVersionShortMap = map[int32]string{
 	38: "allow_to_issue_after_sale",
 	39: "fix_payment_v2_send_to_self",
 	40: "fix_payment_v2_dest_account_not_found",
+	41: "fix_create_kyc_request_auto_approve",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -30719,6 +30724,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAllowToIssueAfterSale":                            38,
 	"LedgerVersionFixPaymentV2SendToSelf":                           39,
 	"LedgerVersionFixPaymentV2DestAccountNotFound":                  40,
+	"LedgerVersionFixCreateKycRequestAutoApprove":                   41,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
