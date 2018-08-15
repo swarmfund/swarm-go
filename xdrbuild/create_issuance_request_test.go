@@ -48,7 +48,7 @@ func TestCreateIssuanceRequestOp_XDR(t *testing.T) {
 		assert.EqualValues(t, op.Asset, body.Request.Asset)
 		assert.EqualValues(t, op.Amount, body.Request.Amount)
 		assert.EqualValues(t, op.Details, body.Request.ExternalDetails)
-		assert.EqualValues(t, op.AllTasks, body.Ext.AllTasks)
+		assert.EqualValues(t, *op.AllTasks, uint32(**body.Ext.AllTasks))
 	})
 
 	cases := []struct {
