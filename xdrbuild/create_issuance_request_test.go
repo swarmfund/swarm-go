@@ -26,6 +26,29 @@ func TestCreateIssuanceRequestOp_XDR(t *testing.T) {
 		assert.EqualValues(t, op.Asset, body.Request.Asset)
 		assert.EqualValues(t, op.Amount, body.Request.Amount)
 		assert.EqualValues(t, op.Details, body.Request.ExternalDetails)
+		assert.Nil(t, op.AllTasks, nil)
+	})
+
+	t.Run("valid with tasks", func(t *testing.T) {
+		var allTasks uint32 = 8
+		op := CreateIssuanceRequestOp{
+			Reference: "foobar",
+			Receiver:  balance,
+			Asset:     "YOBA",
+			Amount:    42,
+			Details:   "{}",
+			AllTasks:  &allTasks,
+		}
+		assert.NoError(t, op.Validate())
+		got, err := op.XDR()
+		assert.NoError(t, err)
+		body := got.Body.CreateIssuanceRequestOp
+		assert.EqualValues(t, op.Reference, body.Reference)
+		assert.EqualValues(t, op.Receiver, body.Request.Receiver.AsString())
+		assert.EqualValues(t, op.Asset, body.Request.Asset)
+		assert.EqualValues(t, op.Amount, body.Request.Amount)
+		assert.EqualValues(t, op.Details, body.Request.ExternalDetails)
+		assert.EqualValues(t, *op.AllTasks, uint32(**body.Ext.AllTasks))
 	})
 
 	cases := []struct {

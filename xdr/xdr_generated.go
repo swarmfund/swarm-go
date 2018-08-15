@@ -771,7 +771,8 @@ type AccountTypeLimitsEntry struct {
 //    	KYC_ACC_MANAGER = 16777216, // can manage kyc
 //    	KYC_SUPER_ADMIN = 33554432,
 //    	EXTERNAL_SYSTEM_ACCOUNT_ID_POOL_MANAGER = 67108864,
-//        KEY_VALUE_MANAGER = 134217728 // can manage keyValue
+//        KEY_VALUE_MANAGER = 134217728, // can manage keyValue
+//        SUPER_ISSUANCE_MANAGER = 268435456
 //    };
 //
 type SignerType int32
@@ -805,6 +806,7 @@ const (
 	SignerTypeKycSuperAdmin                      SignerType = 33554432
 	SignerTypeExternalSystemAccountIdPoolManager SignerType = 67108864
 	SignerTypeKeyValueManager                    SignerType = 134217728
+	SignerTypeSuperIssuanceManager               SignerType = 268435456
 )
 
 var SignerTypeAll = []SignerType{
@@ -836,6 +838,7 @@ var SignerTypeAll = []SignerType{
 	SignerTypeKycSuperAdmin,
 	SignerTypeExternalSystemAccountIdPoolManager,
 	SignerTypeKeyValueManager,
+	SignerTypeSuperIssuanceManager,
 }
 
 var signerTypeMap = map[int32]string{
@@ -867,6 +870,7 @@ var signerTypeMap = map[int32]string{
 	33554432:  "SignerTypeKycSuperAdmin",
 	67108864:  "SignerTypeExternalSystemAccountIdPoolManager",
 	134217728: "SignerTypeKeyValueManager",
+	268435456: "SignerTypeSuperIssuanceManager",
 }
 
 var signerTypeShortMap = map[int32]string{
@@ -898,6 +902,7 @@ var signerTypeShortMap = map[int32]string{
 	33554432:  "kyc_super_admin",
 	67108864:  "external_system_account_id_pool_manager",
 	134217728: "key_value_manager",
+	268435456: "super_issuance_manager",
 }
 
 var signerTypeRevMap = map[string]int32{
@@ -929,6 +934,7 @@ var signerTypeRevMap = map[string]int32{
 	"SignerTypeKycSuperAdmin":                      33554432,
 	"SignerTypeExternalSystemAccountIdPoolManager": 67108864,
 	"SignerTypeKeyValueManager":                    134217728,
+	"SignerTypeSuperIssuanceManager":               268435456,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -3197,7 +3203,8 @@ type KeyValueEntry struct {
 //    {
 //        PAYMENT_OUT = 1,
 //        WITHDRAW = 2,
-//        SPEND = 3
+//        SPEND = 3,
+//        DEPOSIT = 4
 //    };
 //
 type StatsOpType int32
@@ -3206,30 +3213,35 @@ const (
 	StatsOpTypePaymentOut StatsOpType = 1
 	StatsOpTypeWithdraw   StatsOpType = 2
 	StatsOpTypeSpend      StatsOpType = 3
+	StatsOpTypeDeposit    StatsOpType = 4
 )
 
 var StatsOpTypeAll = []StatsOpType{
 	StatsOpTypePaymentOut,
 	StatsOpTypeWithdraw,
 	StatsOpTypeSpend,
+	StatsOpTypeDeposit,
 }
 
 var statsOpTypeMap = map[int32]string{
 	1: "StatsOpTypePaymentOut",
 	2: "StatsOpTypeWithdraw",
 	3: "StatsOpTypeSpend",
+	4: "StatsOpTypeDeposit",
 }
 
 var statsOpTypeShortMap = map[int32]string{
 	1: "payment_out",
 	2: "withdraw",
 	3: "spend",
+	4: "deposit",
 }
 
 var statsOpTypeRevMap = map[string]int32{
 	"StatsOpTypePaymentOut": 1,
 	"StatsOpTypeWithdraw":   2,
 	"StatsOpTypeSpend":      3,
+	"StatsOpTypeDeposit":    4,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -3777,7 +3789,8 @@ type ReferenceEntry struct {
 //    	UPDATE_KYC = 9,
 //    	UPDATE_SALE_DETAILS = 10,
 //    	UPDATE_PROMOTION = 11,
-//    	UPDATE_SALE_END_TIME = 12
+//    	UPDATE_SALE_END_TIME = 12,
+//    	NONE = 13 // use this request type in ReviewRequestOp extended result if additional info is not required
 //    };
 //
 type ReviewableRequestType int32
@@ -3796,6 +3809,7 @@ const (
 	ReviewableRequestTypeUpdateSaleDetails ReviewableRequestType = 10
 	ReviewableRequestTypeUpdatePromotion   ReviewableRequestType = 11
 	ReviewableRequestTypeUpdateSaleEndTime ReviewableRequestType = 12
+	ReviewableRequestTypeNone              ReviewableRequestType = 13
 )
 
 var ReviewableRequestTypeAll = []ReviewableRequestType{
@@ -3812,6 +3826,7 @@ var ReviewableRequestTypeAll = []ReviewableRequestType{
 	ReviewableRequestTypeUpdateSaleDetails,
 	ReviewableRequestTypeUpdatePromotion,
 	ReviewableRequestTypeUpdateSaleEndTime,
+	ReviewableRequestTypeNone,
 }
 
 var reviewableRequestTypeMap = map[int32]string{
@@ -3828,6 +3843,7 @@ var reviewableRequestTypeMap = map[int32]string{
 	10: "ReviewableRequestTypeUpdateSaleDetails",
 	11: "ReviewableRequestTypeUpdatePromotion",
 	12: "ReviewableRequestTypeUpdateSaleEndTime",
+	13: "ReviewableRequestTypeNone",
 }
 
 var reviewableRequestTypeShortMap = map[int32]string{
@@ -3844,6 +3860,7 @@ var reviewableRequestTypeShortMap = map[int32]string{
 	10: "update_sale_details",
 	11: "update_promotion",
 	12: "update_sale_end_time",
+	13: "none",
 }
 
 var reviewableRequestTypeRevMap = map[string]int32{
@@ -3860,6 +3877,7 @@ var reviewableRequestTypeRevMap = map[string]int32{
 	"ReviewableRequestTypeUpdateSaleDetails": 10,
 	"ReviewableRequestTypeUpdatePromotion":   11,
 	"ReviewableRequestTypeUpdateSaleEndTime": 12,
+	"ReviewableRequestTypeNone":              13,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -3921,6 +3939,70 @@ func (e *ReviewableRequestType) UnmarshalJSON(data []byte) error {
 	}
 	*e = ReviewableRequestType(t.Value)
 	return nil
+}
+
+// TasksExtExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type TasksExtExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u TasksExtExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of TasksExtExt
+func (u TasksExtExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewTasksExtExt creates a new  TasksExtExt.
+func NewTasksExtExt(v LedgerVersion, value interface{}) (result TasksExtExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// TasksExt is an XDR Struct defines as:
+//
+//   struct TasksExt {
+//        // Tasks are represented by a bitmask
+//        uint32 allTasks;
+//        uint32 pendingTasks;
+//
+//        // External details vector consists of comments written by request reviewers
+//        longstring externalDetails<>;
+//
+//        // Reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type TasksExt struct {
+	AllTasks        Uint32       `json:"allTasks,omitempty"`
+	PendingTasks    Uint32       `json:"pendingTasks,omitempty"`
+	ExternalDetails []Longstring `json:"externalDetails,omitempty"`
+	Ext             TasksExtExt  `json:"ext,omitempty"`
 }
 
 // ReviewableRequestEntryBody is an XDR NestedUnion defines as:
@@ -4441,10 +4523,13 @@ func (u ReviewableRequestEntryBody) GetUpdateSaleEndTimeRequest() (result Update
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_TASKS_TO_REVIEWABLE_REQUEST:
+//            TasksExt tasksExt;
 //        }
 //
 type ReviewableRequestEntryExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V        LedgerVersion `json:"v,omitempty"`
+	TasksExt *TasksExt     `json:"tasksExt,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -4459,6 +4544,8 @@ func (u ReviewableRequestEntryExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionAddTasksToReviewableRequest:
+		return "TasksExt", true
 	}
 	return "-", false
 }
@@ -4469,7 +4556,39 @@ func NewReviewableRequestEntryExt(v LedgerVersion, value interface{}) (result Re
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionAddTasksToReviewableRequest:
+		tv, ok := value.(TasksExt)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be TasksExt")
+			return
+		}
+		result.TasksExt = &tv
 	}
+	return
+}
+
+// MustTasksExt retrieves the TasksExt value from the union,
+// panicing if the value is not set.
+func (u ReviewableRequestEntryExt) MustTasksExt() TasksExt {
+	val, ok := u.GetTasksExt()
+
+	if !ok {
+		panic("arm TasksExt is not set")
+	}
+
+	return val
+}
+
+// GetTasksExt retrieves the TasksExt value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewableRequestEntryExt) GetTasksExt() (result TasksExt, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "TasksExt" {
+		result = *u.TasksExt
+		ok = true
+	}
+
 	return
 }
 
@@ -4518,6 +4637,8 @@ func NewReviewableRequestEntryExt(v LedgerVersion, value interface{}) (result Re
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_TASKS_TO_REVIEWABLE_REQUEST:
+//            TasksExt tasksExt;
 //        }
 //        ext;
 //    };
@@ -12776,10 +12897,13 @@ func (u CreateAccountResult) GetSuccess() (result CreateAccountSuccess, ok bool)
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_TASKS_TO_REVIEWABLE_REQUEST:
+//            uint32* allTasks;
 //        }
 //
 type CreateIssuanceRequestOpExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V        LedgerVersion `json:"v,omitempty"`
+	AllTasks **Uint32      `json:"allTasks,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -12794,6 +12918,8 @@ func (u CreateIssuanceRequestOpExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionAddTasksToReviewableRequest:
+		return "AllTasks", true
 	}
 	return "-", false
 }
@@ -12804,7 +12930,39 @@ func NewCreateIssuanceRequestOpExt(v LedgerVersion, value interface{}) (result C
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionAddTasksToReviewableRequest:
+		tv, ok := value.(*Uint32)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be *Uint32")
+			return
+		}
+		result.AllTasks = &tv
 	}
+	return
+}
+
+// MustAllTasks retrieves the AllTasks value from the union,
+// panicing if the value is not set.
+func (u CreateIssuanceRequestOpExt) MustAllTasks() *Uint32 {
+	val, ok := u.GetAllTasks()
+
+	if !ok {
+		panic("arm AllTasks is not set")
+	}
+
+	return val
+}
+
+// GetAllTasks retrieves the AllTasks value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u CreateIssuanceRequestOpExt) GetAllTasks() (result *Uint32, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "AllTasks" {
+		result = *u.AllTasks
+		ok = true
+	}
+
 	return
 }
 
@@ -12819,6 +12977,8 @@ func NewCreateIssuanceRequestOpExt(v LedgerVersion, value interface{}) (result C
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_TASKS_TO_REVIEWABLE_REQUEST:
+//            uint32* allTasks;
 //        }
 //        ext;
 //    };
@@ -12847,7 +13007,9 @@ type CreateIssuanceRequestOp struct {
 //    	INVALID_EXTERNAL_DETAILS = -8, // external details size exceeds max allowed
 //    	FEE_EXCEEDS_AMOUNT = -9, // fee more than amount to issue
 //        REQUIRES_KYC = -10, // asset requires receiver to have KYC
-//        REQUIRES_VERIFICATION = -11 //asset requires receiver to be verified
+//        REQUIRES_VERIFICATION = -11, //asset requires receiver to be verified
+//        ISSUANCE_TASKS_NOT_FOUND = -12, // issuance tasks have not been provided by the source and don't exist in 'KeyValue' table
+//        SYSTEM_TASKS_NOT_ALLOWED = -13
 //    };
 //
 type CreateIssuanceRequestResultCode int32
@@ -12865,6 +13027,8 @@ const (
 	CreateIssuanceRequestResultCodeFeeExceedsAmount         CreateIssuanceRequestResultCode = -9
 	CreateIssuanceRequestResultCodeRequiresKyc              CreateIssuanceRequestResultCode = -10
 	CreateIssuanceRequestResultCodeRequiresVerification     CreateIssuanceRequestResultCode = -11
+	CreateIssuanceRequestResultCodeIssuanceTasksNotFound    CreateIssuanceRequestResultCode = -12
+	CreateIssuanceRequestResultCodeSystemTasksNotAllowed    CreateIssuanceRequestResultCode = -13
 )
 
 var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
@@ -12880,6 +13044,8 @@ var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
 	CreateIssuanceRequestResultCodeFeeExceedsAmount,
 	CreateIssuanceRequestResultCodeRequiresKyc,
 	CreateIssuanceRequestResultCodeRequiresVerification,
+	CreateIssuanceRequestResultCodeIssuanceTasksNotFound,
+	CreateIssuanceRequestResultCodeSystemTasksNotAllowed,
 }
 
 var createIssuanceRequestResultCodeMap = map[int32]string{
@@ -12895,6 +13061,8 @@ var createIssuanceRequestResultCodeMap = map[int32]string{
 	-9:  "CreateIssuanceRequestResultCodeFeeExceedsAmount",
 	-10: "CreateIssuanceRequestResultCodeRequiresKyc",
 	-11: "CreateIssuanceRequestResultCodeRequiresVerification",
+	-12: "CreateIssuanceRequestResultCodeIssuanceTasksNotFound",
+	-13: "CreateIssuanceRequestResultCodeSystemTasksNotAllowed",
 }
 
 var createIssuanceRequestResultCodeShortMap = map[int32]string{
@@ -12910,6 +13078,8 @@ var createIssuanceRequestResultCodeShortMap = map[int32]string{
 	-9:  "fee_exceeds_amount",
 	-10: "requires_kyc",
 	-11: "requires_verification",
+	-12: "issuance_tasks_not_found",
+	-13: "system_tasks_not_allowed",
 }
 
 var createIssuanceRequestResultCodeRevMap = map[string]int32{
@@ -12925,6 +13095,8 @@ var createIssuanceRequestResultCodeRevMap = map[string]int32{
 	"CreateIssuanceRequestResultCodeFeeExceedsAmount":         -9,
 	"CreateIssuanceRequestResultCodeRequiresKyc":              -10,
 	"CreateIssuanceRequestResultCodeRequiresVerification":     -11,
+	"CreateIssuanceRequestResultCodeIssuanceTasksNotFound":    -12,
+	"CreateIssuanceRequestResultCodeSystemTasksNotAllowed":    -13,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -22943,6 +23115,262 @@ type UpdateKycDetails struct {
 	Ext             UpdateKycDetailsExt `json:"ext,omitempty"`
 }
 
+// ReviewDetailsExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type ReviewDetailsExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ReviewDetailsExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ReviewDetailsExt
+func (u ReviewDetailsExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewReviewDetailsExt creates a new  ReviewDetailsExt.
+func NewReviewDetailsExt(v LedgerVersion, value interface{}) (result ReviewDetailsExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// ReviewDetails is an XDR Struct defines as:
+//
+//   struct ReviewDetails {
+//        uint32 tasksToAdd;
+//        uint32 tasksToRemove;
+//        string externalDetails<>;
+//        // Reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type ReviewDetails struct {
+	TasksToAdd      Uint32           `json:"tasksToAdd,omitempty"`
+	TasksToRemove   Uint32           `json:"tasksToRemove,omitempty"`
+	ExternalDetails string           `json:"externalDetails,omitempty"`
+	Ext             ReviewDetailsExt `json:"ext,omitempty"`
+}
+
+// SaleExtendedExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type SaleExtendedExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u SaleExtendedExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of SaleExtendedExt
+func (u SaleExtendedExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewSaleExtendedExt creates a new  SaleExtendedExt.
+func NewSaleExtendedExt(v LedgerVersion, value interface{}) (result SaleExtendedExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// SaleExtended is an XDR Struct defines as:
+//
+//   struct SaleExtended {
+//        uint64 saleID;
+//
+//        // Reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type SaleExtended struct {
+	SaleId Uint64          `json:"saleID,omitempty"`
+	Ext    SaleExtendedExt `json:"ext,omitempty"`
+}
+
+// ExtendedResultTypeExt is an XDR NestedUnion defines as:
+//
+//   union switch(ReviewableRequestType requestType) {
+//        case SALE:
+//            SaleExtended saleExtended;
+//        case NONE:
+//            void;
+//        }
+//
+type ExtendedResultTypeExt struct {
+	RequestType  ReviewableRequestType `json:"requestType,omitempty"`
+	SaleExtended *SaleExtended         `json:"saleExtended,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ExtendedResultTypeExt) SwitchFieldName() string {
+	return "RequestType"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ExtendedResultTypeExt
+func (u ExtendedResultTypeExt) ArmForSwitch(sw int32) (string, bool) {
+	switch ReviewableRequestType(sw) {
+	case ReviewableRequestTypeSale:
+		return "SaleExtended", true
+	case ReviewableRequestTypeNone:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewExtendedResultTypeExt creates a new  ExtendedResultTypeExt.
+func NewExtendedResultTypeExt(requestType ReviewableRequestType, value interface{}) (result ExtendedResultTypeExt, err error) {
+	result.RequestType = requestType
+	switch ReviewableRequestType(requestType) {
+	case ReviewableRequestTypeSale:
+		tv, ok := value.(SaleExtended)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be SaleExtended")
+			return
+		}
+		result.SaleExtended = &tv
+	case ReviewableRequestTypeNone:
+		// void
+	}
+	return
+}
+
+// MustSaleExtended retrieves the SaleExtended value from the union,
+// panicing if the value is not set.
+func (u ExtendedResultTypeExt) MustSaleExtended() SaleExtended {
+	val, ok := u.GetSaleExtended()
+
+	if !ok {
+		panic("arm SaleExtended is not set")
+	}
+
+	return val
+}
+
+// GetSaleExtended retrieves the SaleExtended value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ExtendedResultTypeExt) GetSaleExtended() (result SaleExtended, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.RequestType))
+
+	if armName == "SaleExtended" {
+		result = *u.SaleExtended
+		ok = true
+	}
+
+	return
+}
+
+// ExtendedResultExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//       {
+//       case EMPTY_VERSION:
+//           void;
+//       }
+//
+type ExtendedResultExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ExtendedResultExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ExtendedResultExt
+func (u ExtendedResultExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewExtendedResultExt creates a new  ExtendedResultExt.
+func NewExtendedResultExt(v LedgerVersion, value interface{}) (result ExtendedResultExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// ExtendedResult is an XDR Struct defines as:
+//
+//   struct ExtendedResult {
+//        bool fulfilled;
+//
+//        union switch(ReviewableRequestType requestType) {
+//        case SALE:
+//            SaleExtended saleExtended;
+//        case NONE:
+//            void;
+//        } typeExt;
+//
+//       // Reserved for future use
+//       union switch (LedgerVersion v)
+//       {
+//       case EMPTY_VERSION:
+//           void;
+//       }
+//       ext;
+//    };
+//
+type ExtendedResult struct {
+	Fulfilled bool                  `json:"fulfilled,omitempty"`
+	TypeExt   ExtendedResultTypeExt `json:"typeExt,omitempty"`
+	Ext       ExtendedResultExt     `json:"ext,omitempty"`
+}
+
 // ReviewRequestOpRequestDetails is an XDR NestedUnion defines as:
 //
 //   union switch(ReviewableRequestType requestType) {
@@ -23170,10 +23598,13 @@ func (u ReviewRequestOpRequestDetails) GetUpdateKyc() (result UpdateKycDetails, 
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_TASKS_TO_REVIEWABLE_REQUEST:
+//            ReviewDetails reviewDetails;
 //        }
 //
 type ReviewRequestOpExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V             LedgerVersion  `json:"v,omitempty"`
+	ReviewDetails *ReviewDetails `json:"reviewDetails,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -23188,6 +23619,8 @@ func (u ReviewRequestOpExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionAddTasksToReviewableRequest:
+		return "ReviewDetails", true
 	}
 	return "-", false
 }
@@ -23198,7 +23631,39 @@ func NewReviewRequestOpExt(v LedgerVersion, value interface{}) (result ReviewReq
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionAddTasksToReviewableRequest:
+		tv, ok := value.(ReviewDetails)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ReviewDetails")
+			return
+		}
+		result.ReviewDetails = &tv
 	}
+	return
+}
+
+// MustReviewDetails retrieves the ReviewDetails value from the union,
+// panicing if the value is not set.
+func (u ReviewRequestOpExt) MustReviewDetails() ReviewDetails {
+	val, ok := u.GetReviewDetails()
+
+	if !ok {
+		panic("arm ReviewDetails is not set")
+	}
+
+	return val
+}
+
+// GetReviewDetails retrieves the ReviewDetails value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewRequestOpExt) GetReviewDetails() (result ReviewDetails, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "ReviewDetails" {
+		result = *u.ReviewDetails
+		ok = true
+	}
+
 	return
 }
 
@@ -23229,6 +23694,8 @@ func NewReviewRequestOpExt(v LedgerVersion, value interface{}) (result ReviewReq
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_TASKS_TO_REVIEWABLE_REQUEST:
+//            ReviewDetails reviewDetails;
 //        }
 //        ext;
 //    };
@@ -23268,6 +23735,7 @@ type ReviewRequestOp struct {
 //    	MAX_ISSUANCE_AMOUNT_EXCEEDED = -40,
 //    	INSUFFICIENT_AVAILABLE_FOR_ISSUANCE_AMOUNT = -41,
 //    	FULL_LINE = -42, // can't fund balance - total funds exceed UINT64_MAX
+//    	SYSTEM_TASKS_NOT_ALLOWED = -43,
 //
 //    	// Sale creation requests
 //    	BASE_ASSET_DOES_NOT_EXISTS = -50,
@@ -23305,6 +23773,7 @@ const (
 	ReviewRequestResultCodeMaxIssuanceAmountExceeded              ReviewRequestResultCode = -40
 	ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount ReviewRequestResultCode = -41
 	ReviewRequestResultCodeFullLine                               ReviewRequestResultCode = -42
+	ReviewRequestResultCodeSystemTasksNotAllowed                  ReviewRequestResultCode = -43
 	ReviewRequestResultCodeBaseAssetDoesNotExists                 ReviewRequestResultCode = -50
 	ReviewRequestResultCodeHardCapWillExceedMaxIssuance           ReviewRequestResultCode = -51
 	ReviewRequestResultCodeInsufficientPreissuedForHardCap        ReviewRequestResultCode = -52
@@ -23330,6 +23799,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeMaxIssuanceAmountExceeded,
 	ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount,
 	ReviewRequestResultCodeFullLine,
+	ReviewRequestResultCodeSystemTasksNotAllowed,
 	ReviewRequestResultCodeBaseAssetDoesNotExists,
 	ReviewRequestResultCodeHardCapWillExceedMaxIssuance,
 	ReviewRequestResultCodeInsufficientPreissuedForHardCap,
@@ -23355,6 +23825,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-40: "ReviewRequestResultCodeMaxIssuanceAmountExceeded",
 	-41: "ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount",
 	-42: "ReviewRequestResultCodeFullLine",
+	-43: "ReviewRequestResultCodeSystemTasksNotAllowed",
 	-50: "ReviewRequestResultCodeBaseAssetDoesNotExists",
 	-51: "ReviewRequestResultCodeHardCapWillExceedMaxIssuance",
 	-52: "ReviewRequestResultCodeInsufficientPreissuedForHardCap",
@@ -23380,6 +23851,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-40: "max_issuance_amount_exceeded",
 	-41: "insufficient_available_for_issuance_amount",
 	-42: "full_line",
+	-43: "system_tasks_not_allowed",
 	-50: "base_asset_does_not_exists",
 	-51: "hard_cap_will_exceed_max_issuance",
 	-52: "insufficient_preissued_for_hard_cap",
@@ -23405,6 +23877,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeMaxIssuanceAmountExceeded":              -40,
 	"ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount": -41,
 	"ReviewRequestResultCodeFullLine":                               -42,
+	"ReviewRequestResultCodeSystemTasksNotAllowed":                  -43,
 	"ReviewRequestResultCodeBaseAssetDoesNotExists":                 -50,
 	"ReviewRequestResultCodeHardCapWillExceedMaxIssuance":           -51,
 	"ReviewRequestResultCodeInsufficientPreissuedForHardCap":        -52,
@@ -23483,11 +23956,14 @@ func (e *ReviewRequestResultCode) UnmarshalJSON(data []byte) error {
 //    		    uint64 saleID;
 //    		case EMPTY_VERSION:
 //    			void;
+//            case ADD_TASKS_TO_REVIEWABLE_REQUEST:
+//                ExtendedResult extendedResult;
 //    		}
 //
 type ReviewRequestResultSuccessExt struct {
-	V      LedgerVersion `json:"v,omitempty"`
-	SaleId *Uint64       `json:"saleID,omitempty"`
+	V              LedgerVersion   `json:"v,omitempty"`
+	SaleId         *Uint64         `json:"saleID,omitempty"`
+	ExtendedResult *ExtendedResult `json:"extendedResult,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -23504,6 +23980,8 @@ func (u ReviewRequestResultSuccessExt) ArmForSwitch(sw int32) (string, bool) {
 		return "SaleId", true
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionAddTasksToReviewableRequest:
+		return "ExtendedResult", true
 	}
 	return "-", false
 }
@@ -23521,6 +23999,13 @@ func NewReviewRequestResultSuccessExt(v LedgerVersion, value interface{}) (resul
 		result.SaleId = &tv
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionAddTasksToReviewableRequest:
+		tv, ok := value.(ExtendedResult)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ExtendedResult")
+			return
+		}
+		result.ExtendedResult = &tv
 	}
 	return
 }
@@ -23550,6 +24035,31 @@ func (u ReviewRequestResultSuccessExt) GetSaleId() (result Uint64, ok bool) {
 	return
 }
 
+// MustExtendedResult retrieves the ExtendedResult value from the union,
+// panicing if the value is not set.
+func (u ReviewRequestResultSuccessExt) MustExtendedResult() ExtendedResult {
+	val, ok := u.GetExtendedResult()
+
+	if !ok {
+		panic("arm ExtendedResult is not set")
+	}
+
+	return val
+}
+
+// GetExtendedResult retrieves the ExtendedResult value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewRequestResultSuccessExt) GetExtendedResult() (result ExtendedResult, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "ExtendedResult" {
+		result = *u.ExtendedResult
+		ok = true
+	}
+
+	return
+}
+
 // ReviewRequestResultSuccess is an XDR NestedStruct defines as:
 //
 //   struct {
@@ -23560,6 +24070,8 @@ func (u ReviewRequestResultSuccessExt) GetSaleId() (result Uint64, ok bool) {
 //    		    uint64 saleID;
 //    		case EMPTY_VERSION:
 //    			void;
+//            case ADD_TASKS_TO_REVIEWABLE_REQUEST:
+//                ExtendedResult extendedResult;
 //    		}
 //    		ext;
 //    	}
@@ -23581,6 +24093,8 @@ type ReviewRequestResultSuccess struct {
 //    		    uint64 saleID;
 //    		case EMPTY_VERSION:
 //    			void;
+//            case ADD_TASKS_TO_REVIEWABLE_REQUEST:
+//                ExtendedResult extendedResult;
 //    		}
 //    		ext;
 //    	} success;
@@ -30497,7 +31011,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ALLOW_TO_ISSUE_AFTER_SALE = 38,
 //    	FIX_PAYMENT_V2_SEND_TO_SELF = 39,
 //    	FIX_PAYMENT_V2_DEST_ACCOUNT_NOT_FOUND = 40,
-//    	FIX_CREATE_KYC_REQUEST_AUTO_APPROVE = 41
+//    	FIX_CREATE_KYC_REQUEST_AUTO_APPROVE = 41,
+//    	ADD_TASKS_TO_REVIEWABLE_REQUEST = 42
 //    };
 //
 type LedgerVersion int32
@@ -30545,6 +31060,7 @@ const (
 	LedgerVersionFixPaymentV2SendToSelf                           LedgerVersion = 39
 	LedgerVersionFixPaymentV2DestAccountNotFound                  LedgerVersion = 40
 	LedgerVersionFixCreateKycRequestAutoApprove                   LedgerVersion = 41
+	LedgerVersionAddTasksToReviewableRequest                      LedgerVersion = 42
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -30590,6 +31106,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionFixPaymentV2SendToSelf,
 	LedgerVersionFixPaymentV2DestAccountNotFound,
 	LedgerVersionFixCreateKycRequestAutoApprove,
+	LedgerVersionAddTasksToReviewableRequest,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -30635,6 +31152,7 @@ var ledgerVersionMap = map[int32]string{
 	39: "LedgerVersionFixPaymentV2SendToSelf",
 	40: "LedgerVersionFixPaymentV2DestAccountNotFound",
 	41: "LedgerVersionFixCreateKycRequestAutoApprove",
+	42: "LedgerVersionAddTasksToReviewableRequest",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -30680,6 +31198,7 @@ var ledgerVersionShortMap = map[int32]string{
 	39: "fix_payment_v2_send_to_self",
 	40: "fix_payment_v2_dest_account_not_found",
 	41: "fix_create_kyc_request_auto_approve",
+	42: "add_tasks_to_reviewable_request",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -30725,6 +31244,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionFixPaymentV2SendToSelf":                           39,
 	"LedgerVersionFixPaymentV2DestAccountNotFound":                  40,
 	"LedgerVersionFixCreateKycRequestAutoApprove":                   41,
+	"LedgerVersionAddTasksToReviewableRequest":                      42,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
