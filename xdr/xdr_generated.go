@@ -2219,8 +2219,8 @@ type BalanceEntry struct {
 //        CUSTOMER_CONFIRMED = 1,
 //        CONTRACTOR_CONFIRMED = 2,
 //        DISPUTING = 4,
-//        REVERT_RESOLVE = 8,
-//        NOT_REVERT_RESOLVE = 16
+//        REVERTING_RESOLVE = 8,
+//        NOT_REVERTING_RESOLVE = 16
 //    };
 //
 type ContractState int32
@@ -2230,8 +2230,8 @@ const (
 	ContractStateCustomerConfirmed   ContractState = 1
 	ContractStateContractorConfirmed ContractState = 2
 	ContractStateDisputing           ContractState = 4
-	ContractStateRevertResolve       ContractState = 8
-	ContractStateNotRevertResolve    ContractState = 16
+	ContractStateRevertingResolve    ContractState = 8
+	ContractStateNotRevertingResolve ContractState = 16
 )
 
 var ContractStateAll = []ContractState{
@@ -2239,8 +2239,8 @@ var ContractStateAll = []ContractState{
 	ContractStateCustomerConfirmed,
 	ContractStateContractorConfirmed,
 	ContractStateDisputing,
-	ContractStateRevertResolve,
-	ContractStateNotRevertResolve,
+	ContractStateRevertingResolve,
+	ContractStateNotRevertingResolve,
 }
 
 var contractStateMap = map[int32]string{
@@ -2248,8 +2248,8 @@ var contractStateMap = map[int32]string{
 	1:  "ContractStateCustomerConfirmed",
 	2:  "ContractStateContractorConfirmed",
 	4:  "ContractStateDisputing",
-	8:  "ContractStateRevertResolve",
-	16: "ContractStateNotRevertResolve",
+	8:  "ContractStateRevertingResolve",
+	16: "ContractStateNotRevertingResolve",
 }
 
 var contractStateShortMap = map[int32]string{
@@ -2257,8 +2257,8 @@ var contractStateShortMap = map[int32]string{
 	1:  "customer_confirmed",
 	2:  "contractor_confirmed",
 	4:  "disputing",
-	8:  "revert_resolve",
-	16: "not_revert_resolve",
+	8:  "reverting_resolve",
+	16: "not_reverting_resolve",
 }
 
 var contractStateRevMap = map[string]int32{
@@ -2266,8 +2266,8 @@ var contractStateRevMap = map[string]int32{
 	"ContractStateCustomerConfirmed":   1,
 	"ContractStateContractorConfirmed": 2,
 	"ContractStateDisputing":           4,
-	"ContractStateRevertResolve":       8,
-	"ContractStateNotRevertResolve":    16,
+	"ContractStateRevertingResolve":    8,
+	"ContractStateNotRevertingResolve": 16,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
