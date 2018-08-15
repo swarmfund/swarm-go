@@ -1436,7 +1436,8 @@ func (e *AccountType) UnmarshalJSON(data []byte) error {
 //    	RECOVERY_REQUEST = 1,
 //    	KYC_UPDATE = 2,
 //    	SUSPICIOUS_BEHAVIOR = 4,
-//    	TOO_MANY_KYC_UPDATE_REQUESTS = 8
+//    	TOO_MANY_KYC_UPDATE_REQUESTS = 8,
+//    	WITHDRAWAL = 16
 //    };
 //
 type BlockReasons int32
@@ -1446,6 +1447,7 @@ const (
 	BlockReasonsKycUpdate                BlockReasons = 2
 	BlockReasonsSuspiciousBehavior       BlockReasons = 4
 	BlockReasonsTooManyKycUpdateRequests BlockReasons = 8
+	BlockReasonsWithdrawal               BlockReasons = 16
 )
 
 var BlockReasonsAll = []BlockReasons{
@@ -1453,20 +1455,23 @@ var BlockReasonsAll = []BlockReasons{
 	BlockReasonsKycUpdate,
 	BlockReasonsSuspiciousBehavior,
 	BlockReasonsTooManyKycUpdateRequests,
+	BlockReasonsWithdrawal,
 }
 
 var blockReasonsMap = map[int32]string{
-	1: "BlockReasonsRecoveryRequest",
-	2: "BlockReasonsKycUpdate",
-	4: "BlockReasonsSuspiciousBehavior",
-	8: "BlockReasonsTooManyKycUpdateRequests",
+	1:  "BlockReasonsRecoveryRequest",
+	2:  "BlockReasonsKycUpdate",
+	4:  "BlockReasonsSuspiciousBehavior",
+	8:  "BlockReasonsTooManyKycUpdateRequests",
+	16: "BlockReasonsWithdrawal",
 }
 
 var blockReasonsShortMap = map[int32]string{
-	1: "recovery_request",
-	2: "kyc_update",
-	4: "suspicious_behavior",
-	8: "too_many_kyc_update_requests",
+	1:  "recovery_request",
+	2:  "kyc_update",
+	4:  "suspicious_behavior",
+	8:  "too_many_kyc_update_requests",
+	16: "withdrawal",
 }
 
 var blockReasonsRevMap = map[string]int32{
@@ -1474,6 +1479,7 @@ var blockReasonsRevMap = map[string]int32{
 	"BlockReasonsKycUpdate":                2,
 	"BlockReasonsSuspiciousBehavior":       4,
 	"BlockReasonsTooManyKycUpdateRequests": 8,
+	"BlockReasonsWithdrawal":               16,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -3197,7 +3203,8 @@ type KeyValueEntry struct {
 //    {
 //        PAYMENT_OUT = 1,
 //        WITHDRAW = 2,
-//        SPEND = 3
+//        SPEND = 3,
+//        DEPOSIT = 4
 //    };
 //
 type StatsOpType int32
@@ -3206,30 +3213,35 @@ const (
 	StatsOpTypePaymentOut StatsOpType = 1
 	StatsOpTypeWithdraw   StatsOpType = 2
 	StatsOpTypeSpend      StatsOpType = 3
+	StatsOpTypeDeposit    StatsOpType = 4
 )
 
 var StatsOpTypeAll = []StatsOpType{
 	StatsOpTypePaymentOut,
 	StatsOpTypeWithdraw,
 	StatsOpTypeSpend,
+	StatsOpTypeDeposit,
 }
 
 var statsOpTypeMap = map[int32]string{
 	1: "StatsOpTypePaymentOut",
 	2: "StatsOpTypeWithdraw",
 	3: "StatsOpTypeSpend",
+	4: "StatsOpTypeDeposit",
 }
 
 var statsOpTypeShortMap = map[int32]string{
 	1: "payment_out",
 	2: "withdraw",
 	3: "spend",
+	4: "deposit",
 }
 
 var statsOpTypeRevMap = map[string]int32{
 	"StatsOpTypePaymentOut": 1,
 	"StatsOpTypeWithdraw":   2,
 	"StatsOpTypeSpend":      3,
+	"StatsOpTypeDeposit":    4,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -21478,7 +21490,8 @@ type PaymentOpV2 struct {
 //        FEE_ASSET_MISMATCHED = -13,
 //        INSUFFICIENT_FEE_AMOUNT = -14,
 //        BALANCE_TO_CHARGE_FEE_FROM_NOT_FOUND = -15,
-//        PAYMENT_AMOUNT_IS_LESS_THAN_DEST_FEE = -16
+//        PAYMENT_AMOUNT_IS_LESS_THAN_DEST_FEE = -16,
+//        DESTINATION_ACCOUNT_NOT_FOUND = -17
 //    };
 //
 type PaymentV2ResultCode int32
@@ -21501,6 +21514,7 @@ const (
 	PaymentV2ResultCodeInsufficientFeeAmount          PaymentV2ResultCode = -14
 	PaymentV2ResultCodeBalanceToChargeFeeFromNotFound PaymentV2ResultCode = -15
 	PaymentV2ResultCodePaymentAmountIsLessThanDestFee PaymentV2ResultCode = -16
+	PaymentV2ResultCodeDestinationAccountNotFound     PaymentV2ResultCode = -17
 )
 
 var PaymentV2ResultCodeAll = []PaymentV2ResultCode{
@@ -21521,6 +21535,7 @@ var PaymentV2ResultCodeAll = []PaymentV2ResultCode{
 	PaymentV2ResultCodeInsufficientFeeAmount,
 	PaymentV2ResultCodeBalanceToChargeFeeFromNotFound,
 	PaymentV2ResultCodePaymentAmountIsLessThanDestFee,
+	PaymentV2ResultCodeDestinationAccountNotFound,
 }
 
 var paymentV2ResultCodeMap = map[int32]string{
@@ -21541,6 +21556,7 @@ var paymentV2ResultCodeMap = map[int32]string{
 	-14: "PaymentV2ResultCodeInsufficientFeeAmount",
 	-15: "PaymentV2ResultCodeBalanceToChargeFeeFromNotFound",
 	-16: "PaymentV2ResultCodePaymentAmountIsLessThanDestFee",
+	-17: "PaymentV2ResultCodeDestinationAccountNotFound",
 }
 
 var paymentV2ResultCodeShortMap = map[int32]string{
@@ -21561,6 +21577,7 @@ var paymentV2ResultCodeShortMap = map[int32]string{
 	-14: "insufficient_fee_amount",
 	-15: "balance_to_charge_fee_from_not_found",
 	-16: "payment_amount_is_less_than_dest_fee",
+	-17: "destination_account_not_found",
 }
 
 var paymentV2ResultCodeRevMap = map[string]int32{
@@ -21581,6 +21598,7 @@ var paymentV2ResultCodeRevMap = map[string]int32{
 	"PaymentV2ResultCodeInsufficientFeeAmount":          -14,
 	"PaymentV2ResultCodeBalanceToChargeFeeFromNotFound": -15,
 	"PaymentV2ResultCodePaymentAmountIsLessThanDestFee": -16,
+	"PaymentV2ResultCodeDestinationAccountNotFound":     -17,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -30991,8 +31009,10 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ALLOW_CLOSE_SALE_WITH_NON_ZERO_BALANCE = 36,
 //    	ALLOW_TO_UPDATE_VOTING_SALES_AS_PROMOTION = 37,
 //    	ALLOW_TO_ISSUE_AFTER_SALE = 38,
-//        FIX_PAYMENT_V2_SEND_TO_SELF = 39,
-//        ADD_TASKS_TO_REVIEWABLE_REQUEST = 40
+//    	FIX_PAYMENT_V2_SEND_TO_SELF = 39,
+//    	FIX_PAYMENT_V2_DEST_ACCOUNT_NOT_FOUND = 40,
+//    	FIX_CREATE_KYC_REQUEST_AUTO_APPROVE = 41,
+//    	ADD_TASKS_TO_REVIEWABLE_REQUEST = 42
 //    };
 //
 type LedgerVersion int32
@@ -31038,7 +31058,9 @@ const (
 	LedgerVersionAllowToUpdateVotingSalesAsPromotion              LedgerVersion = 37
 	LedgerVersionAllowToIssueAfterSale                            LedgerVersion = 38
 	LedgerVersionFixPaymentV2SendToSelf                           LedgerVersion = 39
-	LedgerVersionAddTasksToReviewableRequest                      LedgerVersion = 40
+	LedgerVersionFixPaymentV2DestAccountNotFound                  LedgerVersion = 40
+	LedgerVersionFixCreateKycRequestAutoApprove                   LedgerVersion = 41
+	LedgerVersionAddTasksToReviewableRequest                      LedgerVersion = 42
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -31082,6 +31104,8 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAllowToUpdateVotingSalesAsPromotion,
 	LedgerVersionAllowToIssueAfterSale,
 	LedgerVersionFixPaymentV2SendToSelf,
+	LedgerVersionFixPaymentV2DestAccountNotFound,
+	LedgerVersionFixCreateKycRequestAutoApprove,
 	LedgerVersionAddTasksToReviewableRequest,
 }
 
@@ -31126,7 +31150,9 @@ var ledgerVersionMap = map[int32]string{
 	37: "LedgerVersionAllowToUpdateVotingSalesAsPromotion",
 	38: "LedgerVersionAllowToIssueAfterSale",
 	39: "LedgerVersionFixPaymentV2SendToSelf",
-	40: "LedgerVersionAddTasksToReviewableRequest",
+	40: "LedgerVersionFixPaymentV2DestAccountNotFound",
+	41: "LedgerVersionFixCreateKycRequestAutoApprove",
+	42: "LedgerVersionAddTasksToReviewableRequest",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -31170,7 +31196,9 @@ var ledgerVersionShortMap = map[int32]string{
 	37: "allow_to_update_voting_sales_as_promotion",
 	38: "allow_to_issue_after_sale",
 	39: "fix_payment_v2_send_to_self",
-	40: "add_tasks_to_reviewable_request",
+	40: "fix_payment_v2_dest_account_not_found",
+	41: "fix_create_kyc_request_auto_approve",
+	42: "add_tasks_to_reviewable_request",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -31214,7 +31242,9 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAllowToUpdateVotingSalesAsPromotion":              37,
 	"LedgerVersionAllowToIssueAfterSale":                            38,
 	"LedgerVersionFixPaymentV2SendToSelf":                           39,
-	"LedgerVersionAddTasksToReviewableRequest":                      40,
+	"LedgerVersionFixPaymentV2DestAccountNotFound":                  40,
+	"LedgerVersionFixCreateKycRequestAutoApprove":                   41,
+	"LedgerVersionAddTasksToReviewableRequest":                      42,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
