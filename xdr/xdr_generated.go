@@ -18965,18 +18965,85 @@ func (e *ManageInvoiceRequestAction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// InvoiceCreationRequestExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type InvoiceCreationRequestExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u InvoiceCreationRequestExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of InvoiceCreationRequestExt
+func (u InvoiceCreationRequestExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewInvoiceCreationRequestExt creates a new  InvoiceCreationRequestExt.
+func NewInvoiceCreationRequestExt(v LedgerVersion, value interface{}) (result InvoiceCreationRequestExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// InvoiceCreationRequest is an XDR Struct defines as:
+//
+//   struct InvoiceCreationRequest
+//    {
+//        AssetCode asset;
+//        AccountID sender;
+//        uint64 amount; // not allowed to set 0
+//
+//        uint64 *contractID;
+//        longstring details;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type InvoiceCreationRequest struct {
+	Asset      AssetCode                 `json:"asset,omitempty"`
+	Sender     AccountId                 `json:"sender,omitempty"`
+	Amount     Uint64                    `json:"amount,omitempty"`
+	ContractId *Uint64                   `json:"contractID,omitempty"`
+	Details    Longstring                `json:"details,omitempty"`
+	Ext        InvoiceCreationRequestExt `json:"ext,omitempty"`
+}
+
 // ManageInvoiceRequestOpDetails is an XDR NestedUnion defines as:
 //
 //   union switch (ManageInvoiceRequestAction action){
 //        case CREATE:
-//            InvoiceRequest invoiceRequest;
+//            InvoiceCreationRequest invoiceRequest;
 //        case REMOVE:
 //            uint64 requestID;
 //        }
 //
 type ManageInvoiceRequestOpDetails struct {
 	Action         ManageInvoiceRequestAction `json:"action,omitempty"`
-	InvoiceRequest *InvoiceRequest            `json:"invoiceRequest,omitempty"`
+	InvoiceRequest *InvoiceCreationRequest    `json:"invoiceRequest,omitempty"`
 	RequestId      *Uint64                    `json:"requestID,omitempty"`
 }
 
@@ -19003,9 +19070,9 @@ func NewManageInvoiceRequestOpDetails(action ManageInvoiceRequestAction, value i
 	result.Action = action
 	switch ManageInvoiceRequestAction(action) {
 	case ManageInvoiceRequestActionCreate:
-		tv, ok := value.(InvoiceRequest)
+		tv, ok := value.(InvoiceCreationRequest)
 		if !ok {
-			err = fmt.Errorf("invalid value, must be InvoiceRequest")
+			err = fmt.Errorf("invalid value, must be InvoiceCreationRequest")
 			return
 		}
 		result.InvoiceRequest = &tv
@@ -19022,7 +19089,7 @@ func NewManageInvoiceRequestOpDetails(action ManageInvoiceRequestAction, value i
 
 // MustInvoiceRequest retrieves the InvoiceRequest value from the union,
 // panicing if the value is not set.
-func (u ManageInvoiceRequestOpDetails) MustInvoiceRequest() InvoiceRequest {
+func (u ManageInvoiceRequestOpDetails) MustInvoiceRequest() InvoiceCreationRequest {
 	val, ok := u.GetInvoiceRequest()
 
 	if !ok {
@@ -19034,7 +19101,7 @@ func (u ManageInvoiceRequestOpDetails) MustInvoiceRequest() InvoiceRequest {
 
 // GetInvoiceRequest retrieves the InvoiceRequest value from the union,
 // returning ok if the union's switch indicated the value is valid.
-func (u ManageInvoiceRequestOpDetails) GetInvoiceRequest() (result InvoiceRequest, ok bool) {
+func (u ManageInvoiceRequestOpDetails) GetInvoiceRequest() (result InvoiceCreationRequest, ok bool) {
 	armName, _ := u.ArmForSwitch(int32(u.Action))
 
 	if armName == "InvoiceRequest" {
@@ -19114,7 +19181,7 @@ func NewManageInvoiceRequestOpExt(v LedgerVersion, value interface{}) (result Ma
 //    {
 //        union switch (ManageInvoiceRequestAction action){
 //        case CREATE:
-//            InvoiceRequest invoiceRequest;
+//            InvoiceCreationRequest invoiceRequest;
 //        case REMOVE:
 //            uint64 requestID;
 //        } details;
@@ -28189,8 +28256,9 @@ func NewInvoiceRequestExt(v LedgerVersion, value interface{}) (result InvoiceReq
 //   struct InvoiceRequest
 //    {
 //        AssetCode asset;
-//        AccountID sender;
 //        uint64 amount; // not allowed to set 0
+//        BalanceID senderBalance;
+//        BalanceID receiverBalance;
 //
 //        uint64 *contractID;
 //        bool isApproved;
@@ -28206,13 +28274,14 @@ func NewInvoiceRequestExt(v LedgerVersion, value interface{}) (result InvoiceReq
 //    };
 //
 type InvoiceRequest struct {
-	Asset      AssetCode         `json:"asset,omitempty"`
-	Sender     AccountId         `json:"sender,omitempty"`
-	Amount     Uint64            `json:"amount,omitempty"`
-	ContractId *Uint64           `json:"contractID,omitempty"`
-	IsApproved bool              `json:"isApproved,omitempty"`
-	Details    Longstring        `json:"details,omitempty"`
-	Ext        InvoiceRequestExt `json:"ext,omitempty"`
+	Asset           AssetCode         `json:"asset,omitempty"`
+	Amount          Uint64            `json:"amount,omitempty"`
+	SenderBalance   BalanceId         `json:"senderBalance,omitempty"`
+	ReceiverBalance BalanceId         `json:"receiverBalance,omitempty"`
+	ContractId      *Uint64           `json:"contractID,omitempty"`
+	IsApproved      bool              `json:"isApproved,omitempty"`
+	Details         Longstring        `json:"details,omitempty"`
+	Ext             InvoiceRequestExt `json:"ext,omitempty"`
 }
 
 // PreIssuanceRequestExt is an XDR NestedUnion defines as:
