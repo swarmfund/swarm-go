@@ -2331,65 +2331,6 @@ func (e *ContractState) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// DisputeDetailsExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//
-type DisputeDetailsExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u DisputeDetailsExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of DisputeDetailsExt
-func (u DisputeDetailsExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewDisputeDetailsExt creates a new  DisputeDetailsExt.
-func NewDisputeDetailsExt(v LedgerVersion, value interface{}) (result DisputeDetailsExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// DisputeDetails is an XDR Struct defines as:
-//
-//   struct DisputeDetails
-//    {
-//        AccountID disputer;
-//        longstring reason;
-//
-//        union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
-//    };
-//
-type DisputeDetails struct {
-	Disputer AccountId         `json:"disputer,omitempty"`
-	Reason   Longstring        `json:"reason,omitempty"`
-	Ext      DisputeDetailsExt `json:"ext,omitempty"`
-}
-
 // ContractEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -2440,11 +2381,10 @@ func NewContractEntryExt(v LedgerVersion, value interface{}) (result ContractEnt
 //
 //        uint64 startTime;
 //        uint64 endTime;
-//        longstring details<>;
 //        uint64 invoiceRequestsIDs<>;
+//        longstring initialDetails;
 //
 //        uint32 state;
-//        DisputeDetails *disputeDetails;
 //
 //        union switch (LedgerVersion v)
 //        {
@@ -2461,10 +2401,9 @@ type ContractEntry struct {
 	Escrow             AccountId        `json:"escrow,omitempty"`
 	StartTime          Uint64           `json:"startTime,omitempty"`
 	EndTime            Uint64           `json:"endTime,omitempty"`
-	Details            []Longstring     `json:"details,omitempty"`
 	InvoiceRequestsIDs []Uint64         `json:"invoiceRequestsIDs,omitempty"`
+	InitialDetails     Longstring       `json:"initialDetails,omitempty"`
 	State              Uint32           `json:"state,omitempty"`
-	DisputeDetails     *DisputeDetails  `json:"disputeDetails,omitempty"`
 	Ext                ContractEntryExt `json:"ext,omitempty"`
 }
 
@@ -17872,33 +17811,27 @@ type ManageContractOp struct {
 //        MALFORMED = -1,
 //        NOT_FOUND = -2, // not found contract
 //        NOT_ALLOWED = -3, // only contractor or customer can add details
-//        TOO_MANY_CONTRACT_DETAILS = -4,
-//        DETAILS_TOO_LONG = -5,
-//        DISPUTE_REASON_TOO_LONG = -6,
-//        ALREADY_CONFIRMED = -7,
-//        INVOICE_NOT_APPROVED = -9, // all contract invoices must be approved
-//        DISPUTE_ALREADY_STARTED = -10,
-//        RESOLVE_DISPUTE_NOW_ALLOWED = -11,
-//        CONFIRM_NOT_ALLOWED = -12,
-//        CUSTOMER_BALANCE_OVERFLOW = -13
+//        DETAILS_TOO_LONG = -4,
+//        DISPUTE_REASON_TOO_LONG = -5,
+//        ALREADY_CONFIRMED = -6,
+//        INVOICE_NOT_APPROVED = -7, // all contract invoices must be approved
+//        DISPUTE_ALREADY_STARTED = -8,
+//        CUSTOMER_BALANCE_OVERFLOW = -9
 //    };
 //
 type ManageContractResultCode int32
 
 const (
-	ManageContractResultCodeSuccess                  ManageContractResultCode = 0
-	ManageContractResultCodeMalformed                ManageContractResultCode = -1
-	ManageContractResultCodeNotFound                 ManageContractResultCode = -2
-	ManageContractResultCodeNotAllowed               ManageContractResultCode = -3
-	ManageContractResultCodeTooManyContractDetails   ManageContractResultCode = -4
-	ManageContractResultCodeDetailsTooLong           ManageContractResultCode = -5
-	ManageContractResultCodeDisputeReasonTooLong     ManageContractResultCode = -6
-	ManageContractResultCodeAlreadyConfirmed         ManageContractResultCode = -7
-	ManageContractResultCodeInvoiceNotApproved       ManageContractResultCode = -9
-	ManageContractResultCodeDisputeAlreadyStarted    ManageContractResultCode = -10
-	ManageContractResultCodeResolveDisputeNowAllowed ManageContractResultCode = -11
-	ManageContractResultCodeConfirmNotAllowed        ManageContractResultCode = -12
-	ManageContractResultCodeCustomerBalanceOverflow  ManageContractResultCode = -13
+	ManageContractResultCodeSuccess                 ManageContractResultCode = 0
+	ManageContractResultCodeMalformed               ManageContractResultCode = -1
+	ManageContractResultCodeNotFound                ManageContractResultCode = -2
+	ManageContractResultCodeNotAllowed              ManageContractResultCode = -3
+	ManageContractResultCodeDetailsTooLong          ManageContractResultCode = -4
+	ManageContractResultCodeDisputeReasonTooLong    ManageContractResultCode = -5
+	ManageContractResultCodeAlreadyConfirmed        ManageContractResultCode = -6
+	ManageContractResultCodeInvoiceNotApproved      ManageContractResultCode = -7
+	ManageContractResultCodeDisputeAlreadyStarted   ManageContractResultCode = -8
+	ManageContractResultCodeCustomerBalanceOverflow ManageContractResultCode = -9
 )
 
 var ManageContractResultCodeAll = []ManageContractResultCode{
@@ -17906,63 +17839,51 @@ var ManageContractResultCodeAll = []ManageContractResultCode{
 	ManageContractResultCodeMalformed,
 	ManageContractResultCodeNotFound,
 	ManageContractResultCodeNotAllowed,
-	ManageContractResultCodeTooManyContractDetails,
 	ManageContractResultCodeDetailsTooLong,
 	ManageContractResultCodeDisputeReasonTooLong,
 	ManageContractResultCodeAlreadyConfirmed,
 	ManageContractResultCodeInvoiceNotApproved,
 	ManageContractResultCodeDisputeAlreadyStarted,
-	ManageContractResultCodeResolveDisputeNowAllowed,
-	ManageContractResultCodeConfirmNotAllowed,
 	ManageContractResultCodeCustomerBalanceOverflow,
 }
 
 var manageContractResultCodeMap = map[int32]string{
-	0:   "ManageContractResultCodeSuccess",
-	-1:  "ManageContractResultCodeMalformed",
-	-2:  "ManageContractResultCodeNotFound",
-	-3:  "ManageContractResultCodeNotAllowed",
-	-4:  "ManageContractResultCodeTooManyContractDetails",
-	-5:  "ManageContractResultCodeDetailsTooLong",
-	-6:  "ManageContractResultCodeDisputeReasonTooLong",
-	-7:  "ManageContractResultCodeAlreadyConfirmed",
-	-9:  "ManageContractResultCodeInvoiceNotApproved",
-	-10: "ManageContractResultCodeDisputeAlreadyStarted",
-	-11: "ManageContractResultCodeResolveDisputeNowAllowed",
-	-12: "ManageContractResultCodeConfirmNotAllowed",
-	-13: "ManageContractResultCodeCustomerBalanceOverflow",
+	0:  "ManageContractResultCodeSuccess",
+	-1: "ManageContractResultCodeMalformed",
+	-2: "ManageContractResultCodeNotFound",
+	-3: "ManageContractResultCodeNotAllowed",
+	-4: "ManageContractResultCodeDetailsTooLong",
+	-5: "ManageContractResultCodeDisputeReasonTooLong",
+	-6: "ManageContractResultCodeAlreadyConfirmed",
+	-7: "ManageContractResultCodeInvoiceNotApproved",
+	-8: "ManageContractResultCodeDisputeAlreadyStarted",
+	-9: "ManageContractResultCodeCustomerBalanceOverflow",
 }
 
 var manageContractResultCodeShortMap = map[int32]string{
-	0:   "success",
-	-1:  "malformed",
-	-2:  "not_found",
-	-3:  "not_allowed",
-	-4:  "too_many_contract_details",
-	-5:  "details_too_long",
-	-6:  "dispute_reason_too_long",
-	-7:  "already_confirmed",
-	-9:  "invoice_not_approved",
-	-10: "dispute_already_started",
-	-11: "resolve_dispute_now_allowed",
-	-12: "confirm_not_allowed",
-	-13: "customer_balance_overflow",
+	0:  "success",
+	-1: "malformed",
+	-2: "not_found",
+	-3: "not_allowed",
+	-4: "details_too_long",
+	-5: "dispute_reason_too_long",
+	-6: "already_confirmed",
+	-7: "invoice_not_approved",
+	-8: "dispute_already_started",
+	-9: "customer_balance_overflow",
 }
 
 var manageContractResultCodeRevMap = map[string]int32{
-	"ManageContractResultCodeSuccess":                  0,
-	"ManageContractResultCodeMalformed":                -1,
-	"ManageContractResultCodeNotFound":                 -2,
-	"ManageContractResultCodeNotAllowed":               -3,
-	"ManageContractResultCodeTooManyContractDetails":   -4,
-	"ManageContractResultCodeDetailsTooLong":           -5,
-	"ManageContractResultCodeDisputeReasonTooLong":     -6,
-	"ManageContractResultCodeAlreadyConfirmed":         -7,
-	"ManageContractResultCodeInvoiceNotApproved":       -9,
-	"ManageContractResultCodeDisputeAlreadyStarted":    -10,
-	"ManageContractResultCodeResolveDisputeNowAllowed": -11,
-	"ManageContractResultCodeConfirmNotAllowed":        -12,
-	"ManageContractResultCodeCustomerBalanceOverflow":  -13,
+	"ManageContractResultCodeSuccess":                 0,
+	"ManageContractResultCodeMalformed":               -1,
+	"ManageContractResultCodeNotFound":                -2,
+	"ManageContractResultCodeNotAllowed":              -3,
+	"ManageContractResultCodeDetailsTooLong":          -4,
+	"ManageContractResultCodeDisputeReasonTooLong":    -5,
+	"ManageContractResultCodeAlreadyConfirmed":        -6,
+	"ManageContractResultCodeInvoiceNotApproved":      -7,
+	"ManageContractResultCodeDisputeAlreadyStarted":   -8,
+	"ManageContractResultCodeCustomerBalanceOverflow": -9,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -19212,6 +19133,7 @@ type ManageInvoiceRequestOp struct {
 //        BALANCE_NOT_FOUND = -2, // sender balance not found
 //        NOT_FOUND = -3, // not found invoice request, when try to remove
 //        TOO_MANY_INVOICES = -4,
+//        DETAILS_TOO_LONG = -5,
 //        NOT_ALLOWED_TO_REMOVE = -6, // only invoice creator can remove invoice
 //        CONTRACT_NOT_FOUND = -7,
 //        ONLY_CONTRACTOR_CAN_ATTACH_INVOICE_TO_CONTRACT = -8,
@@ -19227,6 +19149,7 @@ const (
 	ManageInvoiceRequestResultCodeBalanceNotFound                          ManageInvoiceRequestResultCode = -2
 	ManageInvoiceRequestResultCodeNotFound                                 ManageInvoiceRequestResultCode = -3
 	ManageInvoiceRequestResultCodeTooManyInvoices                          ManageInvoiceRequestResultCode = -4
+	ManageInvoiceRequestResultCodeDetailsTooLong                           ManageInvoiceRequestResultCode = -5
 	ManageInvoiceRequestResultCodeNotAllowedToRemove                       ManageInvoiceRequestResultCode = -6
 	ManageInvoiceRequestResultCodeContractNotFound                         ManageInvoiceRequestResultCode = -7
 	ManageInvoiceRequestResultCodeOnlyContractorCanAttachInvoiceToContract ManageInvoiceRequestResultCode = -8
@@ -19240,6 +19163,7 @@ var ManageInvoiceRequestResultCodeAll = []ManageInvoiceRequestResultCode{
 	ManageInvoiceRequestResultCodeBalanceNotFound,
 	ManageInvoiceRequestResultCodeNotFound,
 	ManageInvoiceRequestResultCodeTooManyInvoices,
+	ManageInvoiceRequestResultCodeDetailsTooLong,
 	ManageInvoiceRequestResultCodeNotAllowedToRemove,
 	ManageInvoiceRequestResultCodeContractNotFound,
 	ManageInvoiceRequestResultCodeOnlyContractorCanAttachInvoiceToContract,
@@ -19253,6 +19177,7 @@ var manageInvoiceRequestResultCodeMap = map[int32]string{
 	-2:  "ManageInvoiceRequestResultCodeBalanceNotFound",
 	-3:  "ManageInvoiceRequestResultCodeNotFound",
 	-4:  "ManageInvoiceRequestResultCodeTooManyInvoices",
+	-5:  "ManageInvoiceRequestResultCodeDetailsTooLong",
 	-6:  "ManageInvoiceRequestResultCodeNotAllowedToRemove",
 	-7:  "ManageInvoiceRequestResultCodeContractNotFound",
 	-8:  "ManageInvoiceRequestResultCodeOnlyContractorCanAttachInvoiceToContract",
@@ -19266,6 +19191,7 @@ var manageInvoiceRequestResultCodeShortMap = map[int32]string{
 	-2:  "balance_not_found",
 	-3:  "not_found",
 	-4:  "too_many_invoices",
+	-5:  "details_too_long",
 	-6:  "not_allowed_to_remove",
 	-7:  "contract_not_found",
 	-8:  "only_contractor_can_attach_invoice_to_contract",
@@ -19279,6 +19205,7 @@ var manageInvoiceRequestResultCodeRevMap = map[string]int32{
 	"ManageInvoiceRequestResultCodeBalanceNotFound":                          -2,
 	"ManageInvoiceRequestResultCodeNotFound":                                 -3,
 	"ManageInvoiceRequestResultCodeTooManyInvoices":                          -4,
+	"ManageInvoiceRequestResultCodeDetailsTooLong":                           -5,
 	"ManageInvoiceRequestResultCodeNotAllowedToRemove":                       -6,
 	"ManageInvoiceRequestResultCodeContractNotFound":                         -7,
 	"ManageInvoiceRequestResultCodeOnlyContractorCanAttachInvoiceToContract": -8,
