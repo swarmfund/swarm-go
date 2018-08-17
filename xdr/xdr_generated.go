@@ -2331,65 +2331,6 @@ func (e *ContractState) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// DisputeDetailsExt is an XDR NestedUnion defines as:
-//
-//   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//
-type DisputeDetailsExt struct {
-	V LedgerVersion `json:"v,omitempty"`
-}
-
-// SwitchFieldName returns the field name in which this union's
-// discriminant is stored
-func (u DisputeDetailsExt) SwitchFieldName() string {
-	return "V"
-}
-
-// ArmForSwitch returns which field name should be used for storing
-// the value for an instance of DisputeDetailsExt
-func (u DisputeDetailsExt) ArmForSwitch(sw int32) (string, bool) {
-	switch LedgerVersion(sw) {
-	case LedgerVersionEmptyVersion:
-		return "", true
-	}
-	return "-", false
-}
-
-// NewDisputeDetailsExt creates a new  DisputeDetailsExt.
-func NewDisputeDetailsExt(v LedgerVersion, value interface{}) (result DisputeDetailsExt, err error) {
-	result.V = v
-	switch LedgerVersion(v) {
-	case LedgerVersionEmptyVersion:
-		// void
-	}
-	return
-}
-
-// DisputeDetails is an XDR Struct defines as:
-//
-//   struct DisputeDetails
-//    {
-//        AccountID disputer;
-//        longstring reason;
-//
-//        union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
-//    };
-//
-type DisputeDetails struct {
-	Disputer AccountId         `json:"disputer,omitempty"`
-	Reason   Longstring        `json:"reason,omitempty"`
-	Ext      DisputeDetailsExt `json:"ext,omitempty"`
-}
-
 // ContractEntryExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -2444,7 +2385,6 @@ func NewContractEntryExt(v LedgerVersion, value interface{}) (result ContractEnt
 //        longstring initialDetails;
 //
 //        uint32 state;
-//        DisputeDetails *disputeDetails;
 //
 //        union switch (LedgerVersion v)
 //        {
@@ -2464,7 +2404,6 @@ type ContractEntry struct {
 	InvoiceRequestsIDs []Uint64         `json:"invoiceRequestsIDs,omitempty"`
 	InitialDetails     Longstring       `json:"initialDetails,omitempty"`
 	State              Uint32           `json:"state,omitempty"`
-	DisputeDetails     *DisputeDetails  `json:"disputeDetails,omitempty"`
 	Ext                ContractEntryExt `json:"ext,omitempty"`
 }
 
