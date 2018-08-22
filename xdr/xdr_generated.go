@@ -4769,8 +4769,9 @@ func (e *SaleState) UnmarshalJSON(data []byte) error {
 //
 //   enum SaleType {
 //    	BASIC_SALE = 1, // sale creator specifies price for each quote asset
-//    	CROWD_FUNDING = 2 // sale creator does not specify price,
+//    	CROWD_FUNDING = 2, // sale creator does not specify price,
 //    	                  // price is defined on sale close based on amount of base asset to be sold and amount of quote assets collected
+//        FIXED_PRICE=3
 //    };
 //
 type SaleType int32
@@ -4778,26 +4779,31 @@ type SaleType int32
 const (
 	SaleTypeBasicSale    SaleType = 1
 	SaleTypeCrowdFunding SaleType = 2
+	SaleTypeFixedPrice   SaleType = 3
 )
 
 var SaleTypeAll = []SaleType{
 	SaleTypeBasicSale,
 	SaleTypeCrowdFunding,
+	SaleTypeFixedPrice,
 }
 
 var saleTypeMap = map[int32]string{
 	1: "SaleTypeBasicSale",
 	2: "SaleTypeCrowdFunding",
+	3: "SaleTypeFixedPrice",
 }
 
 var saleTypeShortMap = map[int32]string{
 	1: "basic_sale",
 	2: "crowd_funding",
+	3: "fixed_price",
 }
 
 var saleTypeRevMap = map[string]int32{
 	"SaleTypeBasicSale":    1,
 	"SaleTypeCrowdFunding": 2,
+	"SaleTypeFixedPrice":   3,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -4859,6 +4865,59 @@ func (e *SaleType) UnmarshalJSON(data []byte) error {
 	}
 	*e = SaleType(t.Value)
 	return nil
+}
+
+// FixedPriceSaleExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type FixedPriceSaleExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u FixedPriceSaleExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of FixedPriceSaleExt
+func (u FixedPriceSaleExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewFixedPriceSaleExt creates a new  FixedPriceSaleExt.
+func NewFixedPriceSaleExt(v LedgerVersion, value interface{}) (result FixedPriceSaleExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// FixedPriceSale is an XDR Struct defines as:
+//
+//   struct FixedPriceSale {
+//    	union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type FixedPriceSale struct {
+	Ext FixedPriceSaleExt `json:"ext,omitempty"`
 }
 
 // CrowdFundingSaleExt is an XDR NestedUnion defines as:
@@ -4975,12 +5034,15 @@ type BasicSale struct {
 //    		BasicSale basicSale;
 //        case CROWD_FUNDING:
 //            CrowdFundingSale crowdFundingSale;
+//        case FIXED_PRICE:
+//            FixedPriceSale fixedPriceSale;
 //        }
 //
 type SaleTypeExtTypedSale struct {
 	SaleType         SaleType          `json:"saleType,omitempty"`
 	BasicSale        *BasicSale        `json:"basicSale,omitempty"`
 	CrowdFundingSale *CrowdFundingSale `json:"crowdFundingSale,omitempty"`
+	FixedPriceSale   *FixedPriceSale   `json:"fixedPriceSale,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -4997,6 +5059,8 @@ func (u SaleTypeExtTypedSale) ArmForSwitch(sw int32) (string, bool) {
 		return "BasicSale", true
 	case SaleTypeCrowdFunding:
 		return "CrowdFundingSale", true
+	case SaleTypeFixedPrice:
+		return "FixedPriceSale", true
 	}
 	return "-", false
 }
@@ -5019,6 +5083,13 @@ func NewSaleTypeExtTypedSale(saleType SaleType, value interface{}) (result SaleT
 			return
 		}
 		result.CrowdFundingSale = &tv
+	case SaleTypeFixedPrice:
+		tv, ok := value.(FixedPriceSale)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be FixedPriceSale")
+			return
+		}
+		result.FixedPriceSale = &tv
 	}
 	return
 }
@@ -5073,6 +5144,31 @@ func (u SaleTypeExtTypedSale) GetCrowdFundingSale() (result CrowdFundingSale, ok
 	return
 }
 
+// MustFixedPriceSale retrieves the FixedPriceSale value from the union,
+// panicing if the value is not set.
+func (u SaleTypeExtTypedSale) MustFixedPriceSale() FixedPriceSale {
+	val, ok := u.GetFixedPriceSale()
+
+	if !ok {
+		panic("arm FixedPriceSale is not set")
+	}
+
+	return val
+}
+
+// GetFixedPriceSale retrieves the FixedPriceSale value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u SaleTypeExtTypedSale) GetFixedPriceSale() (result FixedPriceSale, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.SaleType))
+
+	if armName == "FixedPriceSale" {
+		result = *u.FixedPriceSale
+		ok = true
+	}
+
+	return
+}
+
 // SaleTypeExt is an XDR Struct defines as:
 //
 //   struct SaleTypeExt {
@@ -5082,6 +5178,8 @@ func (u SaleTypeExtTypedSale) GetCrowdFundingSale() (result CrowdFundingSale, ok
 //    		BasicSale basicSale;
 //        case CROWD_FUNDING:
 //            CrowdFundingSale crowdFundingSale;
+//        case FIXED_PRICE:
+//            FixedPriceSale fixedPriceSale;
 //        }
 //        typedSale;
 //    };
@@ -13108,13 +13206,10 @@ func (u CreateIssuanceRequestResult) GetSuccess() (result CreateIssuanceRequestS
 //    	{
 //    	case EMPTY_VERSION:
 //    		void;
-//        case ALLOW_TO_UPDATE_AND_REJECT_LIMITS_UPDATE_REQUESTS:
-//            uint64 requestID;
 //    	}
 //
 type CreateManageLimitsRequestOpExt struct {
-	V         LedgerVersion `json:"v,omitempty"`
-	RequestId *Uint64       `json:"requestID,omitempty"`
+	V LedgerVersion `json:"v,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -13129,8 +13224,6 @@ func (u CreateManageLimitsRequestOpExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
-	case LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests:
-		return "RequestId", true
 	}
 	return "-", false
 }
@@ -13141,39 +13234,7 @@ func NewCreateManageLimitsRequestOpExt(v LedgerVersion, value interface{}) (resu
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
-	case LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests:
-		tv, ok := value.(Uint64)
-		if !ok {
-			err = fmt.Errorf("invalid value, must be Uint64")
-			return
-		}
-		result.RequestId = &tv
 	}
-	return
-}
-
-// MustRequestId retrieves the RequestId value from the union,
-// panicing if the value is not set.
-func (u CreateManageLimitsRequestOpExt) MustRequestId() Uint64 {
-	val, ok := u.GetRequestId()
-
-	if !ok {
-		panic("arm RequestId is not set")
-	}
-
-	return val
-}
-
-// GetRequestId retrieves the RequestId value from the union,
-// returning ok if the union's switch indicated the value is valid.
-func (u CreateManageLimitsRequestOpExt) GetRequestId() (result Uint64, ok bool) {
-	armName, _ := u.ArmForSwitch(int32(u.V))
-
-	if armName == "RequestId" {
-		result = *u.RequestId
-		ok = true
-	}
-
 	return
 }
 
@@ -13188,8 +13249,6 @@ func (u CreateManageLimitsRequestOpExt) GetRequestId() (result Uint64, ok bool) 
 //    	{
 //    	case EMPTY_VERSION:
 //    		void;
-//        case ALLOW_TO_UPDATE_AND_REJECT_LIMITS_UPDATE_REQUESTS:
-//            uint64 requestID;
 //    	}
 //    	ext;
 //
@@ -13206,12 +13265,8 @@ type CreateManageLimitsRequestOp struct {
 //    {
 //        // codes considered as "success" for the operation
 //        SUCCESS = 0,
-//
 //        // codes considered as "failure" for the operation
-//    	MANAGE_LIMITS_REQUEST_REFERENCE_DUPLICATION = -1,
-//        MANAGE_LIMITS_REQUEST_NOT_FOUND = -2,
-//        INVALID_DETAILS = -3, // details must be valid json
-//        INVALID_MANAGE_LIMITS_REQUEST_VERSION = -4 // a version of the request is higher than ledger version
+//    	MANAGE_LIMITS_REQUEST_REFERENCE_DUPLICATION = -1
 //    };
 //
 type CreateManageLimitsRequestResultCode int32
@@ -13219,41 +13274,26 @@ type CreateManageLimitsRequestResultCode int32
 const (
 	CreateManageLimitsRequestResultCodeSuccess                                 CreateManageLimitsRequestResultCode = 0
 	CreateManageLimitsRequestResultCodeManageLimitsRequestReferenceDuplication CreateManageLimitsRequestResultCode = -1
-	CreateManageLimitsRequestResultCodeManageLimitsRequestNotFound             CreateManageLimitsRequestResultCode = -2
-	CreateManageLimitsRequestResultCodeInvalidDetails                          CreateManageLimitsRequestResultCode = -3
-	CreateManageLimitsRequestResultCodeInvalidManageLimitsRequestVersion       CreateManageLimitsRequestResultCode = -4
 )
 
 var CreateManageLimitsRequestResultCodeAll = []CreateManageLimitsRequestResultCode{
 	CreateManageLimitsRequestResultCodeSuccess,
 	CreateManageLimitsRequestResultCodeManageLimitsRequestReferenceDuplication,
-	CreateManageLimitsRequestResultCodeManageLimitsRequestNotFound,
-	CreateManageLimitsRequestResultCodeInvalidDetails,
-	CreateManageLimitsRequestResultCodeInvalidManageLimitsRequestVersion,
 }
 
 var createManageLimitsRequestResultCodeMap = map[int32]string{
 	0:  "CreateManageLimitsRequestResultCodeSuccess",
 	-1: "CreateManageLimitsRequestResultCodeManageLimitsRequestReferenceDuplication",
-	-2: "CreateManageLimitsRequestResultCodeManageLimitsRequestNotFound",
-	-3: "CreateManageLimitsRequestResultCodeInvalidDetails",
-	-4: "CreateManageLimitsRequestResultCodeInvalidManageLimitsRequestVersion",
 }
 
 var createManageLimitsRequestResultCodeShortMap = map[int32]string{
 	0:  "success",
 	-1: "manage_limits_request_reference_duplication",
-	-2: "manage_limits_request_not_found",
-	-3: "invalid_details",
-	-4: "invalid_manage_limits_request_version",
 }
 
 var createManageLimitsRequestResultCodeRevMap = map[string]int32{
 	"CreateManageLimitsRequestResultCodeSuccess":                                 0,
 	"CreateManageLimitsRequestResultCodeManageLimitsRequestReferenceDuplication": -1,
-	"CreateManageLimitsRequestResultCodeManageLimitsRequestNotFound":             -2,
-	"CreateManageLimitsRequestResultCodeInvalidDetails":                          -3,
-	"CreateManageLimitsRequestResultCodeInvalidManageLimitsRequestVersion":       -4,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -20391,24 +20431,19 @@ type ManageLimitsOp struct {
 //    {
 //        // codes considered as "success" for the operation
 //        SUCCESS = 0,
-//
 //        // codes considered as "failure" for the operation
 //        MALFORMED = -1,
 //        NOT_FOUND = -2,
-//        ALREADY_EXISTS = -3,
-//        CANNOT_CREATE_FOR_ACC_ID_AND_ACC_TYPE = -4, // limits cannot be created for account ID and account type simultaneously
-//        INVALID_LIMITS = -5
+//        ALREADY_EXISTS = -3
 //    };
 //
 type ManageLimitsResultCode int32
 
 const (
-	ManageLimitsResultCodeSuccess                        ManageLimitsResultCode = 0
-	ManageLimitsResultCodeMalformed                      ManageLimitsResultCode = -1
-	ManageLimitsResultCodeNotFound                       ManageLimitsResultCode = -2
-	ManageLimitsResultCodeAlreadyExists                  ManageLimitsResultCode = -3
-	ManageLimitsResultCodeCannotCreateForAccIdAndAccType ManageLimitsResultCode = -4
-	ManageLimitsResultCodeInvalidLimits                  ManageLimitsResultCode = -5
+	ManageLimitsResultCodeSuccess       ManageLimitsResultCode = 0
+	ManageLimitsResultCodeMalformed     ManageLimitsResultCode = -1
+	ManageLimitsResultCodeNotFound      ManageLimitsResultCode = -2
+	ManageLimitsResultCodeAlreadyExists ManageLimitsResultCode = -3
 )
 
 var ManageLimitsResultCodeAll = []ManageLimitsResultCode{
@@ -20416,8 +20451,6 @@ var ManageLimitsResultCodeAll = []ManageLimitsResultCode{
 	ManageLimitsResultCodeMalformed,
 	ManageLimitsResultCodeNotFound,
 	ManageLimitsResultCodeAlreadyExists,
-	ManageLimitsResultCodeCannotCreateForAccIdAndAccType,
-	ManageLimitsResultCodeInvalidLimits,
 }
 
 var manageLimitsResultCodeMap = map[int32]string{
@@ -20425,8 +20458,6 @@ var manageLimitsResultCodeMap = map[int32]string{
 	-1: "ManageLimitsResultCodeMalformed",
 	-2: "ManageLimitsResultCodeNotFound",
 	-3: "ManageLimitsResultCodeAlreadyExists",
-	-4: "ManageLimitsResultCodeCannotCreateForAccIdAndAccType",
-	-5: "ManageLimitsResultCodeInvalidLimits",
 }
 
 var manageLimitsResultCodeShortMap = map[int32]string{
@@ -20434,17 +20465,13 @@ var manageLimitsResultCodeShortMap = map[int32]string{
 	-1: "malformed",
 	-2: "not_found",
 	-3: "already_exists",
-	-4: "cannot_create_for_acc_id_and_acc_type",
-	-5: "invalid_limits",
 }
 
 var manageLimitsResultCodeRevMap = map[string]int32{
-	"ManageLimitsResultCodeSuccess":                        0,
-	"ManageLimitsResultCodeMalformed":                      -1,
-	"ManageLimitsResultCodeNotFound":                       -2,
-	"ManageLimitsResultCodeAlreadyExists":                  -3,
-	"ManageLimitsResultCodeCannotCreateForAccIdAndAccType": -4,
-	"ManageLimitsResultCodeInvalidLimits":                  -5,
+	"ManageLimitsResultCodeSuccess":       0,
+	"ManageLimitsResultCodeMalformed":     -1,
+	"ManageLimitsResultCodeNotFound":      -2,
+	"ManageLimitsResultCodeAlreadyExists": -3,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -25147,7 +25174,6 @@ type ReviewRequestOp struct {
 //        CONTRACT_NOT_FOUND = -106,
 //        INVOICE_RECEIVER_BALANCE_LOCK_AMOUNT_OVERFLOW = -107,
 //        INVOICE_ALREADY_APPROVED = -108,
-//
 //        // codes considered as "failure" for the payment operation
 //        PAYMENT_V2_MALFORMED = -110, // bad input, requestID must be > 0
 //        UNDERFUNDED = -111, // not enough funds in source account
@@ -25165,11 +25191,7 @@ type ReviewRequestOp struct {
 //        INSUFFICIENT_FEE_AMOUNT = -123,
 //        BALANCE_TO_CHARGE_FEE_FROM_NOT_FOUND = -124,
 //        PAYMENT_AMOUNT_IS_LESS_THAN_DEST_FEE = -125,
-//        DESTINATION_ACCOUNT_NOT_FOUND = -126,
-//
-//        // Limits update requests
-//        CANNOT_CREATE_FOR_ACC_ID_AND_ACC_TYPE = 130, // limits cannot be created for account ID and account type simultaneously
-//        INVALID_LIMITS = 131
+//        DESTINATION_ACCOUNT_NOT_FOUND = -126
 //    };
 //
 type ReviewRequestResultCode int32
@@ -25223,8 +25245,6 @@ const (
 	ReviewRequestResultCodeBalanceToChargeFeeFromNotFound           ReviewRequestResultCode = -124
 	ReviewRequestResultCodePaymentAmountIsLessThanDestFee           ReviewRequestResultCode = -125
 	ReviewRequestResultCodeDestinationAccountNotFound               ReviewRequestResultCode = -126
-	ReviewRequestResultCodeCannotCreateForAccIdAndAccType           ReviewRequestResultCode = 130
-	ReviewRequestResultCodeInvalidLimits                            ReviewRequestResultCode = 131
 )
 
 var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
@@ -25276,8 +25296,6 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeBalanceToChargeFeeFromNotFound,
 	ReviewRequestResultCodePaymentAmountIsLessThanDestFee,
 	ReviewRequestResultCodeDestinationAccountNotFound,
-	ReviewRequestResultCodeCannotCreateForAccIdAndAccType,
-	ReviewRequestResultCodeInvalidLimits,
 }
 
 var reviewRequestResultCodeMap = map[int32]string{
@@ -25329,8 +25347,6 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-124: "ReviewRequestResultCodeBalanceToChargeFeeFromNotFound",
 	-125: "ReviewRequestResultCodePaymentAmountIsLessThanDestFee",
 	-126: "ReviewRequestResultCodeDestinationAccountNotFound",
-	130:  "ReviewRequestResultCodeCannotCreateForAccIdAndAccType",
-	131:  "ReviewRequestResultCodeInvalidLimits",
 }
 
 var reviewRequestResultCodeShortMap = map[int32]string{
@@ -25382,8 +25398,6 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-124: "balance_to_charge_fee_from_not_found",
 	-125: "payment_amount_is_less_than_dest_fee",
 	-126: "destination_account_not_found",
-	130:  "cannot_create_for_acc_id_and_acc_type",
-	131:  "invalid_limits",
 }
 
 var reviewRequestResultCodeRevMap = map[string]int32{
@@ -25435,8 +25449,6 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeBalanceToChargeFeeFromNotFound":           -124,
 	"ReviewRequestResultCodePaymentAmountIsLessThanDestFee":           -125,
 	"ReviewRequestResultCodeDestinationAccountNotFound":               -126,
-	"ReviewRequestResultCodeCannotCreateForAccIdAndAccType":           130,
-	"ReviewRequestResultCodeInvalidLimits":                            131,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -32865,8 +32877,7 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	ADD_TASKS_TO_REVIEWABLE_REQUEST = 42,
 //    	USE_ONLY_PAYMENT_V2 = 43,
 //        ADD_REVIEW_INVOICE_REQUEST_PAYMENT_RESPONSE = 44,
-//        ADD_CONTRACT_ID_REVIEW_REQUEST_RESULT = 45,
-//        ALLOW_TO_UPDATE_AND_REJECT_LIMITS_UPDATE_REQUESTS = 46
+//        ADD_CONTRACT_ID_REVIEW_REQUEST_RESULT = 45
 //    };
 //
 type LedgerVersion int32
@@ -32918,7 +32929,6 @@ const (
 	LedgerVersionUseOnlyPaymentV2                                 LedgerVersion = 43
 	LedgerVersionAddReviewInvoiceRequestPaymentResponse           LedgerVersion = 44
 	LedgerVersionAddContractIdReviewRequestResult                 LedgerVersion = 45
-	LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests       LedgerVersion = 46
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -32968,7 +32978,6 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionUseOnlyPaymentV2,
 	LedgerVersionAddReviewInvoiceRequestPaymentResponse,
 	LedgerVersionAddContractIdReviewRequestResult,
-	LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -33018,7 +33027,6 @@ var ledgerVersionMap = map[int32]string{
 	43: "LedgerVersionUseOnlyPaymentV2",
 	44: "LedgerVersionAddReviewInvoiceRequestPaymentResponse",
 	45: "LedgerVersionAddContractIdReviewRequestResult",
-	46: "LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -33068,7 +33076,6 @@ var ledgerVersionShortMap = map[int32]string{
 	43: "use_only_payment_v2",
 	44: "add_review_invoice_request_payment_response",
 	45: "add_contract_id_review_request_result",
-	46: "allow_to_update_and_reject_limits_update_requests",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -33118,7 +33125,6 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionUseOnlyPaymentV2":                                 43,
 	"LedgerVersionAddReviewInvoiceRequestPaymentResponse":           44,
 	"LedgerVersionAddContractIdReviewRequestResult":                 45,
-	"LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests":       46,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
