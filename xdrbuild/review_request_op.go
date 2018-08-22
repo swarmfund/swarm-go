@@ -20,12 +20,19 @@ type ReviewRequestOpWithdrawalDetails struct {
 	ExternalDetails string
 }
 
+type ReviewDetails struct {
+	TasksToAdd      uint32
+	TasksToRemove   uint32
+	ExternalDetails string
+}
+
 type ReviewRequestOp struct {
-	ID      uint64
-	Hash    string
-	Action  xdr.ReviewRequestOpAction
-	Details ReviewRequestDetails
-	Reason  string
+	ID            uint64
+	Hash          string
+	Action        xdr.ReviewRequestOpAction
+	Details       ReviewRequestDetails
+	Reason        string
+	ReviewDetails *ReviewDetails
 }
 
 type WithdrawalDetails struct {
@@ -95,6 +102,17 @@ func (op ReviewRequestOp) XDR() (*xdr.Operation, error) {
 				Reason:         xdr.Longstring(op.Reason),
 			},
 		},
+	}
+
+	if op.ReviewDetails != nil {
+		xdrop.Body.ReviewRequestOp.Ext = xdr.ReviewRequestOpExt{
+			V: xdr.LedgerVersionAddTasksToReviewableRequest,
+			ReviewDetails: &xdr.ReviewDetails{
+				TasksToAdd:      xdr.Uint32(op.ReviewDetails.TasksToAdd),
+				TasksToRemove:   xdr.Uint32(op.ReviewDetails.TasksToRemove),
+				ExternalDetails: op.ReviewDetails.ExternalDetails,
+			},
+		}
 	}
 
 	return xdrop, nil

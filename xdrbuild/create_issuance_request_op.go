@@ -12,6 +12,7 @@ type CreateIssuanceRequestOp struct {
 	Asset     string
 	Amount    uint64
 	Details   string
+	AllTasks  *uint32
 }
 
 func (op CreateIssuanceRequestOp) Validate() error {
@@ -30,6 +31,16 @@ func (op CreateIssuanceRequestOp) XDR() (*xdr.Operation, error) {
 		return nil, errors.Wrap(err, "failed to set receiver")
 	}
 
+	var allTasksXDR xdr.Uint32
+	var allTasksXDRPointer *xdr.Uint32
+
+	if op.AllTasks != nil {
+		allTasksXDR = xdr.Uint32(*op.AllTasks)
+		allTasksXDRPointer = &allTasksXDR
+	} else {
+		allTasksXDRPointer = nil
+	}
+
 	return &xdr.Operation{
 		Body: xdr.OperationBody{
 			Type: xdr.OperationTypeCreateIssuanceRequest,
@@ -40,6 +51,10 @@ func (op CreateIssuanceRequestOp) XDR() (*xdr.Operation, error) {
 					Amount:          xdr.Uint64(op.Amount),
 					Receiver:        receiver,
 					ExternalDetails: xdr.Longstring(op.Details),
+				},
+				Ext: xdr.CreateIssuanceRequestOpExt{
+					V:        xdr.LedgerVersionAddTasksToReviewableRequest,
+					AllTasks: &allTasksXDRPointer,
 				},
 			},
 		},
