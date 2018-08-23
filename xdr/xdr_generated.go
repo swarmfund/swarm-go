@@ -32484,7 +32484,7 @@ func NewOperationFeeExt(v LedgerVersion, value interface{}) (result OperationFee
 //
 //   struct OperationFee
 //    {
-//        Operation operation;
+//        OperationType operationType;
 //        uint64 amount;
 //
 //        // reserved for future use
@@ -32497,9 +32497,9 @@ func NewOperationFeeExt(v LedgerVersion, value interface{}) (result OperationFee
 //    };
 //
 type OperationFee struct {
-	Operation Operation       `json:"operation,omitempty"`
-	Amount    Uint64          `json:"amount,omitempty"`
-	Ext       OperationFeeExt `json:"ext,omitempty"`
+	OperationType OperationType   `json:"operationType,omitempty"`
+	Amount        Uint64          `json:"amount,omitempty"`
+	Ext           OperationFeeExt `json:"ext,omitempty"`
 }
 
 // TransactionFeeExt is an XDR NestedUnion defines as:
