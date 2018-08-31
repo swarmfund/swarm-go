@@ -7,7 +7,7 @@ import (
 	"gitlab.com/tokend/keypair"
 )
 
-func TestManageAsset(t *testing.T) {
+func TestCreateAsset(t *testing.T) {
 
 	t.Run("valid", func(t *testing.T) {
 		k, _ := keypair.Random()
@@ -48,5 +48,24 @@ func TestManageAsset(t *testing.T) {
 		got, err := op.XDR()
 		assert.Error(t, err)
 		assert.Nil(t, got)
+	})
+}
+func TestUpdateAsset(t *testing.T) {
+
+	t.Run("valid", func(t *testing.T) {
+		op := UpdateAsset{
+			Code:     "ETH",
+			Policies: 0,
+			Details: AssetDetails{
+				ExternalSystemType: 10,
+				Name:               "Ethereum",
+			},
+		}
+
+		got, err := op.XDR()
+		if assert.NoError(t, err) {
+			assert.EqualValues(t, op.Policies, got.Body.ManageAssetOp.Request.UpdateAsset.Policies)
+			assert.EqualValues(t, op.Code, got.Body.ManageAssetOp.Request.UpdateAsset.Code)
+		}
 	})
 }
