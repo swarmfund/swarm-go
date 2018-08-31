@@ -4808,8 +4808,9 @@ func (e *SaleState) UnmarshalJSON(data []byte) error {
 //
 //   enum SaleType {
 //    	BASIC_SALE = 1, // sale creator specifies price for each quote asset
-//    	CROWD_FUNDING = 2 // sale creator does not specify price,
+//    	CROWD_FUNDING = 2, // sale creator does not specify price,
 //    	                  // price is defined on sale close based on amount of base asset to be sold and amount of quote assets collected
+//        FIXED_PRICE=3
 //    };
 //
 type SaleType int32
@@ -4817,26 +4818,31 @@ type SaleType int32
 const (
 	SaleTypeBasicSale    SaleType = 1
 	SaleTypeCrowdFunding SaleType = 2
+	SaleTypeFixedPrice   SaleType = 3
 )
 
 var SaleTypeAll = []SaleType{
 	SaleTypeBasicSale,
 	SaleTypeCrowdFunding,
+	SaleTypeFixedPrice,
 }
 
 var saleTypeMap = map[int32]string{
 	1: "SaleTypeBasicSale",
 	2: "SaleTypeCrowdFunding",
+	3: "SaleTypeFixedPrice",
 }
 
 var saleTypeShortMap = map[int32]string{
 	1: "basic_sale",
 	2: "crowd_funding",
+	3: "fixed_price",
 }
 
 var saleTypeRevMap = map[string]int32{
 	"SaleTypeBasicSale":    1,
 	"SaleTypeCrowdFunding": 2,
+	"SaleTypeFixedPrice":   3,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -4898,6 +4904,59 @@ func (e *SaleType) UnmarshalJSON(data []byte) error {
 	}
 	*e = SaleType(t.Value)
 	return nil
+}
+
+// FixedPriceSaleExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type FixedPriceSaleExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u FixedPriceSaleExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of FixedPriceSaleExt
+func (u FixedPriceSaleExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewFixedPriceSaleExt creates a new  FixedPriceSaleExt.
+func NewFixedPriceSaleExt(v LedgerVersion, value interface{}) (result FixedPriceSaleExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// FixedPriceSale is an XDR Struct defines as:
+//
+//   struct FixedPriceSale {
+//    	union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type FixedPriceSale struct {
+	Ext FixedPriceSaleExt `json:"ext,omitempty"`
 }
 
 // CrowdFundingSaleExt is an XDR NestedUnion defines as:
@@ -5014,12 +5073,15 @@ type BasicSale struct {
 //    		BasicSale basicSale;
 //        case CROWD_FUNDING:
 //            CrowdFundingSale crowdFundingSale;
+//        case FIXED_PRICE:
+//            FixedPriceSale fixedPriceSale;
 //        }
 //
 type SaleTypeExtTypedSale struct {
 	SaleType         SaleType          `json:"saleType,omitempty"`
 	BasicSale        *BasicSale        `json:"basicSale,omitempty"`
 	CrowdFundingSale *CrowdFundingSale `json:"crowdFundingSale,omitempty"`
+	FixedPriceSale   *FixedPriceSale   `json:"fixedPriceSale,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -5036,6 +5098,8 @@ func (u SaleTypeExtTypedSale) ArmForSwitch(sw int32) (string, bool) {
 		return "BasicSale", true
 	case SaleTypeCrowdFunding:
 		return "CrowdFundingSale", true
+	case SaleTypeFixedPrice:
+		return "FixedPriceSale", true
 	}
 	return "-", false
 }
@@ -5058,6 +5122,13 @@ func NewSaleTypeExtTypedSale(saleType SaleType, value interface{}) (result SaleT
 			return
 		}
 		result.CrowdFundingSale = &tv
+	case SaleTypeFixedPrice:
+		tv, ok := value.(FixedPriceSale)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be FixedPriceSale")
+			return
+		}
+		result.FixedPriceSale = &tv
 	}
 	return
 }
@@ -5112,6 +5183,31 @@ func (u SaleTypeExtTypedSale) GetCrowdFundingSale() (result CrowdFundingSale, ok
 	return
 }
 
+// MustFixedPriceSale retrieves the FixedPriceSale value from the union,
+// panicing if the value is not set.
+func (u SaleTypeExtTypedSale) MustFixedPriceSale() FixedPriceSale {
+	val, ok := u.GetFixedPriceSale()
+
+	if !ok {
+		panic("arm FixedPriceSale is not set")
+	}
+
+	return val
+}
+
+// GetFixedPriceSale retrieves the FixedPriceSale value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u SaleTypeExtTypedSale) GetFixedPriceSale() (result FixedPriceSale, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.SaleType))
+
+	if armName == "FixedPriceSale" {
+		result = *u.FixedPriceSale
+		ok = true
+	}
+
+	return
+}
+
 // SaleTypeExt is an XDR Struct defines as:
 //
 //   struct SaleTypeExt {
@@ -5121,6 +5217,8 @@ func (u SaleTypeExtTypedSale) GetCrowdFundingSale() (result CrowdFundingSale, ok
 //    		BasicSale basicSale;
 //        case CROWD_FUNDING:
 //            CrowdFundingSale crowdFundingSale;
+//        case FIXED_PRICE:
+//            FixedPriceSale fixedPriceSale;
 //        }
 //        typedSale;
 //    };
