@@ -13,6 +13,7 @@ type (
 		ExternalSystemType int    `json:"external_system_type,string"`
 		Name               string `json:"name"`
 	}
+
 	CreateAssetOp struct {
 		AssetSigner       string
 		MaxIssuanceAmount uint64
@@ -20,6 +21,12 @@ type (
 		Policies          uint32
 		Code              string
 		Details           AssetDetails
+	}
+
+	UpdateAsset struct {
+		Code     string
+		Policies uint32
+		Details  AssetDetails
 	}
 )
 
@@ -59,6 +66,42 @@ func (ca CreateAssetOp) XDR() (*xdr.Operation, error) {
 						InitialPreissuedAmount: xdr.Uint64(ca.PreIssuanceAmount),
 						Policies:               xdr.Uint32(ca.Policies),
 						Code:                   xdr.AssetCode(ca.Code),
+					},
+				},
+			},
+		},
+	}
+
+	return op, nil
+}
+
+func (ca UpdateAsset) Validate() error {
+	return ValidateStruct(&ca,
+		Field(&ca.Code, Required),
+		Field(&ca.Policies, Required),
+	)
+}
+
+func (ca UpdateAsset) XDR() (*xdr.Operation, error) {
+	details, err := json.Marshal(ca.Details)
+	if err != nil {
+		return nil, errors.Wrap(err, "can't marshal details")
+	}
+
+	op := &xdr.Operation{
+		Body: xdr.OperationBody{
+			Type: xdr.OperationTypeManageAsset,
+			ManageAssetOp: &xdr.ManageAssetOp{
+				RequestId: 0,
+				Request: xdr.ManageAssetOpRequest{
+					Action: xdr.ManageAssetActionCreateAssetUpdateRequest,
+					UpdateAsset: &xdr.AssetUpdateRequest{
+						Code:     xdr.AssetCode(ca.Code),
+						Details:  xdr.Longstring(details),
+						Policies: xdr.Uint32(ca.Policies),
+						Ext: xdr.AssetUpdateRequestExt{
+							V: xdr.LedgerVersionEmptyVersion,
+						},
 					},
 				},
 			},
