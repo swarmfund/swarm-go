@@ -2337,10 +2337,13 @@ func (e *ContractState) UnmarshalJSON(data []byte) error {
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_CUSTOMER_DETAILS_TO_CONTRACT:
+//            longstring customerDetails;
 //        }
 //
 type ContractEntryExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V               LedgerVersion `json:"v,omitempty"`
+	CustomerDetails *Longstring   `json:"customerDetails,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -2355,6 +2358,8 @@ func (u ContractEntryExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionAddCustomerDetailsToContract:
+		return "CustomerDetails", true
 	}
 	return "-", false
 }
@@ -2365,7 +2370,39 @@ func NewContractEntryExt(v LedgerVersion, value interface{}) (result ContractEnt
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionAddCustomerDetailsToContract:
+		tv, ok := value.(Longstring)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be Longstring")
+			return
+		}
+		result.CustomerDetails = &tv
 	}
+	return
+}
+
+// MustCustomerDetails retrieves the CustomerDetails value from the union,
+// panicing if the value is not set.
+func (u ContractEntryExt) MustCustomerDetails() Longstring {
+	val, ok := u.GetCustomerDetails()
+
+	if !ok {
+		panic("arm CustomerDetails is not set")
+	}
+
+	return val
+}
+
+// GetCustomerDetails retrieves the CustomerDetails value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ContractEntryExt) GetCustomerDetails() (result Longstring, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "CustomerDetails" {
+		result = *u.CustomerDetails
+		ok = true
+	}
+
 	return
 }
 
@@ -2390,6 +2427,8 @@ func NewContractEntryExt(v LedgerVersion, value interface{}) (result ContractEnt
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_CUSTOMER_DETAILS_TO_CONTRACT:
+//            longstring customerDetails;
 //        }
 //        ext;
 //    };
@@ -24501,6 +24540,63 @@ type UpdateKycDetails struct {
 	Ext             UpdateKycDetailsExt `json:"ext,omitempty"`
 }
 
+// ContractDetailsExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type ContractDetailsExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u ContractDetailsExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of ContractDetailsExt
+func (u ContractDetailsExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewContractDetailsExt creates a new  ContractDetailsExt.
+func NewContractDetailsExt(v LedgerVersion, value interface{}) (result ContractDetailsExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// ContractDetails is an XDR Struct defines as:
+//
+//   struct ContractDetails {
+//        longstring details;
+//
+//        // Reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type ContractDetails struct {
+	Details Longstring         `json:"details,omitempty"`
+	Ext     ContractDetailsExt `json:"ext,omitempty"`
+}
+
 // BillPayDetailsExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -24829,6 +24925,8 @@ type ExtendedResult struct {
 //            UpdateKYCDetails updateKYC;
 //        case INVOICE:
 //            BillPayDetails billPay;
+//        case CONTRACT:
+//            ContractDetails contract;
 //    	default:
 //    		void;
 //    	}
@@ -24841,6 +24939,7 @@ type ReviewRequestOpRequestDetails struct {
 	AmlAlertDetails   *AmlAlertDetails      `json:"amlAlertDetails,omitempty"`
 	UpdateKyc         *UpdateKycDetails     `json:"updateKYC,omitempty"`
 	BillPay           *BillPayDetails       `json:"billPay,omitempty"`
+	Contract          *ContractDetails      `json:"contract,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -24865,6 +24964,8 @@ func (u ReviewRequestOpRequestDetails) ArmForSwitch(sw int32) (string, bool) {
 		return "UpdateKyc", true
 	case ReviewableRequestTypeInvoice:
 		return "BillPay", true
+	case ReviewableRequestTypeContract:
+		return "Contract", true
 	default:
 		return "", true
 	}
@@ -24916,6 +25017,13 @@ func NewReviewRequestOpRequestDetails(requestType ReviewableRequestType, value i
 			return
 		}
 		result.BillPay = &tv
+	case ReviewableRequestTypeContract:
+		tv, ok := value.(ContractDetails)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be ContractDetails")
+			return
+		}
+		result.Contract = &tv
 	default:
 		// void
 	}
@@ -25072,6 +25180,31 @@ func (u ReviewRequestOpRequestDetails) GetBillPay() (result BillPayDetails, ok b
 	return
 }
 
+// MustContract retrieves the Contract value from the union,
+// panicing if the value is not set.
+func (u ReviewRequestOpRequestDetails) MustContract() ContractDetails {
+	val, ok := u.GetContract()
+
+	if !ok {
+		panic("arm Contract is not set")
+	}
+
+	return val
+}
+
+// GetContract retrieves the Contract value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u ReviewRequestOpRequestDetails) GetContract() (result ContractDetails, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.RequestType))
+
+	if armName == "Contract" {
+		result = *u.Contract
+		ok = true
+	}
+
+	return
+}
+
 // ReviewRequestOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
@@ -25166,6 +25299,8 @@ func (u ReviewRequestOpExt) GetReviewDetails() (result ReviewDetails, ok bool) {
 //            UpdateKYCDetails updateKYC;
 //        case INVOICE:
 //            BillPayDetails billPay;
+//        case CONTRACT:
+//            ContractDetails contract;
 //    	default:
 //    		void;
 //    	} requestDetails;
@@ -25267,7 +25402,10 @@ type ReviewRequestOp struct {
 //
 //        // Limits update requests
 //        CANNOT_CREATE_FOR_ACC_ID_AND_ACC_TYPE = 130, // limits cannot be created for account ID and account type simultaneously
-//        INVALID_LIMITS = 131
+//        INVALID_LIMITS = 131,
+//
+//        // Contract requests
+//        CONTRACT_DETAILS_TOO_LONG = -140 // customer details reached length limit
 //    };
 //
 type ReviewRequestResultCode int32
@@ -25323,6 +25461,7 @@ const (
 	ReviewRequestResultCodeDestinationAccountNotFound               ReviewRequestResultCode = -126
 	ReviewRequestResultCodeCannotCreateForAccIdAndAccType           ReviewRequestResultCode = 130
 	ReviewRequestResultCodeInvalidLimits                            ReviewRequestResultCode = 131
+	ReviewRequestResultCodeContractDetailsTooLong                   ReviewRequestResultCode = -140
 )
 
 var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
@@ -25376,6 +25515,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeDestinationAccountNotFound,
 	ReviewRequestResultCodeCannotCreateForAccIdAndAccType,
 	ReviewRequestResultCodeInvalidLimits,
+	ReviewRequestResultCodeContractDetailsTooLong,
 }
 
 var reviewRequestResultCodeMap = map[int32]string{
@@ -25429,6 +25569,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-126: "ReviewRequestResultCodeDestinationAccountNotFound",
 	130:  "ReviewRequestResultCodeCannotCreateForAccIdAndAccType",
 	131:  "ReviewRequestResultCodeInvalidLimits",
+	-140: "ReviewRequestResultCodeContractDetailsTooLong",
 }
 
 var reviewRequestResultCodeShortMap = map[int32]string{
@@ -25482,6 +25623,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-126: "destination_account_not_found",
 	130:  "cannot_create_for_acc_id_and_acc_type",
 	131:  "invalid_limits",
+	-140: "contract_details_too_long",
 }
 
 var reviewRequestResultCodeRevMap = map[string]int32{
@@ -25535,6 +25677,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeDestinationAccountNotFound":               -126,
 	"ReviewRequestResultCodeCannotCreateForAccIdAndAccType":           130,
 	"ReviewRequestResultCodeInvalidLimits":                            131,
+	"ReviewRequestResultCodeContractDetailsTooLong":                   -140,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -32964,7 +33107,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //    	USE_ONLY_PAYMENT_V2 = 43,
 //        ADD_REVIEW_INVOICE_REQUEST_PAYMENT_RESPONSE = 44,
 //        ADD_CONTRACT_ID_REVIEW_REQUEST_RESULT = 45,
-//        ALLOW_TO_UPDATE_AND_REJECT_LIMITS_UPDATE_REQUESTS = 46
+//        ALLOW_TO_UPDATE_AND_REJECT_LIMITS_UPDATE_REQUESTS = 46,
+//        ADD_CUSTOMER_DETAILS_TO_CONTRACT = 47
 //    };
 //
 type LedgerVersion int32
@@ -33017,6 +33161,7 @@ const (
 	LedgerVersionAddReviewInvoiceRequestPaymentResponse           LedgerVersion = 44
 	LedgerVersionAddContractIdReviewRequestResult                 LedgerVersion = 45
 	LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests       LedgerVersion = 46
+	LedgerVersionAddCustomerDetailsToContract                     LedgerVersion = 47
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -33067,6 +33212,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAddReviewInvoiceRequestPaymentResponse,
 	LedgerVersionAddContractIdReviewRequestResult,
 	LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests,
+	LedgerVersionAddCustomerDetailsToContract,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -33117,6 +33263,7 @@ var ledgerVersionMap = map[int32]string{
 	44: "LedgerVersionAddReviewInvoiceRequestPaymentResponse",
 	45: "LedgerVersionAddContractIdReviewRequestResult",
 	46: "LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests",
+	47: "LedgerVersionAddCustomerDetailsToContract",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -33167,6 +33314,7 @@ var ledgerVersionShortMap = map[int32]string{
 	44: "add_review_invoice_request_payment_response",
 	45: "add_contract_id_review_request_result",
 	46: "allow_to_update_and_reject_limits_update_requests",
+	47: "add_customer_details_to_contract",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -33217,6 +33365,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAddReviewInvoiceRequestPaymentResponse":           44,
 	"LedgerVersionAddContractIdReviewRequestResult":                 45,
 	"LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests":       46,
+	"LedgerVersionAddCustomerDetailsToContract":                     47,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
