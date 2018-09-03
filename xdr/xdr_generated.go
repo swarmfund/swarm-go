@@ -2590,18 +2590,18 @@ type ExternalSystemAccountId struct {
 //        WITHDRAWAL_FEE = 2,
 //        ISSUANCE_FEE = 3,
 //        INVEST_FEE = 4, // fee to be taken while creating sale participation
-//        CAPITAL_DEPLOYMENT = 5 // fee to be taken when sale close
+//        CAPITAL_DEPLOYMENT_FEE = 5 // fee to be taken when sale close
 //    };
 //
 type FeeType int32
 
 const (
-	FeeTypePaymentFee        FeeType = 0
-	FeeTypeOfferFee          FeeType = 1
-	FeeTypeWithdrawalFee     FeeType = 2
-	FeeTypeIssuanceFee       FeeType = 3
-	FeeTypeInvestFee         FeeType = 4
-	FeeTypeCapitalDeployment FeeType = 5
+	FeeTypePaymentFee           FeeType = 0
+	FeeTypeOfferFee             FeeType = 1
+	FeeTypeWithdrawalFee        FeeType = 2
+	FeeTypeIssuanceFee          FeeType = 3
+	FeeTypeInvestFee            FeeType = 4
+	FeeTypeCapitalDeploymentFee FeeType = 5
 )
 
 var FeeTypeAll = []FeeType{
@@ -2610,7 +2610,7 @@ var FeeTypeAll = []FeeType{
 	FeeTypeWithdrawalFee,
 	FeeTypeIssuanceFee,
 	FeeTypeInvestFee,
-	FeeTypeCapitalDeployment,
+	FeeTypeCapitalDeploymentFee,
 }
 
 var feeTypeMap = map[int32]string{
@@ -2619,7 +2619,7 @@ var feeTypeMap = map[int32]string{
 	2: "FeeTypeWithdrawalFee",
 	3: "FeeTypeIssuanceFee",
 	4: "FeeTypeInvestFee",
-	5: "FeeTypeCapitalDeployment",
+	5: "FeeTypeCapitalDeploymentFee",
 }
 
 var feeTypeShortMap = map[int32]string{
@@ -2628,16 +2628,16 @@ var feeTypeShortMap = map[int32]string{
 	2: "withdrawal_fee",
 	3: "issuance_fee",
 	4: "invest_fee",
-	5: "capital_deployment",
+	5: "capital_deployment_fee",
 }
 
 var feeTypeRevMap = map[string]int32{
-	"FeeTypePaymentFee":        0,
-	"FeeTypeOfferFee":          1,
-	"FeeTypeWithdrawalFee":     2,
-	"FeeTypeIssuanceFee":       3,
-	"FeeTypeInvestFee":         4,
-	"FeeTypeCapitalDeployment": 5,
+	"FeeTypePaymentFee":           0,
+	"FeeTypeOfferFee":             1,
+	"FeeTypeWithdrawalFee":        2,
+	"FeeTypeIssuanceFee":          3,
+	"FeeTypeInvestFee":            4,
+	"FeeTypeCapitalDeploymentFee": 5,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
