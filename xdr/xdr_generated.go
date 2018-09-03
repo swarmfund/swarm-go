@@ -2589,17 +2589,19 @@ type ExternalSystemAccountId struct {
 //    	OFFER_FEE = 1,
 //        WITHDRAWAL_FEE = 2,
 //        ISSUANCE_FEE = 3,
-//        INVEST_FEE = 4 // fee to be taken while creating sale participation
+//        INVEST_FEE = 4, // fee to be taken while creating sale participation
+//        CAPITAL_DEPLOYMENT_FEE = 5 // fee to be taken when sale close
 //    };
 //
 type FeeType int32
 
 const (
-	FeeTypePaymentFee    FeeType = 0
-	FeeTypeOfferFee      FeeType = 1
-	FeeTypeWithdrawalFee FeeType = 2
-	FeeTypeIssuanceFee   FeeType = 3
-	FeeTypeInvestFee     FeeType = 4
+	FeeTypePaymentFee           FeeType = 0
+	FeeTypeOfferFee             FeeType = 1
+	FeeTypeWithdrawalFee        FeeType = 2
+	FeeTypeIssuanceFee          FeeType = 3
+	FeeTypeInvestFee            FeeType = 4
+	FeeTypeCapitalDeploymentFee FeeType = 5
 )
 
 var FeeTypeAll = []FeeType{
@@ -2608,6 +2610,7 @@ var FeeTypeAll = []FeeType{
 	FeeTypeWithdrawalFee,
 	FeeTypeIssuanceFee,
 	FeeTypeInvestFee,
+	FeeTypeCapitalDeploymentFee,
 }
 
 var feeTypeMap = map[int32]string{
@@ -2616,6 +2619,7 @@ var feeTypeMap = map[int32]string{
 	2: "FeeTypeWithdrawalFee",
 	3: "FeeTypeIssuanceFee",
 	4: "FeeTypeInvestFee",
+	5: "FeeTypeCapitalDeploymentFee",
 }
 
 var feeTypeShortMap = map[int32]string{
@@ -2624,14 +2628,16 @@ var feeTypeShortMap = map[int32]string{
 	2: "withdrawal_fee",
 	3: "issuance_fee",
 	4: "invest_fee",
+	5: "capital_deployment_fee",
 }
 
 var feeTypeRevMap = map[string]int32{
-	"FeeTypePaymentFee":    0,
-	"FeeTypeOfferFee":      1,
-	"FeeTypeWithdrawalFee": 2,
-	"FeeTypeIssuanceFee":   3,
-	"FeeTypeInvestFee":     4,
+	"FeeTypePaymentFee":           0,
+	"FeeTypeOfferFee":             1,
+	"FeeTypeWithdrawalFee":        2,
+	"FeeTypeIssuanceFee":          3,
+	"FeeTypeInvestFee":            4,
+	"FeeTypeCapitalDeploymentFee": 5,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -33108,7 +33114,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //        ADD_REVIEW_INVOICE_REQUEST_PAYMENT_RESPONSE = 44,
 //        ADD_CONTRACT_ID_REVIEW_REQUEST_RESULT = 45,
 //        ALLOW_TO_UPDATE_AND_REJECT_LIMITS_UPDATE_REQUESTS = 46,
-//        ADD_CUSTOMER_DETAILS_TO_CONTRACT = 47
+//        ADD_CUSTOMER_DETAILS_TO_CONTRACT = 47,
+//        ADD_CAPITAL_DEPLOYMENT_FEE_TYPE = 48
 //    };
 //
 type LedgerVersion int32
@@ -33162,6 +33169,7 @@ const (
 	LedgerVersionAddContractIdReviewRequestResult                 LedgerVersion = 45
 	LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests       LedgerVersion = 46
 	LedgerVersionAddCustomerDetailsToContract                     LedgerVersion = 47
+	LedgerVersionAddCapitalDeploymentFeeType                      LedgerVersion = 48
 )
 
 var LedgerVersionAll = []LedgerVersion{
@@ -33213,6 +33221,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAddContractIdReviewRequestResult,
 	LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests,
 	LedgerVersionAddCustomerDetailsToContract,
+	LedgerVersionAddCapitalDeploymentFeeType,
 }
 
 var ledgerVersionMap = map[int32]string{
@@ -33264,6 +33273,7 @@ var ledgerVersionMap = map[int32]string{
 	45: "LedgerVersionAddContractIdReviewRequestResult",
 	46: "LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests",
 	47: "LedgerVersionAddCustomerDetailsToContract",
+	48: "LedgerVersionAddCapitalDeploymentFeeType",
 }
 
 var ledgerVersionShortMap = map[int32]string{
@@ -33315,6 +33325,7 @@ var ledgerVersionShortMap = map[int32]string{
 	45: "add_contract_id_review_request_result",
 	46: "allow_to_update_and_reject_limits_update_requests",
 	47: "add_customer_details_to_contract",
+	48: "add_capital_deployment_fee_type",
 }
 
 var ledgerVersionRevMap = map[string]int32{
@@ -33366,6 +33377,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAddContractIdReviewRequestResult":                 45,
 	"LedgerVersionAllowToUpdateAndRejectLimitsUpdateRequests":       46,
 	"LedgerVersionAddCustomerDetailsToContract":                     47,
+	"LedgerVersionAddCapitalDeploymentFeeType":                      48,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
