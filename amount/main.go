@@ -28,6 +28,15 @@ func MustParse(v string) int64 {
 	return ret
 }
 
+// MustParseU is the panicking version of ParseU
+func MustParseU(v string) uint64 {
+	ret, err := ParseU(v)
+	if err != nil {
+		panic(err)
+	}
+	return ret
+}
+
 // Parse parses the provided as a stellar "amount", i.e. A 64-bit signed integer
 // that represents a decimal number with 7 digits of significance in the
 // fractional portion of the number.

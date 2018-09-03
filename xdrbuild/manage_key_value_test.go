@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gitlab.com/tokend/go/xdr"
 )
 
 func TestManageKeyValueOp_XDR(t *testing.T) {
@@ -14,8 +15,11 @@ func TestManageKeyValueOp_XDR(t *testing.T) {
 			Uint32: &v,
 		}
 		assert.NoError(t, op.Validate())
-		_, err := op.XDR()
+		xdrOp, err := op.XDR()
 		assert.NoError(t, err)
+		assert.Equal(t, xdr.ManageKvActionPut, xdrOp.Body.MustManageKeyValueOp().Action.Action)
+		assert.Equal(t, xdr.KeyValueEntryTypeUint32, xdrOp.Body.MustManageKeyValueOp().Action.MustValue().Value.Type)
+		assert.Equal(t, xdr.Uint32(v), xdrOp.Body.MustManageKeyValueOp().Action.MustValue().Value.MustUi32Value())
 	})
 	t.Run("valid with string", func(t *testing.T) {
 		str := "TaskFaceValidation"
@@ -24,9 +28,20 @@ func TestManageKeyValueOp_XDR(t *testing.T) {
 			String: &str,
 		}
 		assert.NoError(t, op.Validate())
-		_, err := op.XDR()
+		xdrOp, err := op.XDR()
 		assert.NoError(t, err)
-
+		assert.Equal(t, xdr.ManageKvActionPut, xdrOp.Body.MustManageKeyValueOp().Action.Action)
+		assert.Equal(t, xdr.KeyValueEntryTypeString, xdrOp.Body.MustManageKeyValueOp().Action.MustValue().Value.Type)
+		assert.Equal(t, str, xdrOp.Body.MustManageKeyValueOp().Action.MustValue().Value.MustStringValue())
+	})
+	t.Run("valid remove", func(t *testing.T) {
+		op := ManageKeyValueOp{
+			Key: "Key",
+		}
+		assert.NoError(t, op.Validate())
+		xdrOp, err := op.XDR()
+		assert.NoError(t, err)
+		assert.Equal(t, xdr.ManageKvActionRemove, xdrOp.Body.MustManageKeyValueOp().Action.Action)
 	})
 	t.Run("invalid struct", func(t *testing.T) {
 
