@@ -9,6 +9,7 @@ import (
 type ManageKeyValueOp struct {
 	Key    string
 	Uint32 *uint32
+	Uint64 *uint64
 	String *string
 }
 
@@ -20,6 +21,7 @@ func (mkv ManageKeyValueOp) Validate() error {
 	return ValidateStruct(&mkv,
 		Field(&mkv.Key, Required),
 		Field(&mkv.Uint32, NilOrNotEmpty),
+		Field(&mkv.Uint64, NilOrNotEmpty),
 		Field(&mkv.String, NilOrNotEmpty),
 	)
 }
@@ -36,6 +38,16 @@ func (mkv ManageKeyValueOp) XDR() (*xdr.Operation, error) {
 			Value: xdr.KeyValueEntryValue{
 				Type:      xdr.KeyValueEntryTypeUint32,
 				Ui32Value: &val,
+			},
+		}
+	case mkv.Uint64 != nil:
+		manageKvAction = xdr.ManageKvActionPut
+		val := xdr.Uint64(*mkv.Uint64)
+		keyValueEntry = &xdr.KeyValueEntry{
+			Key: xdr.Longstring(mkv.Key),
+			Value: xdr.KeyValueEntryValue{
+				Type:      xdr.KeyValueEntryTypeUint64,
+				Ui64Value: &val,
 			},
 		}
 	case mkv.String != nil:
