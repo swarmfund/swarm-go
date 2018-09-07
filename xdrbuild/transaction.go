@@ -15,12 +15,13 @@ import (
 type Operation = internal.Operation
 
 type Transaction struct {
-	builder    *Builder
-	source     keypair.Address
-	operations []internal.Operation
-	signers    []keypair.Full
-	salt       *int64
-	timebounds *internal.TimeBounds
+	builder     *Builder
+	source      keypair.Address
+	operations  []internal.Operation
+	signers     []keypair.Full
+	salt        *int64
+	timebounds  *internal.TimeBounds
+	maxTotalFee *uint64
 }
 
 func (tx *Transaction) Salt(v int64) *Transaction {
@@ -60,6 +61,13 @@ func (tx *Transaction) Marshal() (string, error) {
 			MinTime: xdr.Uint64(tx.timebounds.Min),
 			MaxTime: xdr.Uint64(tx.timebounds.Max),
 		}
+	}
+
+	// max total fee
+	if tx.maxTotalFee != nil {
+		envelope.Tx.Ext.V = xdr.LedgerVersionAddTransactionFee
+		rawMaxTotalFee := xdr.Uint64(*tx.maxTotalFee)
+		envelope.Tx.Ext.MaxTotalFee = &rawMaxTotalFee
 	}
 
 	// marshal operations
@@ -110,5 +118,10 @@ func (tx *Transaction) Sign(kp keypair.Full) *Transaction {
 
 func (tx *Transaction) Op(op Operation) *Transaction {
 	tx.operations = append(tx.operations, op)
+	return tx
+}
+
+func (tx *Transaction) MaxTotalFee(maxTotalFee uint64) *Transaction {
+	tx.maxTotalFee = &maxTotalFee
 	return tx
 }
