@@ -14348,10 +14348,10 @@ func (u CreateSaleCreationRequestResult) GetSuccess() (result CreateSaleCreation
 // CreateWithdrawalRequestOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
+//    	{
+//    	case EMPTY_VERSION:
+//    		void;
+//    	}
 //
 type CreateWithdrawalRequestOpExt struct {
 	V LedgerVersion `json:"v,omitempty"`
@@ -14387,14 +14387,14 @@ func NewCreateWithdrawalRequestOpExt(v LedgerVersion, value interface{}) (result
 //
 //   struct CreateWithdrawalRequestOp
 //    {
-//        WithdrawalRequest request;
+//    	WithdrawalRequest request;
 //
 //    	union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
+//    	{
+//    	case EMPTY_VERSION:
+//    		void;
+//    	}
+//    	ext;
 //
 //    };
 //
@@ -14407,12 +14407,12 @@ type CreateWithdrawalRequestOp struct {
 //
 //   enum CreateWithdrawalRequestResultCode
 //    {
-//        // codes considered as "success" for the operation
-//        SUCCESS = 0,
+//    	// codes considered as "success" for the operation
+//    	SUCCESS = 0,
 //
-//        // codes considered as "failure" for the operation
+//    	// codes considered as "failure" for the operation
 //    	INVALID_AMOUNT = -1, // amount is 0
-//        INVALID_EXTERNAL_DETAILS = -2, // external details size exceeds max allowed
+//    	INVALID_EXTERNAL_DETAILS = -2, // external details size exceeds max allowed
 //    	BALANCE_NOT_FOUND = -3, // balance not found
 //    	ASSET_IS_NOT_WITHDRAWABLE = -4, // asset is not withdrawable
 //    	CONVERSION_PRICE_IS_NOT_AVAILABLE = -5, // failed to find conversion price - conversion is not allowed
@@ -14423,8 +14423,9 @@ type CreateWithdrawalRequestOp struct {
 //    	UNDERFUNDED = -10, // insufficient balance to perform operation
 //    	INVALID_UNIVERSAL_AMOUNT = -11, // non-zero universal amount
 //    	STATS_OVERFLOW = -12, // statistics overflowed by the operation
-//        LIMITS_EXCEEDED = -13, // withdraw exceeds limits for source account
-//    	INVALID_PRE_CONFIRMATION_DETAILS = -14 // it's not allowed to pass pre confirmation details
+//    	LIMITS_EXCEEDED = -13, // withdraw exceeds limits for source account
+//    	INVALID_PRE_CONFIRMATION_DETAILS = -14, // it's not allowed to pass pre confirmation details
+//    	LOWER_BOUND_NOT_EXCEEDED = -15
 //    };
 //
 type CreateWithdrawalRequestResultCode int32
@@ -14445,6 +14446,7 @@ const (
 	CreateWithdrawalRequestResultCodeStatsOverflow                 CreateWithdrawalRequestResultCode = -12
 	CreateWithdrawalRequestResultCodeLimitsExceeded                CreateWithdrawalRequestResultCode = -13
 	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails CreateWithdrawalRequestResultCode = -14
+	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded         CreateWithdrawalRequestResultCode = -15
 )
 
 var CreateWithdrawalRequestResultCodeAll = []CreateWithdrawalRequestResultCode{
@@ -14463,6 +14465,7 @@ var CreateWithdrawalRequestResultCodeAll = []CreateWithdrawalRequestResultCode{
 	CreateWithdrawalRequestResultCodeStatsOverflow,
 	CreateWithdrawalRequestResultCodeLimitsExceeded,
 	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails,
+	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded,
 }
 
 var createWithdrawalRequestResultCodeMap = map[int32]string{
@@ -14481,6 +14484,7 @@ var createWithdrawalRequestResultCodeMap = map[int32]string{
 	-12: "CreateWithdrawalRequestResultCodeStatsOverflow",
 	-13: "CreateWithdrawalRequestResultCodeLimitsExceeded",
 	-14: "CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails",
+	-15: "CreateWithdrawalRequestResultCodeLowerBoundNotExceeded",
 }
 
 var createWithdrawalRequestResultCodeShortMap = map[int32]string{
@@ -14499,6 +14503,7 @@ var createWithdrawalRequestResultCodeShortMap = map[int32]string{
 	-12: "stats_overflow",
 	-13: "limits_exceeded",
 	-14: "invalid_pre_confirmation_details",
+	-15: "lower_bound_not_exceeded",
 }
 
 var createWithdrawalRequestResultCodeRevMap = map[string]int32{
@@ -14517,6 +14522,7 @@ var createWithdrawalRequestResultCodeRevMap = map[string]int32{
 	"CreateWithdrawalRequestResultCodeStatsOverflow":                 -12,
 	"CreateWithdrawalRequestResultCodeLimitsExceeded":                -13,
 	"CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails": -14,
+	"CreateWithdrawalRequestResultCodeLowerBoundNotExceeded":         -15,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -14583,10 +14589,10 @@ func (e *CreateWithdrawalRequestResultCode) UnmarshalJSON(data []byte) error {
 // CreateWithdrawalSuccessExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
+//    	{
+//    	case EMPTY_VERSION:
+//    		void;
+//    	}
 //
 type CreateWithdrawalSuccessExt struct {
 	V LedgerVersion `json:"v,omitempty"`
@@ -14624,11 +14630,11 @@ func NewCreateWithdrawalSuccessExt(v LedgerVersion, value interface{}) (result C
 //    	uint64 requestID;
 //
 //    	union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
+//    	{
+//    	case EMPTY_VERSION:
+//    		void;
+//    	}
+//    	ext;
 //    };
 //
 type CreateWithdrawalSuccess struct {
@@ -14640,10 +14646,10 @@ type CreateWithdrawalSuccess struct {
 //
 //   union CreateWithdrawalRequestResult switch (CreateWithdrawalRequestResultCode code)
 //    {
-//        case SUCCESS:
-//            CreateWithdrawalSuccess success;
-//        default:
-//            void;
+//    	case SUCCESS:
+//    		CreateWithdrawalSuccess success;
+//    	default:
+//    		void;
 //    };
 //
 type CreateWithdrawalRequestResult struct {
