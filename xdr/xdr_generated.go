@@ -3022,7 +3022,8 @@ type FeeEntry struct {
 //   enum KeyValueEntryType
 //        {
 //            UINT32 = 1,
-//            STRING = 2
+//            STRING = 2,
+//            UINT64 = 3
 //        };
 //
 type KeyValueEntryType int32
@@ -3030,26 +3031,31 @@ type KeyValueEntryType int32
 const (
 	KeyValueEntryTypeUint32 KeyValueEntryType = 1
 	KeyValueEntryTypeString KeyValueEntryType = 2
+	KeyValueEntryTypeUint64 KeyValueEntryType = 3
 )
 
 var KeyValueEntryTypeAll = []KeyValueEntryType{
 	KeyValueEntryTypeUint32,
 	KeyValueEntryTypeString,
+	KeyValueEntryTypeUint64,
 }
 
 var keyValueEntryTypeMap = map[int32]string{
 	1: "KeyValueEntryTypeUint32",
 	2: "KeyValueEntryTypeString",
+	3: "KeyValueEntryTypeUint64",
 }
 
 var keyValueEntryTypeShortMap = map[int32]string{
 	1: "uint32",
 	2: "string",
+	3: "uint64",
 }
 
 var keyValueEntryTypeRevMap = map[string]int32{
 	"KeyValueEntryTypeUint32": 1,
 	"KeyValueEntryTypeString": 2,
+	"KeyValueEntryTypeUint64": 3,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -3121,12 +3127,15 @@ func (e *KeyValueEntryType) UnmarshalJSON(data []byte) error {
 //                    uint32 ui32Value;
 //                 case STRING:
 //                    string stringValue<>;
+//                case UINT64:
+//                    uint64 ui64Value;
 //            }
 //
 type KeyValueEntryValue struct {
 	Type        KeyValueEntryType `json:"type,omitempty"`
 	Ui32Value   *Uint32           `json:"ui32Value,omitempty"`
 	StringValue *string           `json:"stringValue,omitempty"`
+	Ui64Value   *Uint64           `json:"ui64Value,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -3143,6 +3152,8 @@ func (u KeyValueEntryValue) ArmForSwitch(sw int32) (string, bool) {
 		return "Ui32Value", true
 	case KeyValueEntryTypeString:
 		return "StringValue", true
+	case KeyValueEntryTypeUint64:
+		return "Ui64Value", true
 	}
 	return "-", false
 }
@@ -3165,6 +3176,13 @@ func NewKeyValueEntryValue(aType KeyValueEntryType, value interface{}) (result K
 			return
 		}
 		result.StringValue = &tv
+	case KeyValueEntryTypeUint64:
+		tv, ok := value.(Uint64)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be Uint64")
+			return
+		}
+		result.Ui64Value = &tv
 	}
 	return
 }
@@ -3213,6 +3231,31 @@ func (u KeyValueEntryValue) GetStringValue() (result string, ok bool) {
 
 	if armName == "StringValue" {
 		result = *u.StringValue
+		ok = true
+	}
+
+	return
+}
+
+// MustUi64Value retrieves the Ui64Value value from the union,
+// panicing if the value is not set.
+func (u KeyValueEntryValue) MustUi64Value() Uint64 {
+	val, ok := u.GetUi64Value()
+
+	if !ok {
+		panic("arm Ui64Value is not set")
+	}
+
+	return val
+}
+
+// GetUi64Value retrieves the Ui64Value value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u KeyValueEntryValue) GetUi64Value() (result Uint64, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "Ui64Value" {
+		result = *u.Ui64Value
 		ok = true
 	}
 
@@ -3269,6 +3312,8 @@ func NewKeyValueEntryExt(v LedgerVersion, value interface{}) (result KeyValueEnt
 //                    uint32 ui32Value;
 //                 case STRING:
 //                    string stringValue<>;
+//                case UINT64:
+//                    uint64 ui64Value;
 //            }
 //            value;
 //
@@ -14303,10 +14348,10 @@ func (u CreateSaleCreationRequestResult) GetSuccess() (result CreateSaleCreation
 // CreateWithdrawalRequestOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
+//    	{
+//    	case EMPTY_VERSION:
+//    		void;
+//    	}
 //
 type CreateWithdrawalRequestOpExt struct {
 	V LedgerVersion `json:"v,omitempty"`
@@ -14342,14 +14387,14 @@ func NewCreateWithdrawalRequestOpExt(v LedgerVersion, value interface{}) (result
 //
 //   struct CreateWithdrawalRequestOp
 //    {
-//        WithdrawalRequest request;
+//    	WithdrawalRequest request;
 //
 //    	union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
+//    	{
+//    	case EMPTY_VERSION:
+//    		void;
+//    	}
+//    	ext;
 //
 //    };
 //
@@ -14362,12 +14407,12 @@ type CreateWithdrawalRequestOp struct {
 //
 //   enum CreateWithdrawalRequestResultCode
 //    {
-//        // codes considered as "success" for the operation
-//        SUCCESS = 0,
+//    	// codes considered as "success" for the operation
+//    	SUCCESS = 0,
 //
-//        // codes considered as "failure" for the operation
+//    	// codes considered as "failure" for the operation
 //    	INVALID_AMOUNT = -1, // amount is 0
-//        INVALID_EXTERNAL_DETAILS = -2, // external details size exceeds max allowed
+//    	INVALID_EXTERNAL_DETAILS = -2, // external details size exceeds max allowed
 //    	BALANCE_NOT_FOUND = -3, // balance not found
 //    	ASSET_IS_NOT_WITHDRAWABLE = -4, // asset is not withdrawable
 //    	CONVERSION_PRICE_IS_NOT_AVAILABLE = -5, // failed to find conversion price - conversion is not allowed
@@ -14378,8 +14423,9 @@ type CreateWithdrawalRequestOp struct {
 //    	UNDERFUNDED = -10, // insufficient balance to perform operation
 //    	INVALID_UNIVERSAL_AMOUNT = -11, // non-zero universal amount
 //    	STATS_OVERFLOW = -12, // statistics overflowed by the operation
-//        LIMITS_EXCEEDED = -13, // withdraw exceeds limits for source account
-//    	INVALID_PRE_CONFIRMATION_DETAILS = -14 // it's not allowed to pass pre confirmation details
+//    	LIMITS_EXCEEDED = -13, // withdraw exceeds limits for source account
+//    	INVALID_PRE_CONFIRMATION_DETAILS = -14, // it's not allowed to pass pre confirmation details
+//    	LOWER_BOUND_NOT_EXCEEDED = -15
 //    };
 //
 type CreateWithdrawalRequestResultCode int32
@@ -14400,6 +14446,7 @@ const (
 	CreateWithdrawalRequestResultCodeStatsOverflow                 CreateWithdrawalRequestResultCode = -12
 	CreateWithdrawalRequestResultCodeLimitsExceeded                CreateWithdrawalRequestResultCode = -13
 	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails CreateWithdrawalRequestResultCode = -14
+	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded         CreateWithdrawalRequestResultCode = -15
 )
 
 var CreateWithdrawalRequestResultCodeAll = []CreateWithdrawalRequestResultCode{
@@ -14418,6 +14465,7 @@ var CreateWithdrawalRequestResultCodeAll = []CreateWithdrawalRequestResultCode{
 	CreateWithdrawalRequestResultCodeStatsOverflow,
 	CreateWithdrawalRequestResultCodeLimitsExceeded,
 	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails,
+	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded,
 }
 
 var createWithdrawalRequestResultCodeMap = map[int32]string{
@@ -14436,6 +14484,7 @@ var createWithdrawalRequestResultCodeMap = map[int32]string{
 	-12: "CreateWithdrawalRequestResultCodeStatsOverflow",
 	-13: "CreateWithdrawalRequestResultCodeLimitsExceeded",
 	-14: "CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails",
+	-15: "CreateWithdrawalRequestResultCodeLowerBoundNotExceeded",
 }
 
 var createWithdrawalRequestResultCodeShortMap = map[int32]string{
@@ -14454,6 +14503,7 @@ var createWithdrawalRequestResultCodeShortMap = map[int32]string{
 	-12: "stats_overflow",
 	-13: "limits_exceeded",
 	-14: "invalid_pre_confirmation_details",
+	-15: "lower_bound_not_exceeded",
 }
 
 var createWithdrawalRequestResultCodeRevMap = map[string]int32{
@@ -14472,6 +14522,7 @@ var createWithdrawalRequestResultCodeRevMap = map[string]int32{
 	"CreateWithdrawalRequestResultCodeStatsOverflow":                 -12,
 	"CreateWithdrawalRequestResultCodeLimitsExceeded":                -13,
 	"CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails": -14,
+	"CreateWithdrawalRequestResultCodeLowerBoundNotExceeded":         -15,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -14538,10 +14589,10 @@ func (e *CreateWithdrawalRequestResultCode) UnmarshalJSON(data []byte) error {
 // CreateWithdrawalSuccessExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
+//    	{
+//    	case EMPTY_VERSION:
+//    		void;
+//    	}
 //
 type CreateWithdrawalSuccessExt struct {
 	V LedgerVersion `json:"v,omitempty"`
@@ -14579,11 +14630,11 @@ func NewCreateWithdrawalSuccessExt(v LedgerVersion, value interface{}) (result C
 //    	uint64 requestID;
 //
 //    	union switch (LedgerVersion v)
-//        {
-//        case EMPTY_VERSION:
-//            void;
-//        }
-//        ext;
+//    	{
+//    	case EMPTY_VERSION:
+//    		void;
+//    	}
+//    	ext;
 //    };
 //
 type CreateWithdrawalSuccess struct {
@@ -14595,10 +14646,10 @@ type CreateWithdrawalSuccess struct {
 //
 //   union CreateWithdrawalRequestResult switch (CreateWithdrawalRequestResultCode code)
 //    {
-//        case SUCCESS:
-//            CreateWithdrawalSuccess success;
-//        default:
-//            void;
+//    	case SUCCESS:
+//    		CreateWithdrawalSuccess success;
+//    	default:
+//    		void;
 //    };
 //
 type CreateWithdrawalRequestResult struct {
