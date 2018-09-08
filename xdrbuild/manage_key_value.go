@@ -13,17 +13,35 @@ type ManageKeyValueOp struct {
 	String *string
 }
 
-func (mkv ManageKeyValueOp) Validate() error {
-	if (mkv.String != nil) && (mkv.Uint32 != nil) {
-		return errors.New("unexpected state, Both not nil Uint32 and String not allowed")
+func isNil(i interface{}) error {
+	_, isNil := Indirect(i)
+	if !isNil {
+		return errors.New("must be nil")
 	}
+	return nil
+}
 
-	return ValidateStruct(&mkv,
-		Field(&mkv.Key, Required),
-		Field(&mkv.Uint32, NilOrNotEmpty),
-		Field(&mkv.Uint64, NilOrNotEmpty),
-		Field(&mkv.String, NilOrNotEmpty),
-	)
+func (mkv ManageKeyValueOp) Validate() error {
+	errs := Errors{
+			"Key": Validate(&mkv.Key, Required),
+		}
+
+	if mkv.Uint32 != nil {
+		errs["Uint32"] = Validate(mkv.Uint32, NotNil)
+		errs["String"] = Validate(mkv.String, By(isNil))
+		errs["Uint64"] = Validate(mkv.Uint64, By(isNil))
+	}
+	if mkv.String != nil {
+		errs["String"] = Validate(mkv.String, NotNil)
+		errs["Uint32"] = Validate(mkv.Uint32, By(isNil))
+		errs["Uint64"] = Validate(mkv.Uint64, By(isNil))
+	}
+	if mkv.Uint64 != nil {
+		errs["Uint64"] = Validate(mkv.Uint64, NotNil)
+		errs["String"] = Validate(mkv.String, By(isNil))
+		errs["Uint32"] = Validate(mkv.Uint32, By(isNil))
+	}
+	return errs.Filter()
 }
 
 func (mkv ManageKeyValueOp) XDR() (*xdr.Operation, error) {
