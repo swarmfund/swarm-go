@@ -57,8 +57,28 @@ func TestManageKeyValueOp_XDR(t *testing.T) {
 		assert.Equal(t, xdr.ManageKvActionRemove, xdrOp.Body.MustManageKeyValueOp().Action.Action)
 	})
 	t.Run("invalid struct", func(t *testing.T) {
-
-		op := ManageKeyValueOp{}
+		v := uint32(6)
+		str := "TaskFaceValidation"
+		op := ManageKeyValueOp{
+			String: &str,
+			Uint32: &v,
+		}
 		assert.Error(t, op.Validate())
+	})
+	t.Run("valid with empty string", func(t *testing.T) {
+		str := ""
+		op := ManageKeyValueOp{
+			Key: "Key",
+			String: &str,
+		}
+		assert.NoError(t, op.Validate())
+	})
+	t.Run("valid with 0" , func(t *testing.T) {
+		v := uint32(0)
+		op := ManageKeyValueOp{
+			Key: "Key",
+			Uint32: &v,
+		}
+		assert.NoError(t, op.Validate())
 	})
 }
