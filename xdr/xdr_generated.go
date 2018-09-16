@@ -25,6 +25,7 @@
 //  xdr/raw/Stellar-ledger-entries.x
 //  xdr/raw/Stellar-ledger.x
 //  xdr/raw/Stellar-operation-bind-external-system-id.x
+//  xdr/raw/Stellar-operation-cancel-sale-creation-request.x
 //  xdr/raw/Stellar-operation-check-sale-state.x
 //  xdr/raw/Stellar-operation-create-AML-alert-request.x
 //  xdr/raw/Stellar-operation-create-KYC-request.x
@@ -11001,6 +11002,297 @@ func (u BindExternalSystemAccountIdResult) MustSuccess() BindExternalSystemAccou
 // GetSuccess retrieves the Success value from the union,
 // returning ok if the union's switch indicated the value is valid.
 func (u BindExternalSystemAccountIdResult) GetSuccess() (result BindExternalSystemAccountIdSuccess, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Code))
+
+	if armName == "Success" {
+		result = *u.Success
+		ok = true
+	}
+
+	return
+}
+
+// CancelSaleCreationRequestOpExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type CancelSaleCreationRequestOpExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CancelSaleCreationRequestOpExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CancelSaleCreationRequestOpExt
+func (u CancelSaleCreationRequestOpExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewCancelSaleCreationRequestOpExt creates a new  CancelSaleCreationRequestOpExt.
+func NewCancelSaleCreationRequestOpExt(v LedgerVersion, value interface{}) (result CancelSaleCreationRequestOpExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// CancelSaleCreationRequestOp is an XDR Struct defines as:
+//
+//   struct CancelSaleCreationRequestOp
+//    {
+//        uint64 requestID;
+//
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//
+//    };
+//
+type CancelSaleCreationRequestOp struct {
+	RequestId Uint64                         `json:"requestID,omitempty"`
+	Ext       CancelSaleCreationRequestOpExt `json:"ext,omitempty"`
+}
+
+// CancelSaleCreationRequestResultCode is an XDR Enum defines as:
+//
+//   enum CancelSaleCreationRequestResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        SUCCESS = 0,
+//
+//        // codes considered as "failure" for the operation
+//        REQUEST_ID_INVALID = -1, // request id can not be equal zero
+//        REQUEST_NOT_FOUND = -2 // trying to cancel not existing reviewable request
+//    };
+//
+type CancelSaleCreationRequestResultCode int32
+
+const (
+	CancelSaleCreationRequestResultCodeSuccess          CancelSaleCreationRequestResultCode = 0
+	CancelSaleCreationRequestResultCodeRequestIdInvalid CancelSaleCreationRequestResultCode = -1
+	CancelSaleCreationRequestResultCodeRequestNotFound  CancelSaleCreationRequestResultCode = -2
+)
+
+var CancelSaleCreationRequestResultCodeAll = []CancelSaleCreationRequestResultCode{
+	CancelSaleCreationRequestResultCodeSuccess,
+	CancelSaleCreationRequestResultCodeRequestIdInvalid,
+	CancelSaleCreationRequestResultCodeRequestNotFound,
+}
+
+var cancelSaleCreationRequestResultCodeMap = map[int32]string{
+	0:  "CancelSaleCreationRequestResultCodeSuccess",
+	-1: "CancelSaleCreationRequestResultCodeRequestIdInvalid",
+	-2: "CancelSaleCreationRequestResultCodeRequestNotFound",
+}
+
+var cancelSaleCreationRequestResultCodeShortMap = map[int32]string{
+	0:  "success",
+	-1: "request_id_invalid",
+	-2: "request_not_found",
+}
+
+var cancelSaleCreationRequestResultCodeRevMap = map[string]int32{
+	"CancelSaleCreationRequestResultCodeSuccess":          0,
+	"CancelSaleCreationRequestResultCodeRequestIdInvalid": -1,
+	"CancelSaleCreationRequestResultCodeRequestNotFound":  -2,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for CancelSaleCreationRequestResultCode
+func (e CancelSaleCreationRequestResultCode) ValidEnum(v int32) bool {
+	_, ok := cancelSaleCreationRequestResultCodeMap[v]
+	return ok
+}
+func (e CancelSaleCreationRequestResultCode) isFlag() bool {
+	for i := len(CancelSaleCreationRequestResultCodeAll) - 1; i >= 0; i-- {
+		expected := CancelSaleCreationRequestResultCode(2) << uint64(len(CancelSaleCreationRequestResultCodeAll)-1) >> uint64(len(CancelSaleCreationRequestResultCodeAll)-i)
+		if expected != CancelSaleCreationRequestResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e CancelSaleCreationRequestResultCode) String() string {
+	name, _ := cancelSaleCreationRequestResultCodeMap[int32(e)]
+	return name
+}
+
+func (e CancelSaleCreationRequestResultCode) ShortString() string {
+	name, _ := cancelSaleCreationRequestResultCodeShortMap[int32(e)]
+	return name
+}
+
+func (e CancelSaleCreationRequestResultCode) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range CancelSaleCreationRequestResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *CancelSaleCreationRequestResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = CancelSaleCreationRequestResultCode(t.Value)
+	return nil
+}
+
+// CancelSaleCreationSuccessExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type CancelSaleCreationSuccessExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CancelSaleCreationSuccessExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CancelSaleCreationSuccessExt
+func (u CancelSaleCreationSuccessExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewCancelSaleCreationSuccessExt creates a new  CancelSaleCreationSuccessExt.
+func NewCancelSaleCreationSuccessExt(v LedgerVersion, value interface{}) (result CancelSaleCreationSuccessExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// CancelSaleCreationSuccess is an XDR Struct defines as:
+//
+//   struct CancelSaleCreationSuccess {
+//
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type CancelSaleCreationSuccess struct {
+	Ext CancelSaleCreationSuccessExt `json:"ext,omitempty"`
+}
+
+// CancelSaleCreationRequestResult is an XDR Union defines as:
+//
+//   union CancelSaleCreationRequestResult switch (CancelSaleCreationRequestResultCode code)
+//    {
+//        case SUCCESS:
+//            CancelSaleCreationSuccess success;
+//        default:
+//            void;
+//    };
+//
+type CancelSaleCreationRequestResult struct {
+	Code    CancelSaleCreationRequestResultCode `json:"code,omitempty"`
+	Success *CancelSaleCreationSuccess          `json:"success,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u CancelSaleCreationRequestResult) SwitchFieldName() string {
+	return "Code"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of CancelSaleCreationRequestResult
+func (u CancelSaleCreationRequestResult) ArmForSwitch(sw int32) (string, bool) {
+	switch CancelSaleCreationRequestResultCode(sw) {
+	case CancelSaleCreationRequestResultCodeSuccess:
+		return "Success", true
+	default:
+		return "", true
+	}
+}
+
+// NewCancelSaleCreationRequestResult creates a new  CancelSaleCreationRequestResult.
+func NewCancelSaleCreationRequestResult(code CancelSaleCreationRequestResultCode, value interface{}) (result CancelSaleCreationRequestResult, err error) {
+	result.Code = code
+	switch CancelSaleCreationRequestResultCode(code) {
+	case CancelSaleCreationRequestResultCodeSuccess:
+		tv, ok := value.(CancelSaleCreationSuccess)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CancelSaleCreationSuccess")
+			return
+		}
+		result.Success = &tv
+	default:
+		// void
+	}
+	return
+}
+
+// MustSuccess retrieves the Success value from the union,
+// panicing if the value is not set.
+func (u CancelSaleCreationRequestResult) MustSuccess() CancelSaleCreationSuccess {
+	val, ok := u.GetSuccess()
+
+	if !ok {
+		panic("arm Success is not set")
+	}
+
+	return val
+}
+
+// GetSuccess retrieves the Success value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u CancelSaleCreationRequestResult) GetSuccess() (result CancelSaleCreationSuccess, ok bool) {
 	armName, _ := u.ArmForSwitch(int32(u.Code))
 
 	if armName == "Success" {
@@ -29708,6 +30000,8 @@ type WithdrawalRequest struct {
 //            ManageContractRequestOp manageContractRequestOp;
 //        case MANAGE_CONTRACT:
 //            ManageContractOp manageContractOp;
+//        case CANCEL_SALE_REQUEST:
+//            CancelSaleCreationRequestOp cancelSaleCreationRequestOp;
 //        }
 //
 type OperationBody struct {
@@ -29740,6 +30034,7 @@ type OperationBody struct {
 	CreateManageLimitsRequestOp              *CreateManageLimitsRequestOp              `json:"createManageLimitsRequestOp,omitempty"`
 	ManageContractRequestOp                  *ManageContractRequestOp                  `json:"manageContractRequestOp,omitempty"`
 	ManageContractOp                         *ManageContractOp                         `json:"manageContractOp,omitempty"`
+	CancelSaleCreationRequestOp              *CancelSaleCreationRequestOp              `json:"cancelSaleCreationRequestOp,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -29808,6 +30103,8 @@ func (u OperationBody) ArmForSwitch(sw int32) (string, bool) {
 		return "ManageContractRequestOp", true
 	case OperationTypeManageContract:
 		return "ManageContractOp", true
+	case OperationTypeCancelSaleRequest:
+		return "CancelSaleCreationRequestOp", true
 	}
 	return "-", false
 }
@@ -30012,6 +30309,13 @@ func NewOperationBody(aType OperationType, value interface{}) (result OperationB
 			return
 		}
 		result.ManageContractOp = &tv
+	case OperationTypeCancelSaleRequest:
+		tv, ok := value.(CancelSaleCreationRequestOp)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CancelSaleCreationRequestOp")
+			return
+		}
+		result.CancelSaleCreationRequestOp = &tv
 	}
 	return
 }
@@ -30716,6 +31020,31 @@ func (u OperationBody) GetManageContractOp() (result ManageContractOp, ok bool) 
 	return
 }
 
+// MustCancelSaleCreationRequestOp retrieves the CancelSaleCreationRequestOp value from the union,
+// panicing if the value is not set.
+func (u OperationBody) MustCancelSaleCreationRequestOp() CancelSaleCreationRequestOp {
+	val, ok := u.GetCancelSaleCreationRequestOp()
+
+	if !ok {
+		panic("arm CancelSaleCreationRequestOp is not set")
+	}
+
+	return val
+}
+
+// GetCancelSaleCreationRequestOp retrieves the CancelSaleCreationRequestOp value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationBody) GetCancelSaleCreationRequestOp() (result CancelSaleCreationRequestOp, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "CancelSaleCreationRequestOp" {
+		result = *u.CancelSaleCreationRequestOp
+		ok = true
+	}
+
+	return
+}
+
 // Operation is an XDR Struct defines as:
 //
 //   struct Operation
@@ -30783,6 +31112,8 @@ func (u OperationBody) GetManageContractOp() (result ManageContractOp, ok bool) 
 //            ManageContractRequestOp manageContractRequestOp;
 //        case MANAGE_CONTRACT:
 //            ManageContractOp manageContractOp;
+//        case CANCEL_SALE_REQUEST:
+//            CancelSaleCreationRequestOp cancelSaleCreationRequestOp;
 //        }
 //        body;
 //    };
@@ -31428,6 +31759,8 @@ func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
 //            ManageContractRequestResult manageContractRequestResult;
 //        case MANAGE_CONTRACT:
 //            ManageContractResult manageContractResult;
+//        case CANCEL_SALE_REQUEST:
+//            CancelSaleCreationRequestResult cancelSaleCreationRequestResult;
 //        }
 //
 type OperationResultTr struct {
@@ -31460,6 +31793,7 @@ type OperationResultTr struct {
 	CreateManageLimitsRequestResult              *CreateManageLimitsRequestResult              `json:"createManageLimitsRequestResult,omitempty"`
 	ManageContractRequestResult                  *ManageContractRequestResult                  `json:"manageContractRequestResult,omitempty"`
 	ManageContractResult                         *ManageContractResult                         `json:"manageContractResult,omitempty"`
+	CancelSaleCreationRequestResult              *CancelSaleCreationRequestResult              `json:"cancelSaleCreationRequestResult,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -31528,6 +31862,8 @@ func (u OperationResultTr) ArmForSwitch(sw int32) (string, bool) {
 		return "ManageContractRequestResult", true
 	case OperationTypeManageContract:
 		return "ManageContractResult", true
+	case OperationTypeCancelSaleRequest:
+		return "CancelSaleCreationRequestResult", true
 	}
 	return "-", false
 }
@@ -31732,6 +32068,13 @@ func NewOperationResultTr(aType OperationType, value interface{}) (result Operat
 			return
 		}
 		result.ManageContractResult = &tv
+	case OperationTypeCancelSaleRequest:
+		tv, ok := value.(CancelSaleCreationRequestResult)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be CancelSaleCreationRequestResult")
+			return
+		}
+		result.CancelSaleCreationRequestResult = &tv
 	}
 	return
 }
@@ -32436,6 +32779,31 @@ func (u OperationResultTr) GetManageContractResult() (result ManageContractResul
 	return
 }
 
+// MustCancelSaleCreationRequestResult retrieves the CancelSaleCreationRequestResult value from the union,
+// panicing if the value is not set.
+func (u OperationResultTr) MustCancelSaleCreationRequestResult() CancelSaleCreationRequestResult {
+	val, ok := u.GetCancelSaleCreationRequestResult()
+
+	if !ok {
+		panic("arm CancelSaleCreationRequestResult is not set")
+	}
+
+	return val
+}
+
+// GetCancelSaleCreationRequestResult retrieves the CancelSaleCreationRequestResult value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationResultTr) GetCancelSaleCreationRequestResult() (result CancelSaleCreationRequestResult, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "CancelSaleCreationRequestResult" {
+		result = *u.CancelSaleCreationRequestResult
+		ok = true
+	}
+
+	return
+}
+
 // OperationResult is an XDR Union defines as:
 //
 //   union OperationResult switch (OperationResultCode code)
@@ -32499,6 +32867,8 @@ func (u OperationResultTr) GetManageContractResult() (result ManageContractResul
 //            ManageContractRequestResult manageContractRequestResult;
 //        case MANAGE_CONTRACT:
 //            ManageContractResult manageContractResult;
+//        case CANCEL_SALE_REQUEST:
+//            CancelSaleCreationRequestResult cancelSaleCreationRequestResult;
 //        }
 //        tr;
 //    default:
@@ -34045,7 +34415,8 @@ type Fee struct {
 //        MANAGE_KEY_VALUE = 27,
 //        CREATE_MANAGE_LIMITS_REQUEST = 28,
 //        MANAGE_CONTRACT_REQUEST = 29,
-//        MANAGE_CONTRACT = 30
+//        MANAGE_CONTRACT = 30,
+//        CANCEL_SALE_REQUEST = 31
 //    };
 //
 type OperationType int32
@@ -34079,6 +34450,7 @@ const (
 	OperationTypeCreateManageLimitsRequest              OperationType = 28
 	OperationTypeManageContractRequest                  OperationType = 29
 	OperationTypeManageContract                         OperationType = 30
+	OperationTypeCancelSaleRequest                      OperationType = 31
 )
 
 var OperationTypeAll = []OperationType{
@@ -34110,6 +34482,7 @@ var OperationTypeAll = []OperationType{
 	OperationTypeCreateManageLimitsRequest,
 	OperationTypeManageContractRequest,
 	OperationTypeManageContract,
+	OperationTypeCancelSaleRequest,
 }
 
 var operationTypeMap = map[int32]string{
@@ -34141,6 +34514,7 @@ var operationTypeMap = map[int32]string{
 	28: "OperationTypeCreateManageLimitsRequest",
 	29: "OperationTypeManageContractRequest",
 	30: "OperationTypeManageContract",
+	31: "OperationTypeCancelSaleRequest",
 }
 
 var operationTypeShortMap = map[int32]string{
@@ -34172,6 +34546,7 @@ var operationTypeShortMap = map[int32]string{
 	28: "create_manage_limits_request",
 	29: "manage_contract_request",
 	30: "manage_contract",
+	31: "cancel_sale_request",
 }
 
 var operationTypeRevMap = map[string]int32{
@@ -34203,6 +34578,7 @@ var operationTypeRevMap = map[string]int32{
 	"OperationTypeCreateManageLimitsRequest":              28,
 	"OperationTypeManageContractRequest":                  29,
 	"OperationTypeManageContract":                         30,
+	"OperationTypeCancelSaleRequest":                      31,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
