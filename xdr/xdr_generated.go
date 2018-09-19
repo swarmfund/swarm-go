@@ -24933,6 +24933,7 @@ func NewPayoutSuccessResultExt(v LedgerVersion, value interface{}) (result Payou
 //    {
 //        PayoutResponse payoutResponses<>;
 //        uint64 actualPayoutAmount;
+//        Fee actualFee;
 //
 //        // reserved for future use
 //        union switch (LedgerVersion v)
@@ -24946,6 +24947,7 @@ func NewPayoutSuccessResultExt(v LedgerVersion, value interface{}) (result Payou
 type PayoutSuccessResult struct {
 	PayoutResponses    []PayoutResponse       `json:"payoutResponses,omitempty"`
 	ActualPayoutAmount Uint64                 `json:"actualPayoutAmount,omitempty"`
+	ActualFee          Fee                    `json:"actualFee,omitempty"`
 	Ext                PayoutSuccessResultExt `json:"ext,omitempty"`
 }
 
@@ -24954,14 +24956,14 @@ type PayoutSuccessResult struct {
 //   union PayoutResult switch (PayoutResultCode code)
 //    {
 //        case SUCCESS:
-//            PayoutSuccessResult payoutSuccessResult;
+//            PayoutSuccessResult success;
 //        default:
 //            void;
 //    };
 //
 type PayoutResult struct {
-	Code                PayoutResultCode     `json:"code,omitempty"`
-	PayoutSuccessResult *PayoutSuccessResult `json:"payoutSuccessResult,omitempty"`
+	Code    PayoutResultCode     `json:"code,omitempty"`
+	Success *PayoutSuccessResult `json:"success,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -24975,7 +24977,7 @@ func (u PayoutResult) SwitchFieldName() string {
 func (u PayoutResult) ArmForSwitch(sw int32) (string, bool) {
 	switch PayoutResultCode(sw) {
 	case PayoutResultCodeSuccess:
-		return "PayoutSuccessResult", true
+		return "Success", true
 	default:
 		return "", true
 	}
@@ -24991,32 +24993,32 @@ func NewPayoutResult(code PayoutResultCode, value interface{}) (result PayoutRes
 			err = fmt.Errorf("invalid value, must be PayoutSuccessResult")
 			return
 		}
-		result.PayoutSuccessResult = &tv
+		result.Success = &tv
 	default:
 		// void
 	}
 	return
 }
 
-// MustPayoutSuccessResult retrieves the PayoutSuccessResult value from the union,
+// MustSuccess retrieves the Success value from the union,
 // panicing if the value is not set.
-func (u PayoutResult) MustPayoutSuccessResult() PayoutSuccessResult {
-	val, ok := u.GetPayoutSuccessResult()
+func (u PayoutResult) MustSuccess() PayoutSuccessResult {
+	val, ok := u.GetSuccess()
 
 	if !ok {
-		panic("arm PayoutSuccessResult is not set")
+		panic("arm Success is not set")
 	}
 
 	return val
 }
 
-// GetPayoutSuccessResult retrieves the PayoutSuccessResult value from the union,
+// GetSuccess retrieves the Success value from the union,
 // returning ok if the union's switch indicated the value is valid.
-func (u PayoutResult) GetPayoutSuccessResult() (result PayoutSuccessResult, ok bool) {
+func (u PayoutResult) GetSuccess() (result PayoutSuccessResult, ok bool) {
 	armName, _ := u.ArmForSwitch(int32(u.Code))
 
-	if armName == "PayoutSuccessResult" {
-		result = *u.PayoutSuccessResult
+	if armName == "Success" {
+		result = *u.Success
 		ok = true
 	}
 
