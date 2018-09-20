@@ -24668,7 +24668,7 @@ type PayoutOp struct {
 //        TOTAL_FEE_OVERFLOW = -8,
 //        UNDERFUNDED = -9, // not enough amount on source balance
 //        HOLDERS_NOT_FOUND = -10, // there is no holders of such asset
-//        MIN_AMOUNT_TOO_MUCH = -11, // there is no appropriate holders balances
+//        MIN_AMOUNT_TOO_BIG = -11, // there is no appropriate holders balances
 //        LINE_FULL = -12, // destination balance amount overflows
 //        STATS_OVERFLOW = -13, // source statistics overflow
 //        LIMITS_EXCEEDED = -14 // source account limit exceeded
@@ -24688,7 +24688,7 @@ const (
 	PayoutResultCodeTotalFeeOverflow       PayoutResultCode = -8
 	PayoutResultCodeUnderfunded            PayoutResultCode = -9
 	PayoutResultCodeHoldersNotFound        PayoutResultCode = -10
-	PayoutResultCodeMinAmountTooMuch       PayoutResultCode = -11
+	PayoutResultCodeMinAmountTooBig        PayoutResultCode = -11
 	PayoutResultCodeLineFull               PayoutResultCode = -12
 	PayoutResultCodeStatsOverflow          PayoutResultCode = -13
 	PayoutResultCodeLimitsExceeded         PayoutResultCode = -14
@@ -24706,7 +24706,7 @@ var PayoutResultCodeAll = []PayoutResultCode{
 	PayoutResultCodeTotalFeeOverflow,
 	PayoutResultCodeUnderfunded,
 	PayoutResultCodeHoldersNotFound,
-	PayoutResultCodeMinAmountTooMuch,
+	PayoutResultCodeMinAmountTooBig,
 	PayoutResultCodeLineFull,
 	PayoutResultCodeStatsOverflow,
 	PayoutResultCodeLimitsExceeded,
@@ -24724,7 +24724,7 @@ var payoutResultCodeMap = map[int32]string{
 	-8:  "PayoutResultCodeTotalFeeOverflow",
 	-9:  "PayoutResultCodeUnderfunded",
 	-10: "PayoutResultCodeHoldersNotFound",
-	-11: "PayoutResultCodeMinAmountTooMuch",
+	-11: "PayoutResultCodeMinAmountTooBig",
 	-12: "PayoutResultCodeLineFull",
 	-13: "PayoutResultCodeStatsOverflow",
 	-14: "PayoutResultCodeLimitsExceeded",
@@ -24742,7 +24742,7 @@ var payoutResultCodeShortMap = map[int32]string{
 	-8:  "total_fee_overflow",
 	-9:  "underfunded",
 	-10: "holders_not_found",
-	-11: "min_amount_too_much",
+	-11: "min_amount_too_big",
 	-12: "line_full",
 	-13: "stats_overflow",
 	-14: "limits_exceeded",
@@ -24760,7 +24760,7 @@ var payoutResultCodeRevMap = map[string]int32{
 	"PayoutResultCodeTotalFeeOverflow":       -8,
 	"PayoutResultCodeUnderfunded":            -9,
 	"PayoutResultCodeHoldersNotFound":        -10,
-	"PayoutResultCodeMinAmountTooMuch":       -11,
+	"PayoutResultCodeMinAmountTooBig":        -11,
 	"PayoutResultCodeLineFull":               -12,
 	"PayoutResultCodeStatsOverflow":          -13,
 	"PayoutResultCodeLimitsExceeded":         -14,
