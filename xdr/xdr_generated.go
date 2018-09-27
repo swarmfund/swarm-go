@@ -50,6 +50,7 @@
 //  xdr/raw/Stellar-operation-manage-sale.x
 //  xdr/raw/Stellar-operation-payment-v2.x
 //  xdr/raw/Stellar-operation-payment.x
+//  xdr/raw/Stellar-operation-payout.x
 //  xdr/raw/Stellar-operation-review-request.x
 //  xdr/raw/Stellar-operation-set-fees.x
 //  xdr/raw/Stellar-operation-set-options.x
@@ -2592,7 +2593,8 @@ type ExternalSystemAccountId struct {
 //        ISSUANCE_FEE = 3,
 //        INVEST_FEE = 4, // fee to be taken while creating sale participation
 //        CAPITAL_DEPLOYMENT_FEE = 5, // fee to be taken when sale close
-//        OPERATION_FEE = 6
+//        OPERATION_FEE = 6,
+//        PAYOUT_FEE = 7
 //    };
 //
 type FeeType int32
@@ -2605,6 +2607,7 @@ const (
 	FeeTypeInvestFee            FeeType = 4
 	FeeTypeCapitalDeploymentFee FeeType = 5
 	FeeTypeOperationFee         FeeType = 6
+	FeeTypePayoutFee            FeeType = 7
 )
 
 var FeeTypeAll = []FeeType{
@@ -2615,6 +2618,7 @@ var FeeTypeAll = []FeeType{
 	FeeTypeInvestFee,
 	FeeTypeCapitalDeploymentFee,
 	FeeTypeOperationFee,
+	FeeTypePayoutFee,
 }
 
 var feeTypeMap = map[int32]string{
@@ -2625,6 +2629,7 @@ var feeTypeMap = map[int32]string{
 	4: "FeeTypeInvestFee",
 	5: "FeeTypeCapitalDeploymentFee",
 	6: "FeeTypeOperationFee",
+	7: "FeeTypePayoutFee",
 }
 
 var feeTypeShortMap = map[int32]string{
@@ -2635,6 +2640,7 @@ var feeTypeShortMap = map[int32]string{
 	4: "invest_fee",
 	5: "capital_deployment_fee",
 	6: "operation_fee",
+	7: "payout_fee",
 }
 
 var feeTypeRevMap = map[string]int32{
@@ -2645,6 +2651,7 @@ var feeTypeRevMap = map[string]int32{
 	"FeeTypeInvestFee":            4,
 	"FeeTypeCapitalDeploymentFee": 5,
 	"FeeTypeOperationFee":         6,
+	"FeeTypePayoutFee":            7,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -3340,7 +3347,8 @@ type KeyValueEntry struct {
 //        PAYMENT_OUT = 1,
 //        WITHDRAW = 2,
 //        SPEND = 3,
-//        DEPOSIT = 4
+//        DEPOSIT = 4,
+//        PAYOUT = 5
 //    };
 //
 type StatsOpType int32
@@ -3350,6 +3358,7 @@ const (
 	StatsOpTypeWithdraw   StatsOpType = 2
 	StatsOpTypeSpend      StatsOpType = 3
 	StatsOpTypeDeposit    StatsOpType = 4
+	StatsOpTypePayout     StatsOpType = 5
 )
 
 var StatsOpTypeAll = []StatsOpType{
@@ -3357,6 +3366,7 @@ var StatsOpTypeAll = []StatsOpType{
 	StatsOpTypeWithdraw,
 	StatsOpTypeSpend,
 	StatsOpTypeDeposit,
+	StatsOpTypePayout,
 }
 
 var statsOpTypeMap = map[int32]string{
@@ -3364,6 +3374,7 @@ var statsOpTypeMap = map[int32]string{
 	2: "StatsOpTypeWithdraw",
 	3: "StatsOpTypeSpend",
 	4: "StatsOpTypeDeposit",
+	5: "StatsOpTypePayout",
 }
 
 var statsOpTypeShortMap = map[int32]string{
@@ -3371,6 +3382,7 @@ var statsOpTypeShortMap = map[int32]string{
 	2: "withdraw",
 	3: "spend",
 	4: "deposit",
+	5: "payout",
 }
 
 var statsOpTypeRevMap = map[string]int32{
@@ -3378,6 +3390,7 @@ var statsOpTypeRevMap = map[string]int32{
 	"StatsOpTypeWithdraw":   2,
 	"StatsOpTypeSpend":      3,
 	"StatsOpTypeDeposit":    4,
+	"StatsOpTypePayout":     5,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -24567,6 +24580,451 @@ func (u PaymentResult) GetPaymentResponse() (result PaymentResponse, ok bool) {
 	return
 }
 
+// PayoutOpExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type PayoutOpExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PayoutOpExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PayoutOpExt
+func (u PayoutOpExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewPayoutOpExt creates a new  PayoutOpExt.
+func NewPayoutOpExt(v LedgerVersion, value interface{}) (result PayoutOpExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// PayoutOp is an XDR Struct defines as:
+//
+//   struct PayoutOp
+//    {
+//        AssetCode asset; // asset, which holders will receive dividends
+//        BalanceID sourceBalanceID; // balance, from which payout will be performed
+//
+//        uint64 maxPayoutAmount; // max amount of asset, that owner wants to pay out
+//        uint64 minPayoutAmount; // min tokens amount which will be payed for one balance;
+//        uint64 minAssetHolderAmount; // min tokens amount for which holder will received dividends
+//
+//        Fee fee;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type PayoutOp struct {
+	Asset                AssetCode   `json:"asset,omitempty"`
+	SourceBalanceId      BalanceId   `json:"sourceBalanceID,omitempty"`
+	MaxPayoutAmount      Uint64      `json:"maxPayoutAmount,omitempty"`
+	MinPayoutAmount      Uint64      `json:"minPayoutAmount,omitempty"`
+	MinAssetHolderAmount Uint64      `json:"minAssetHolderAmount,omitempty"`
+	Fee                  Fee         `json:"fee,omitempty"`
+	Ext                  PayoutOpExt `json:"ext,omitempty"`
+}
+
+// PayoutResultCode is an XDR Enum defines as:
+//
+//   enum PayoutResultCode
+//    {
+//        // codes considered as "success" for the operation
+//        SUCCESS = 0,    // payout successfully completed
+//
+//        // codes considered as "failure" for the operation
+//        INVALID_AMOUNT = -1, // max payout amount can not be zero
+//        INVALID_ASSET = -2,
+//        ASSET_NOT_FOUND = -3,
+//        ASSET_NOT_TRANSFERABLE = -4, // asset must have policy transferable
+//        BALANCE_NOT_FOUND = -5,
+//        INSUFFICIENT_FEE_AMOUNT = -6,
+//        FEE_EXCEEDS_ACTUAL_AMOUNT = -7,
+//        TOTAL_FEE_OVERFLOW = -8,
+//        UNDERFUNDED = -9, // not enough amount on source balance
+//        HOLDERS_NOT_FOUND = -10, // there is no holders of such asset
+//        MIN_AMOUNT_TOO_BIG = -11, // there is no appropriate holders balances
+//        LINE_FULL = -12, // destination balance amount overflows
+//        STATS_OVERFLOW = -13, // source statistics overflow
+//        LIMITS_EXCEEDED = -14 // source account limit exceeded
+//    };
+//
+type PayoutResultCode int32
+
+const (
+	PayoutResultCodeSuccess                PayoutResultCode = 0
+	PayoutResultCodeInvalidAmount          PayoutResultCode = -1
+	PayoutResultCodeInvalidAsset           PayoutResultCode = -2
+	PayoutResultCodeAssetNotFound          PayoutResultCode = -3
+	PayoutResultCodeAssetNotTransferable   PayoutResultCode = -4
+	PayoutResultCodeBalanceNotFound        PayoutResultCode = -5
+	PayoutResultCodeInsufficientFeeAmount  PayoutResultCode = -6
+	PayoutResultCodeFeeExceedsActualAmount PayoutResultCode = -7
+	PayoutResultCodeTotalFeeOverflow       PayoutResultCode = -8
+	PayoutResultCodeUnderfunded            PayoutResultCode = -9
+	PayoutResultCodeHoldersNotFound        PayoutResultCode = -10
+	PayoutResultCodeMinAmountTooBig        PayoutResultCode = -11
+	PayoutResultCodeLineFull               PayoutResultCode = -12
+	PayoutResultCodeStatsOverflow          PayoutResultCode = -13
+	PayoutResultCodeLimitsExceeded         PayoutResultCode = -14
+)
+
+var PayoutResultCodeAll = []PayoutResultCode{
+	PayoutResultCodeSuccess,
+	PayoutResultCodeInvalidAmount,
+	PayoutResultCodeInvalidAsset,
+	PayoutResultCodeAssetNotFound,
+	PayoutResultCodeAssetNotTransferable,
+	PayoutResultCodeBalanceNotFound,
+	PayoutResultCodeInsufficientFeeAmount,
+	PayoutResultCodeFeeExceedsActualAmount,
+	PayoutResultCodeTotalFeeOverflow,
+	PayoutResultCodeUnderfunded,
+	PayoutResultCodeHoldersNotFound,
+	PayoutResultCodeMinAmountTooBig,
+	PayoutResultCodeLineFull,
+	PayoutResultCodeStatsOverflow,
+	PayoutResultCodeLimitsExceeded,
+}
+
+var payoutResultCodeMap = map[int32]string{
+	0:   "PayoutResultCodeSuccess",
+	-1:  "PayoutResultCodeInvalidAmount",
+	-2:  "PayoutResultCodeInvalidAsset",
+	-3:  "PayoutResultCodeAssetNotFound",
+	-4:  "PayoutResultCodeAssetNotTransferable",
+	-5:  "PayoutResultCodeBalanceNotFound",
+	-6:  "PayoutResultCodeInsufficientFeeAmount",
+	-7:  "PayoutResultCodeFeeExceedsActualAmount",
+	-8:  "PayoutResultCodeTotalFeeOverflow",
+	-9:  "PayoutResultCodeUnderfunded",
+	-10: "PayoutResultCodeHoldersNotFound",
+	-11: "PayoutResultCodeMinAmountTooBig",
+	-12: "PayoutResultCodeLineFull",
+	-13: "PayoutResultCodeStatsOverflow",
+	-14: "PayoutResultCodeLimitsExceeded",
+}
+
+var payoutResultCodeShortMap = map[int32]string{
+	0:   "success",
+	-1:  "invalid_amount",
+	-2:  "invalid_asset",
+	-3:  "asset_not_found",
+	-4:  "asset_not_transferable",
+	-5:  "balance_not_found",
+	-6:  "insufficient_fee_amount",
+	-7:  "fee_exceeds_actual_amount",
+	-8:  "total_fee_overflow",
+	-9:  "underfunded",
+	-10: "holders_not_found",
+	-11: "min_amount_too_big",
+	-12: "line_full",
+	-13: "stats_overflow",
+	-14: "limits_exceeded",
+}
+
+var payoutResultCodeRevMap = map[string]int32{
+	"PayoutResultCodeSuccess":                0,
+	"PayoutResultCodeInvalidAmount":          -1,
+	"PayoutResultCodeInvalidAsset":           -2,
+	"PayoutResultCodeAssetNotFound":          -3,
+	"PayoutResultCodeAssetNotTransferable":   -4,
+	"PayoutResultCodeBalanceNotFound":        -5,
+	"PayoutResultCodeInsufficientFeeAmount":  -6,
+	"PayoutResultCodeFeeExceedsActualAmount": -7,
+	"PayoutResultCodeTotalFeeOverflow":       -8,
+	"PayoutResultCodeUnderfunded":            -9,
+	"PayoutResultCodeHoldersNotFound":        -10,
+	"PayoutResultCodeMinAmountTooBig":        -11,
+	"PayoutResultCodeLineFull":               -12,
+	"PayoutResultCodeStatsOverflow":          -13,
+	"PayoutResultCodeLimitsExceeded":         -14,
+}
+
+// ValidEnum validates a proposed value for this enum.  Implements
+// the Enum interface for PayoutResultCode
+func (e PayoutResultCode) ValidEnum(v int32) bool {
+	_, ok := payoutResultCodeMap[v]
+	return ok
+}
+func (e PayoutResultCode) isFlag() bool {
+	for i := len(PayoutResultCodeAll) - 1; i >= 0; i-- {
+		expected := PayoutResultCode(2) << uint64(len(PayoutResultCodeAll)-1) >> uint64(len(PayoutResultCodeAll)-i)
+		if expected != PayoutResultCodeAll[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// String returns the name of `e`
+func (e PayoutResultCode) String() string {
+	name, _ := payoutResultCodeMap[int32(e)]
+	return name
+}
+
+func (e PayoutResultCode) ShortString() string {
+	name, _ := payoutResultCodeShortMap[int32(e)]
+	return name
+}
+
+func (e PayoutResultCode) MarshalJSON() ([]byte, error) {
+	if e.isFlag() {
+		// marshal as mask
+		result := flag{
+			Value: int32(e),
+		}
+		for _, value := range PayoutResultCodeAll {
+			if (value & e) == value {
+				result.Flags = append(result.Flags, flagValue{
+					Value: int32(value),
+					Name:  value.ShortString(),
+				})
+			}
+		}
+		return json.Marshal(&result)
+	} else {
+		// marshal as enum
+		result := enum{
+			Value:  int32(e),
+			String: e.ShortString(),
+		}
+		return json.Marshal(&result)
+	}
+}
+
+func (e *PayoutResultCode) UnmarshalJSON(data []byte) error {
+	var t value
+	if err := json.Unmarshal(data, &t); err != nil {
+		return err
+	}
+	*e = PayoutResultCode(t.Value)
+	return nil
+}
+
+// PayoutResponseExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type PayoutResponseExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PayoutResponseExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PayoutResponseExt
+func (u PayoutResponseExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewPayoutResponseExt creates a new  PayoutResponseExt.
+func NewPayoutResponseExt(v LedgerVersion, value interface{}) (result PayoutResponseExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// PayoutResponse is an XDR Struct defines as:
+//
+//   struct PayoutResponse
+//    {
+//        AccountID receiverID;
+//        BalanceID receiverBalanceID;
+//        uint64 receivedAmount;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type PayoutResponse struct {
+	ReceiverId        AccountId         `json:"receiverID,omitempty"`
+	ReceiverBalanceId BalanceId         `json:"receiverBalanceID,omitempty"`
+	ReceivedAmount    Uint64            `json:"receivedAmount,omitempty"`
+	Ext               PayoutResponseExt `json:"ext,omitempty"`
+}
+
+// PayoutSuccessResultExt is an XDR NestedUnion defines as:
+//
+//   union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//
+type PayoutSuccessResultExt struct {
+	V LedgerVersion `json:"v,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PayoutSuccessResultExt) SwitchFieldName() string {
+	return "V"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PayoutSuccessResultExt
+func (u PayoutSuccessResultExt) ArmForSwitch(sw int32) (string, bool) {
+	switch LedgerVersion(sw) {
+	case LedgerVersionEmptyVersion:
+		return "", true
+	}
+	return "-", false
+}
+
+// NewPayoutSuccessResultExt creates a new  PayoutSuccessResultExt.
+func NewPayoutSuccessResultExt(v LedgerVersion, value interface{}) (result PayoutSuccessResultExt, err error) {
+	result.V = v
+	switch LedgerVersion(v) {
+	case LedgerVersionEmptyVersion:
+		// void
+	}
+	return
+}
+
+// PayoutSuccessResult is an XDR Struct defines as:
+//
+//   struct PayoutSuccessResult
+//    {
+//        PayoutResponse payoutResponses<>;
+//        uint64 actualPayoutAmount;
+//        Fee actualFee;
+//
+//        // reserved for future use
+//        union switch (LedgerVersion v)
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        }
+//        ext;
+//    };
+//
+type PayoutSuccessResult struct {
+	PayoutResponses    []PayoutResponse       `json:"payoutResponses,omitempty"`
+	ActualPayoutAmount Uint64                 `json:"actualPayoutAmount,omitempty"`
+	ActualFee          Fee                    `json:"actualFee,omitempty"`
+	Ext                PayoutSuccessResultExt `json:"ext,omitempty"`
+}
+
+// PayoutResult is an XDR Union defines as:
+//
+//   union PayoutResult switch (PayoutResultCode code)
+//    {
+//        case SUCCESS:
+//            PayoutSuccessResult success;
+//        default:
+//            void;
+//    };
+//
+type PayoutResult struct {
+	Code    PayoutResultCode     `json:"code,omitempty"`
+	Success *PayoutSuccessResult `json:"success,omitempty"`
+}
+
+// SwitchFieldName returns the field name in which this union's
+// discriminant is stored
+func (u PayoutResult) SwitchFieldName() string {
+	return "Code"
+}
+
+// ArmForSwitch returns which field name should be used for storing
+// the value for an instance of PayoutResult
+func (u PayoutResult) ArmForSwitch(sw int32) (string, bool) {
+	switch PayoutResultCode(sw) {
+	case PayoutResultCodeSuccess:
+		return "Success", true
+	default:
+		return "", true
+	}
+}
+
+// NewPayoutResult creates a new  PayoutResult.
+func NewPayoutResult(code PayoutResultCode, value interface{}) (result PayoutResult, err error) {
+	result.Code = code
+	switch PayoutResultCode(code) {
+	case PayoutResultCodeSuccess:
+		tv, ok := value.(PayoutSuccessResult)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be PayoutSuccessResult")
+			return
+		}
+		result.Success = &tv
+	default:
+		// void
+	}
+	return
+}
+
+// MustSuccess retrieves the Success value from the union,
+// panicing if the value is not set.
+func (u PayoutResult) MustSuccess() PayoutSuccessResult {
+	val, ok := u.GetSuccess()
+
+	if !ok {
+		panic("arm Success is not set")
+	}
+
+	return val
+}
+
+// GetSuccess retrieves the Success value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u PayoutResult) GetSuccess() (result PayoutSuccessResult, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Code))
+
+	if armName == "Success" {
+		result = *u.Success
+		ok = true
+	}
+
+	return
+}
+
 // ReviewRequestOpAction is an XDR Enum defines as:
 //
 //   enum ReviewRequestOpAction {
@@ -29980,6 +30438,8 @@ type WithdrawalRequest struct {
 //    		CreateSaleCreationRequestOp createSaleCreationRequestOp;
 //    	case CHECK_SALE_STATE:
 //    		CheckSaleStateOp checkSaleStateOp;
+//    	case PAYOUT:
+//    	    PayoutOp payoutOp;
 //    	case CREATE_AML_ALERT:
 //    	    CreateAMLAlertRequestOp createAMLAlertRequestOp;
 //    	case MANAGE_KEY_VALUE:
@@ -30024,6 +30484,7 @@ type OperationBody struct {
 	ReviewRequestOp                          *ReviewRequestOp                          `json:"reviewRequestOp,omitempty"`
 	CreateSaleCreationRequestOp              *CreateSaleCreationRequestOp              `json:"createSaleCreationRequestOp,omitempty"`
 	CheckSaleStateOp                         *CheckSaleStateOp                         `json:"checkSaleStateOp,omitempty"`
+	PayoutOp                                 *PayoutOp                                 `json:"payoutOp,omitempty"`
 	CreateAmlAlertRequestOp                  *CreateAmlAlertRequestOp                  `json:"createAMLAlertRequestOp,omitempty"`
 	ManageKeyValueOp                         *ManageKeyValueOp                         `json:"manageKeyValueOp,omitempty"`
 	CreateUpdateKycRequestOp                 *CreateUpdateKycRequestOp                 `json:"createUpdateKYCRequestOp,omitempty"`
@@ -30083,6 +30544,8 @@ func (u OperationBody) ArmForSwitch(sw int32) (string, bool) {
 		return "CreateSaleCreationRequestOp", true
 	case OperationTypeCheckSaleState:
 		return "CheckSaleStateOp", true
+	case OperationTypePayout:
+		return "PayoutOp", true
 	case OperationTypeCreateAmlAlert:
 		return "CreateAmlAlertRequestOp", true
 	case OperationTypeManageKeyValue:
@@ -30239,6 +30702,13 @@ func NewOperationBody(aType OperationType, value interface{}) (result OperationB
 			return
 		}
 		result.CheckSaleStateOp = &tv
+	case OperationTypePayout:
+		tv, ok := value.(PayoutOp)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be PayoutOp")
+			return
+		}
+		result.PayoutOp = &tv
 	case OperationTypeCreateAmlAlert:
 		tv, ok := value.(CreateAmlAlertRequestOp)
 		if !ok {
@@ -30770,6 +31240,31 @@ func (u OperationBody) GetCheckSaleStateOp() (result CheckSaleStateOp, ok bool) 
 	return
 }
 
+// MustPayoutOp retrieves the PayoutOp value from the union,
+// panicing if the value is not set.
+func (u OperationBody) MustPayoutOp() PayoutOp {
+	val, ok := u.GetPayoutOp()
+
+	if !ok {
+		panic("arm PayoutOp is not set")
+	}
+
+	return val
+}
+
+// GetPayoutOp retrieves the PayoutOp value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationBody) GetPayoutOp() (result PayoutOp, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "PayoutOp" {
+		result = *u.PayoutOp
+		ok = true
+	}
+
+	return
+}
+
 // MustCreateAmlAlertRequestOp retrieves the CreateAmlAlertRequestOp value from the union,
 // panicing if the value is not set.
 func (u OperationBody) MustCreateAmlAlertRequestOp() CreateAmlAlertRequestOp {
@@ -31092,6 +31587,8 @@ func (u OperationBody) GetCancelSaleCreationRequestOp() (result CancelSaleCreati
 //    		CreateSaleCreationRequestOp createSaleCreationRequestOp;
 //    	case CHECK_SALE_STATE:
 //    		CheckSaleStateOp checkSaleStateOp;
+//    	case PAYOUT:
+//    	    PayoutOp payoutOp;
 //    	case CREATE_AML_ALERT:
 //    	    CreateAMLAlertRequestOp createAMLAlertRequestOp;
 //    	case MANAGE_KEY_VALUE:
@@ -31739,6 +32236,8 @@ func (e *OperationResultCode) UnmarshalJSON(data []byte) error {
 //    		CreateSaleCreationRequestResult createSaleCreationRequestResult;
 //    	case CHECK_SALE_STATE:
 //    		CheckSaleStateResult checkSaleStateResult;
+//    	case PAYOUT:
+//    	    PayoutResult payoutResult;
 //    	case CREATE_AML_ALERT:
 //    	    CreateAMLAlertRequestResult createAMLAlertRequestResult;
 //    	case MANAGE_KEY_VALUE:
@@ -31783,6 +32282,7 @@ type OperationResultTr struct {
 	ReviewRequestResult                          *ReviewRequestResult                          `json:"reviewRequestResult,omitempty"`
 	CreateSaleCreationRequestResult              *CreateSaleCreationRequestResult              `json:"createSaleCreationRequestResult,omitempty"`
 	CheckSaleStateResult                         *CheckSaleStateResult                         `json:"checkSaleStateResult,omitempty"`
+	PayoutResult                                 *PayoutResult                                 `json:"payoutResult,omitempty"`
 	CreateAmlAlertRequestResult                  *CreateAmlAlertRequestResult                  `json:"createAMLAlertRequestResult,omitempty"`
 	ManageKeyValueResult                         *ManageKeyValueResult                         `json:"manageKeyValueResult,omitempty"`
 	CreateUpdateKycRequestResult                 *CreateUpdateKycRequestResult                 `json:"createUpdateKYCRequestResult,omitempty"`
@@ -31842,6 +32342,8 @@ func (u OperationResultTr) ArmForSwitch(sw int32) (string, bool) {
 		return "CreateSaleCreationRequestResult", true
 	case OperationTypeCheckSaleState:
 		return "CheckSaleStateResult", true
+	case OperationTypePayout:
+		return "PayoutResult", true
 	case OperationTypeCreateAmlAlert:
 		return "CreateAmlAlertRequestResult", true
 	case OperationTypeManageKeyValue:
@@ -31998,6 +32500,13 @@ func NewOperationResultTr(aType OperationType, value interface{}) (result Operat
 			return
 		}
 		result.CheckSaleStateResult = &tv
+	case OperationTypePayout:
+		tv, ok := value.(PayoutResult)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be PayoutResult")
+			return
+		}
+		result.PayoutResult = &tv
 	case OperationTypeCreateAmlAlert:
 		tv, ok := value.(CreateAmlAlertRequestResult)
 		if !ok {
@@ -32529,6 +33038,31 @@ func (u OperationResultTr) GetCheckSaleStateResult() (result CheckSaleStateResul
 	return
 }
 
+// MustPayoutResult retrieves the PayoutResult value from the union,
+// panicing if the value is not set.
+func (u OperationResultTr) MustPayoutResult() PayoutResult {
+	val, ok := u.GetPayoutResult()
+
+	if !ok {
+		panic("arm PayoutResult is not set")
+	}
+
+	return val
+}
+
+// GetPayoutResult retrieves the PayoutResult value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u OperationResultTr) GetPayoutResult() (result PayoutResult, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.Type))
+
+	if armName == "PayoutResult" {
+		result = *u.PayoutResult
+		ok = true
+	}
+
+	return
+}
+
 // MustCreateAmlAlertRequestResult retrieves the CreateAmlAlertRequestResult value from the union,
 // panicing if the value is not set.
 func (u OperationResultTr) MustCreateAmlAlertRequestResult() CreateAmlAlertRequestResult {
@@ -32847,6 +33381,8 @@ func (u OperationResultTr) GetCancelSaleCreationRequestResult() (result CancelSa
 //    		CreateSaleCreationRequestResult createSaleCreationRequestResult;
 //    	case CHECK_SALE_STATE:
 //    		CheckSaleStateResult checkSaleStateResult;
+//    	case PAYOUT:
+//    	    PayoutResult payoutResult;
 //    	case CREATE_AML_ALERT:
 //    	    CreateAMLAlertRequestResult createAMLAlertRequestResult;
 //    	case MANAGE_KEY_VALUE:
@@ -34416,7 +34952,8 @@ type Fee struct {
 //        CREATE_MANAGE_LIMITS_REQUEST = 28,
 //        MANAGE_CONTRACT_REQUEST = 29,
 //        MANAGE_CONTRACT = 30,
-//        CANCEL_SALE_REQUEST = 31
+//        CANCEL_SALE_REQUEST = 31,
+//        PAYOUT = 32
 //    };
 //
 type OperationType int32
@@ -34451,6 +34988,7 @@ const (
 	OperationTypeManageContractRequest                  OperationType = 29
 	OperationTypeManageContract                         OperationType = 30
 	OperationTypeCancelSaleRequest                      OperationType = 31
+	OperationTypePayout                                 OperationType = 32
 )
 
 var OperationTypeAll = []OperationType{
@@ -34483,6 +35021,7 @@ var OperationTypeAll = []OperationType{
 	OperationTypeManageContractRequest,
 	OperationTypeManageContract,
 	OperationTypeCancelSaleRequest,
+	OperationTypePayout,
 }
 
 var operationTypeMap = map[int32]string{
@@ -34515,6 +35054,7 @@ var operationTypeMap = map[int32]string{
 	29: "OperationTypeManageContractRequest",
 	30: "OperationTypeManageContract",
 	31: "OperationTypeCancelSaleRequest",
+	32: "OperationTypePayout",
 }
 
 var operationTypeShortMap = map[int32]string{
@@ -34547,6 +35087,7 @@ var operationTypeShortMap = map[int32]string{
 	29: "manage_contract_request",
 	30: "manage_contract",
 	31: "cancel_sale_request",
+	32: "payout",
 }
 
 var operationTypeRevMap = map[string]int32{
@@ -34579,6 +35120,7 @@ var operationTypeRevMap = map[string]int32{
 	"OperationTypeManageContractRequest":                  29,
 	"OperationTypeManageContract":                         30,
 	"OperationTypeCancelSaleRequest":                      31,
+	"OperationTypePayout":                                 32,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
