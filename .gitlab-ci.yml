@@ -1,14 +1,19 @@
-image: shebgregor/ci-golang
+services:
+  - docker:dind
 
 stages:
-  - test
+  - publish-gh
 
-test:
-  stage: test
-  variables:
-    APP_PATH: gitlab.com/tokend/go
+publish-gh:
+  image: ubuntu
+  stage: publish-gh
+  only:
+    - master
   script:
-    - mkdir -p $GOPATH/src/$APP_PATH
-    - cp -rf ./* $GOPATH/src/$APP_PATH
-    - cd $GOPATH/src/$APP_PATH
-    - go test ./...
+    - apt update
+    - apt install -y --no-install-recommends git openssh-client
+    - mkdir -p ~/.ssh
+    - echo "$GH_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+    - GIT_SSH_COMMAND="ssh -i ~/.ssh/id_rsa" git push -f git@github.com:swarmfund/swarm-go.git master
