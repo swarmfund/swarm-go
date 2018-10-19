@@ -12,6 +12,13 @@ type (
 	AssetDetails struct {
 		ExternalSystemType int    `json:"external_system_type,string"`
 		Name               string `json:"name"`
+		Logo               *Logo  `json:"logo,omitempty"`
+	}
+
+	Logo struct {
+		Key  string `json:"key,omitempty"`
+		Type string `json:"type,omitempty"`
+		URL  string `json:"url,omitempty"`
 	}
 
 	CreateAssetOp struct {
