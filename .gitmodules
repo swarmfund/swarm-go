@@ -1,0 +1,3 @@
+[submodule "xdr/raw"]
+	path = xdr/raw
+	url = git@github.com:tokend/xdr
