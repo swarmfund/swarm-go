@@ -1,3 +1,5 @@
+// revision: 84135ed642bff4965ce69f9a91f566d6d525188d
+// branch:   master
 // Package xdr is generated from:
 //
 //  xdr/Stellar-SCP.x
