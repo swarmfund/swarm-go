@@ -36,6 +36,7 @@ type CreateWithdrawRequestOp struct {
 	Balance string
 	Asset   string
 	Amount  uint64
+	AllTasks *uint32
 	Details WithdrawRequestDetails
 }
 
@@ -55,6 +56,16 @@ func (op CreateWithdrawRequestOp) XDR() (*xdr.Operation, error) {
 		return nil, errors.Wrap(err, "failed to set receiver")
 	}
 
+	var allTasksXDR xdr.Uint32
+	var allTasksXDRPointer *xdr.Uint32
+
+	if op.AllTasks != nil {
+		allTasksXDR = xdr.Uint32(*op.AllTasks)
+		allTasksXDRPointer = &allTasksXDR
+	} else {
+		allTasksXDRPointer = nil
+	}
+
 	return &xdr.Operation{
 		Body: xdr.OperationBody{
 			Type: xdr.OperationTypeCreateWithdrawalRequest,
@@ -70,6 +81,10 @@ func (op CreateWithdrawRequestOp) XDR() (*xdr.Operation, error) {
 							ExpectedAmount: xdr.Uint64(op.Amount),
 						},
 					},
+				},
+				Ext: xdr.CreateWithdrawalRequestOpExt{
+					V: xdr.LedgerVersionWithdrawalTasks,
+					AllTasks: &allTasksXDRPointer,
 				},
 			},
 		},

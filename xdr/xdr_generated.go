@@ -1,5 +1,5 @@
-// revision: 84135ed642bff4965ce69f9a91f566d6d525188d
-// branch:   master
+// revision: ef016275cf87b8568192a7c9c404ded36856ddea
+// branch:   feature/withdrawal_tasks
 // Package xdr is generated from:
 //
 //  xdr/Stellar-SCP.x
@@ -15271,13 +15271,16 @@ func (u CreateSaleCreationRequestResult) GetSuccess() (result CreateSaleCreation
 // CreateWithdrawalRequestOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
-//    	{
-//    	case EMPTY_VERSION:
-//    		void;
-//    	}
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        case WITHDRAWAL_TASKS:
+//            uint32* allTasks;
+//        }
 //
 type CreateWithdrawalRequestOpExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V        LedgerVersion `json:"v,omitempty"`
+	AllTasks **Uint32      `json:"allTasks,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -15292,6 +15295,8 @@ func (u CreateWithdrawalRequestOpExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionWithdrawalTasks:
+		return "AllTasks", true
 	}
 	return "-", false
 }
@@ -15302,7 +15307,39 @@ func NewCreateWithdrawalRequestOpExt(v LedgerVersion, value interface{}) (result
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionWithdrawalTasks:
+		tv, ok := value.(*Uint32)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be *Uint32")
+			return
+		}
+		result.AllTasks = &tv
 	}
+	return
+}
+
+// MustAllTasks retrieves the AllTasks value from the union,
+// panicing if the value is not set.
+func (u CreateWithdrawalRequestOpExt) MustAllTasks() *Uint32 {
+	val, ok := u.GetAllTasks()
+
+	if !ok {
+		panic("arm AllTasks is not set")
+	}
+
+	return val
+}
+
+// GetAllTasks retrieves the AllTasks value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u CreateWithdrawalRequestOpExt) GetAllTasks() (result *Uint32, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "AllTasks" {
+		result = *u.AllTasks
+		ok = true
+	}
+
 	return
 }
 
@@ -15313,11 +15350,13 @@ func NewCreateWithdrawalRequestOpExt(v LedgerVersion, value interface{}) (result
 //    	WithdrawalRequest request;
 //
 //    	union switch (LedgerVersion v)
-//    	{
-//    	case EMPTY_VERSION:
-//    		void;
-//    	}
-//    	ext;
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        case WITHDRAWAL_TASKS:
+//            uint32* allTasks;
+//        }
+//        ext;
 //
 //    };
 //
@@ -15348,7 +15387,8 @@ type CreateWithdrawalRequestOp struct {
 //    	STATS_OVERFLOW = -12, // statistics overflowed by the operation
 //    	LIMITS_EXCEEDED = -13, // withdraw exceeds limits for source account
 //    	INVALID_PRE_CONFIRMATION_DETAILS = -14, // it's not allowed to pass pre confirmation details
-//    	LOWER_BOUND_NOT_EXCEEDED = -15
+//    	LOWER_BOUND_NOT_EXCEEDED = -15, //amount to withdraw is too small
+//        WITHDRAWAL_TASKS_NOT_FOUND = -16
 //    };
 //
 type CreateWithdrawalRequestResultCode int32
@@ -15370,6 +15410,7 @@ const (
 	CreateWithdrawalRequestResultCodeLimitsExceeded                CreateWithdrawalRequestResultCode = -13
 	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails CreateWithdrawalRequestResultCode = -14
 	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded         CreateWithdrawalRequestResultCode = -15
+	CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound       CreateWithdrawalRequestResultCode = -16
 )
 
 var CreateWithdrawalRequestResultCodeAll = []CreateWithdrawalRequestResultCode{
@@ -15389,6 +15430,7 @@ var CreateWithdrawalRequestResultCodeAll = []CreateWithdrawalRequestResultCode{
 	CreateWithdrawalRequestResultCodeLimitsExceeded,
 	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails,
 	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded,
+	CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound,
 }
 
 var createWithdrawalRequestResultCodeMap = map[int32]string{
@@ -15408,6 +15450,7 @@ var createWithdrawalRequestResultCodeMap = map[int32]string{
 	-13: "CreateWithdrawalRequestResultCodeLimitsExceeded",
 	-14: "CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails",
 	-15: "CreateWithdrawalRequestResultCodeLowerBoundNotExceeded",
+	-16: "CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound",
 }
 
 var createWithdrawalRequestResultCodeShortMap = map[int32]string{
@@ -15427,6 +15470,7 @@ var createWithdrawalRequestResultCodeShortMap = map[int32]string{
 	-13: "limits_exceeded",
 	-14: "invalid_pre_confirmation_details",
 	-15: "lower_bound_not_exceeded",
+	-16: "withdrawal_tasks_not_found",
 }
 
 var createWithdrawalRequestResultCodeRevMap = map[string]int32{
@@ -15446,6 +15490,7 @@ var createWithdrawalRequestResultCodeRevMap = map[string]int32{
 	"CreateWithdrawalRequestResultCodeLimitsExceeded":                -13,
 	"CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails": -14,
 	"CreateWithdrawalRequestResultCodeLowerBoundNotExceeded":         -15,
+	"CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound":       -16,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -36431,6 +36476,7 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //        ADD_CAPITAL_DEPLOYMENT_FEE_TYPE = 48,
 //        ADD_TRANSACTION_FEE = 49,
 //        ADD_DEFAULT_ISSUANCE_TASKS = 50,
+//    	WITHDRAWAL_TASKS = 51,
 //        REPLACE_ACCOUNT_TYPES_WITH_POLICIES = 999999 // do not use it yet, there are features to be improved
 //    };
 //
@@ -36488,6 +36534,7 @@ const (
 	LedgerVersionAddCapitalDeploymentFeeType                      LedgerVersion = 48
 	LedgerVersionAddTransactionFee                                LedgerVersion = 49
 	LedgerVersionAddDefaultIssuanceTasks                          LedgerVersion = 50
+	LedgerVersionWithdrawalTasks                                  LedgerVersion = 51
 	LedgerVersionReplaceAccountTypesWithPolicies                  LedgerVersion = 999999
 )
 
@@ -36543,6 +36590,7 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAddCapitalDeploymentFeeType,
 	LedgerVersionAddTransactionFee,
 	LedgerVersionAddDefaultIssuanceTasks,
+	LedgerVersionWithdrawalTasks,
 	LedgerVersionReplaceAccountTypesWithPolicies,
 }
 
@@ -36598,6 +36646,7 @@ var ledgerVersionMap = map[int32]string{
 	48:     "LedgerVersionAddCapitalDeploymentFeeType",
 	49:     "LedgerVersionAddTransactionFee",
 	50:     "LedgerVersionAddDefaultIssuanceTasks",
+	51:     "LedgerVersionWithdrawalTasks",
 	999999: "LedgerVersionReplaceAccountTypesWithPolicies",
 }
 
@@ -36653,6 +36702,7 @@ var ledgerVersionShortMap = map[int32]string{
 	48:     "add_capital_deployment_fee_type",
 	49:     "add_transaction_fee",
 	50:     "add_default_issuance_tasks",
+	51:     "withdrawal_tasks",
 	999999: "replace_account_types_with_policies",
 }
 
@@ -36708,6 +36758,7 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAddCapitalDeploymentFeeType":                      48,
 	"LedgerVersionAddTransactionFee":                                49,
 	"LedgerVersionAddDefaultIssuanceTasks":                          50,
+	"LedgerVersionWithdrawalTasks":                                  51,
 	"LedgerVersionReplaceAccountTypesWithPolicies":                  999999,
 }
 
