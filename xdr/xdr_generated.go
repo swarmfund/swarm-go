@@ -1,4 +1,4 @@
-// revision: ef016275cf87b8568192a7c9c404ded36856ddea
+// revision: 63aac5173660331bce7ce9643eb65cc08b8f47ad
 // branch:   feature/withdrawal_tasks
 // Package xdr is generated from:
 //
@@ -2091,7 +2091,8 @@ type AssetPairEntry struct {
 //    	TWO_STEP_WITHDRAWAL = 16,
 //    	REQUIRES_KYC = 32,
 //    	ISSUANCE_MANUAL_REVIEW_REQUIRED = 64,
-//    	REQUIRES_VERIFICATION = 128
+//    	REQUIRES_VERIFICATION = 128,
+//    	WITHDRAWABLE_V2 = 256 // switch to withdraw with tasks
 //    };
 //
 type AssetPolicy int32
@@ -2105,6 +2106,7 @@ const (
 	AssetPolicyRequiresKyc                  AssetPolicy = 32
 	AssetPolicyIssuanceManualReviewRequired AssetPolicy = 64
 	AssetPolicyRequiresVerification         AssetPolicy = 128
+	AssetPolicyWithdrawableV2               AssetPolicy = 256
 )
 
 var AssetPolicyAll = []AssetPolicy{
@@ -2116,6 +2118,7 @@ var AssetPolicyAll = []AssetPolicy{
 	AssetPolicyRequiresKyc,
 	AssetPolicyIssuanceManualReviewRequired,
 	AssetPolicyRequiresVerification,
+	AssetPolicyWithdrawableV2,
 }
 
 var assetPolicyMap = map[int32]string{
@@ -2127,6 +2130,7 @@ var assetPolicyMap = map[int32]string{
 	32:  "AssetPolicyRequiresKyc",
 	64:  "AssetPolicyIssuanceManualReviewRequired",
 	128: "AssetPolicyRequiresVerification",
+	256: "AssetPolicyWithdrawableV2",
 }
 
 var assetPolicyShortMap = map[int32]string{
@@ -2138,6 +2142,7 @@ var assetPolicyShortMap = map[int32]string{
 	32:  "requires_kyc",
 	64:  "issuance_manual_review_required",
 	128: "requires_verification",
+	256: "withdrawable_v2",
 }
 
 var assetPolicyRevMap = map[string]int32{
@@ -2149,6 +2154,7 @@ var assetPolicyRevMap = map[string]int32{
 	"AssetPolicyRequiresKyc":                  32,
 	"AssetPolicyIssuanceManualReviewRequired": 64,
 	"AssetPolicyRequiresVerification":         128,
+	"AssetPolicyWithdrawableV2":               256,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -15388,29 +15394,31 @@ type CreateWithdrawalRequestOp struct {
 //    	LIMITS_EXCEEDED = -13, // withdraw exceeds limits for source account
 //    	INVALID_PRE_CONFIRMATION_DETAILS = -14, // it's not allowed to pass pre confirmation details
 //    	LOWER_BOUND_NOT_EXCEEDED = -15, //amount to withdraw is too small
-//        WITHDRAWAL_TASKS_NOT_FOUND = -16
+//        WITHDRAWAL_TASKS_NOT_FOUND = -16,
+//    	NOT_ALLOWED_TO_SET_WITHDRAWAL_TASKS = -17 //Can't set withdrawal tasks on request creation
 //    };
 //
 type CreateWithdrawalRequestResultCode int32
 
 const (
-	CreateWithdrawalRequestResultCodeSuccess                       CreateWithdrawalRequestResultCode = 0
-	CreateWithdrawalRequestResultCodeInvalidAmount                 CreateWithdrawalRequestResultCode = -1
-	CreateWithdrawalRequestResultCodeInvalidExternalDetails        CreateWithdrawalRequestResultCode = -2
-	CreateWithdrawalRequestResultCodeBalanceNotFound               CreateWithdrawalRequestResultCode = -3
-	CreateWithdrawalRequestResultCodeAssetIsNotWithdrawable        CreateWithdrawalRequestResultCode = -4
-	CreateWithdrawalRequestResultCodeConversionPriceIsNotAvailable CreateWithdrawalRequestResultCode = -5
-	CreateWithdrawalRequestResultCodeFeeMismatched                 CreateWithdrawalRequestResultCode = -6
-	CreateWithdrawalRequestResultCodeConversionOverflow            CreateWithdrawalRequestResultCode = -7
-	CreateWithdrawalRequestResultCodeConvertedAmountMismatched     CreateWithdrawalRequestResultCode = -8
-	CreateWithdrawalRequestResultCodeBalanceLockOverflow           CreateWithdrawalRequestResultCode = -9
-	CreateWithdrawalRequestResultCodeUnderfunded                   CreateWithdrawalRequestResultCode = -10
-	CreateWithdrawalRequestResultCodeInvalidUniversalAmount        CreateWithdrawalRequestResultCode = -11
-	CreateWithdrawalRequestResultCodeStatsOverflow                 CreateWithdrawalRequestResultCode = -12
-	CreateWithdrawalRequestResultCodeLimitsExceeded                CreateWithdrawalRequestResultCode = -13
-	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails CreateWithdrawalRequestResultCode = -14
-	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded         CreateWithdrawalRequestResultCode = -15
-	CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound       CreateWithdrawalRequestResultCode = -16
+	CreateWithdrawalRequestResultCodeSuccess                        CreateWithdrawalRequestResultCode = 0
+	CreateWithdrawalRequestResultCodeInvalidAmount                  CreateWithdrawalRequestResultCode = -1
+	CreateWithdrawalRequestResultCodeInvalidExternalDetails         CreateWithdrawalRequestResultCode = -2
+	CreateWithdrawalRequestResultCodeBalanceNotFound                CreateWithdrawalRequestResultCode = -3
+	CreateWithdrawalRequestResultCodeAssetIsNotWithdrawable         CreateWithdrawalRequestResultCode = -4
+	CreateWithdrawalRequestResultCodeConversionPriceIsNotAvailable  CreateWithdrawalRequestResultCode = -5
+	CreateWithdrawalRequestResultCodeFeeMismatched                  CreateWithdrawalRequestResultCode = -6
+	CreateWithdrawalRequestResultCodeConversionOverflow             CreateWithdrawalRequestResultCode = -7
+	CreateWithdrawalRequestResultCodeConvertedAmountMismatched      CreateWithdrawalRequestResultCode = -8
+	CreateWithdrawalRequestResultCodeBalanceLockOverflow            CreateWithdrawalRequestResultCode = -9
+	CreateWithdrawalRequestResultCodeUnderfunded                    CreateWithdrawalRequestResultCode = -10
+	CreateWithdrawalRequestResultCodeInvalidUniversalAmount         CreateWithdrawalRequestResultCode = -11
+	CreateWithdrawalRequestResultCodeStatsOverflow                  CreateWithdrawalRequestResultCode = -12
+	CreateWithdrawalRequestResultCodeLimitsExceeded                 CreateWithdrawalRequestResultCode = -13
+	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails  CreateWithdrawalRequestResultCode = -14
+	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded          CreateWithdrawalRequestResultCode = -15
+	CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound        CreateWithdrawalRequestResultCode = -16
+	CreateWithdrawalRequestResultCodeNotAllowedToSetWithdrawalTasks CreateWithdrawalRequestResultCode = -17
 )
 
 var CreateWithdrawalRequestResultCodeAll = []CreateWithdrawalRequestResultCode{
@@ -15431,6 +15439,7 @@ var CreateWithdrawalRequestResultCodeAll = []CreateWithdrawalRequestResultCode{
 	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails,
 	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded,
 	CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound,
+	CreateWithdrawalRequestResultCodeNotAllowedToSetWithdrawalTasks,
 }
 
 var createWithdrawalRequestResultCodeMap = map[int32]string{
@@ -15451,6 +15460,7 @@ var createWithdrawalRequestResultCodeMap = map[int32]string{
 	-14: "CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails",
 	-15: "CreateWithdrawalRequestResultCodeLowerBoundNotExceeded",
 	-16: "CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound",
+	-17: "CreateWithdrawalRequestResultCodeNotAllowedToSetWithdrawalTasks",
 }
 
 var createWithdrawalRequestResultCodeShortMap = map[int32]string{
@@ -15471,26 +15481,28 @@ var createWithdrawalRequestResultCodeShortMap = map[int32]string{
 	-14: "invalid_pre_confirmation_details",
 	-15: "lower_bound_not_exceeded",
 	-16: "withdrawal_tasks_not_found",
+	-17: "not_allowed_to_set_withdrawal_tasks",
 }
 
 var createWithdrawalRequestResultCodeRevMap = map[string]int32{
-	"CreateWithdrawalRequestResultCodeSuccess":                       0,
-	"CreateWithdrawalRequestResultCodeInvalidAmount":                 -1,
-	"CreateWithdrawalRequestResultCodeInvalidExternalDetails":        -2,
-	"CreateWithdrawalRequestResultCodeBalanceNotFound":               -3,
-	"CreateWithdrawalRequestResultCodeAssetIsNotWithdrawable":        -4,
-	"CreateWithdrawalRequestResultCodeConversionPriceIsNotAvailable": -5,
-	"CreateWithdrawalRequestResultCodeFeeMismatched":                 -6,
-	"CreateWithdrawalRequestResultCodeConversionOverflow":            -7,
-	"CreateWithdrawalRequestResultCodeConvertedAmountMismatched":     -8,
-	"CreateWithdrawalRequestResultCodeBalanceLockOverflow":           -9,
-	"CreateWithdrawalRequestResultCodeUnderfunded":                   -10,
-	"CreateWithdrawalRequestResultCodeInvalidUniversalAmount":        -11,
-	"CreateWithdrawalRequestResultCodeStatsOverflow":                 -12,
-	"CreateWithdrawalRequestResultCodeLimitsExceeded":                -13,
-	"CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails": -14,
-	"CreateWithdrawalRequestResultCodeLowerBoundNotExceeded":         -15,
-	"CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound":       -16,
+	"CreateWithdrawalRequestResultCodeSuccess":                        0,
+	"CreateWithdrawalRequestResultCodeInvalidAmount":                  -1,
+	"CreateWithdrawalRequestResultCodeInvalidExternalDetails":         -2,
+	"CreateWithdrawalRequestResultCodeBalanceNotFound":                -3,
+	"CreateWithdrawalRequestResultCodeAssetIsNotWithdrawable":         -4,
+	"CreateWithdrawalRequestResultCodeConversionPriceIsNotAvailable":  -5,
+	"CreateWithdrawalRequestResultCodeFeeMismatched":                  -6,
+	"CreateWithdrawalRequestResultCodeConversionOverflow":             -7,
+	"CreateWithdrawalRequestResultCodeConvertedAmountMismatched":      -8,
+	"CreateWithdrawalRequestResultCodeBalanceLockOverflow":            -9,
+	"CreateWithdrawalRequestResultCodeUnderfunded":                    -10,
+	"CreateWithdrawalRequestResultCodeInvalidUniversalAmount":         -11,
+	"CreateWithdrawalRequestResultCodeStatsOverflow":                  -12,
+	"CreateWithdrawalRequestResultCodeLimitsExceeded":                 -13,
+	"CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails":  -14,
+	"CreateWithdrawalRequestResultCodeLowerBoundNotExceeded":          -15,
+	"CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound":        -16,
+	"CreateWithdrawalRequestResultCodeNotAllowedToSetWithdrawalTasks": -17,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -18683,7 +18695,8 @@ type ManageAssetOp struct {
 //    	REQUEST_ALREADY_EXISTS = -9,      // request for creation of unique entry already exists
 //    	STATS_ASSET_ALREADY_EXISTS = -10, // statistics quote asset already exists
 //    	INITIAL_PREISSUED_EXCEEDS_MAX_ISSUANCE = -11, // initial pre issued amount exceeds max issuance amount
-//    	INVALID_DETAILS = -12 // details must be a valid json
+//    	INVALID_DETAILS = -12, // details must be a valid json
+//    	INCOMPATIBLE_POLICIES = -13 // policies set in request are incompatible(i.e. WITHDRAWABLE and WITHDRAWABLE_V2)
 //    };
 //
 type ManageAssetResultCode int32
@@ -18700,6 +18713,7 @@ const (
 	ManageAssetResultCodeStatsAssetAlreadyExists            ManageAssetResultCode = -10
 	ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance ManageAssetResultCode = -11
 	ManageAssetResultCodeInvalidDetails                     ManageAssetResultCode = -12
+	ManageAssetResultCodeIncompatiblePolicies               ManageAssetResultCode = -13
 )
 
 var ManageAssetResultCodeAll = []ManageAssetResultCode{
@@ -18714,6 +18728,7 @@ var ManageAssetResultCodeAll = []ManageAssetResultCode{
 	ManageAssetResultCodeStatsAssetAlreadyExists,
 	ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance,
 	ManageAssetResultCodeInvalidDetails,
+	ManageAssetResultCodeIncompatiblePolicies,
 }
 
 var manageAssetResultCodeMap = map[int32]string{
@@ -18728,6 +18743,7 @@ var manageAssetResultCodeMap = map[int32]string{
 	-10: "ManageAssetResultCodeStatsAssetAlreadyExists",
 	-11: "ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance",
 	-12: "ManageAssetResultCodeInvalidDetails",
+	-13: "ManageAssetResultCodeIncompatiblePolicies",
 }
 
 var manageAssetResultCodeShortMap = map[int32]string{
@@ -18742,6 +18758,7 @@ var manageAssetResultCodeShortMap = map[int32]string{
 	-10: "stats_asset_already_exists",
 	-11: "initial_preissued_exceeds_max_issuance",
 	-12: "invalid_details",
+	-13: "incompatible_policies",
 }
 
 var manageAssetResultCodeRevMap = map[string]int32{
@@ -18756,6 +18773,7 @@ var manageAssetResultCodeRevMap = map[string]int32{
 	"ManageAssetResultCodeStatsAssetAlreadyExists":            -10,
 	"ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance": -11,
 	"ManageAssetResultCodeInvalidDetails":                     -12,
+	"ManageAssetResultCodeIncompatiblePolicies":               -13,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
