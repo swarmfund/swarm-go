@@ -1,4 +1,4 @@
-// revision: 63aac5173660331bce7ce9643eb65cc08b8f47ad
+// revision: 91786f9fed345da65601baca0bfe778d11c69e5d
 // branch:   feature/withdrawal_tasks
 // Package xdr is generated from:
 //
@@ -28253,7 +28253,10 @@ type ReviewRequestOp struct {
 //        INVALID_LIMITS = 131,
 //
 //        // Contract requests
-//        CONTRACT_DETAILS_TOO_LONG = -140 // customer details reached length limit
+//        CONTRACT_DETAILS_TOO_LONG = -140, // customer details reached length limit
+//
+//    	//Withdrawal request
+//    	REMOVING_NOT_SET_TASKS = -150 // cannot remove tasks which are not set
 //    };
 //
 type ReviewRequestResultCode int32
@@ -28310,6 +28313,7 @@ const (
 	ReviewRequestResultCodeCannotCreateForAccIdAndAccType           ReviewRequestResultCode = 130
 	ReviewRequestResultCodeInvalidLimits                            ReviewRequestResultCode = 131
 	ReviewRequestResultCodeContractDetailsTooLong                   ReviewRequestResultCode = -140
+	ReviewRequestResultCodeRemovingNotSetTasks                      ReviewRequestResultCode = -150
 )
 
 var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
@@ -28364,6 +28368,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeCannotCreateForAccIdAndAccType,
 	ReviewRequestResultCodeInvalidLimits,
 	ReviewRequestResultCodeContractDetailsTooLong,
+	ReviewRequestResultCodeRemovingNotSetTasks,
 }
 
 var reviewRequestResultCodeMap = map[int32]string{
@@ -28418,6 +28423,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	130:  "ReviewRequestResultCodeCannotCreateForAccIdAndAccType",
 	131:  "ReviewRequestResultCodeInvalidLimits",
 	-140: "ReviewRequestResultCodeContractDetailsTooLong",
+	-150: "ReviewRequestResultCodeRemovingNotSetTasks",
 }
 
 var reviewRequestResultCodeShortMap = map[int32]string{
@@ -28472,6 +28478,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	130:  "cannot_create_for_acc_id_and_acc_type",
 	131:  "invalid_limits",
 	-140: "contract_details_too_long",
+	-150: "removing_not_set_tasks",
 }
 
 var reviewRequestResultCodeRevMap = map[string]int32{
@@ -28526,6 +28533,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeCannotCreateForAccIdAndAccType":           130,
 	"ReviewRequestResultCodeInvalidLimits":                            131,
 	"ReviewRequestResultCodeContractDetailsTooLong":                   -140,
+	"ReviewRequestResultCodeRemovingNotSetTasks":                      -150,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -37425,3 +37433,4 @@ type DecoratedSignature struct {
 }
 
 var fmtTest = fmt.Sprint("this is a dummy usage of fmt")
+var Revision = "91786f9fed345da65601baca0bfe778d11c69e5d"
