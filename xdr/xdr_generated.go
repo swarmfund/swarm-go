@@ -1,4 +1,4 @@
-// revision: 84135ed642bff4965ce69f9a91f566d6d525188d
+// revision: 0b366c3fff83de5ee79cb1b7d191d1aa709f15b0
 // branch:   master
 // Package xdr is generated from:
 //
@@ -2091,7 +2091,8 @@ type AssetPairEntry struct {
 //    	TWO_STEP_WITHDRAWAL = 16,
 //    	REQUIRES_KYC = 32,
 //    	ISSUANCE_MANUAL_REVIEW_REQUIRED = 64,
-//    	REQUIRES_VERIFICATION = 128
+//    	REQUIRES_VERIFICATION = 128,
+//    	WITHDRAWABLE_V2 = 256 // switch to withdraw with tasks
 //    };
 //
 type AssetPolicy int32
@@ -2105,6 +2106,7 @@ const (
 	AssetPolicyRequiresKyc                  AssetPolicy = 32
 	AssetPolicyIssuanceManualReviewRequired AssetPolicy = 64
 	AssetPolicyRequiresVerification         AssetPolicy = 128
+	AssetPolicyWithdrawableV2               AssetPolicy = 256
 )
 
 var AssetPolicyAll = []AssetPolicy{
@@ -2116,6 +2118,7 @@ var AssetPolicyAll = []AssetPolicy{
 	AssetPolicyRequiresKyc,
 	AssetPolicyIssuanceManualReviewRequired,
 	AssetPolicyRequiresVerification,
+	AssetPolicyWithdrawableV2,
 }
 
 var assetPolicyMap = map[int32]string{
@@ -2127,6 +2130,7 @@ var assetPolicyMap = map[int32]string{
 	32:  "AssetPolicyRequiresKyc",
 	64:  "AssetPolicyIssuanceManualReviewRequired",
 	128: "AssetPolicyRequiresVerification",
+	256: "AssetPolicyWithdrawableV2",
 }
 
 var assetPolicyShortMap = map[int32]string{
@@ -2138,6 +2142,7 @@ var assetPolicyShortMap = map[int32]string{
 	32:  "requires_kyc",
 	64:  "issuance_manual_review_required",
 	128: "requires_verification",
+	256: "withdrawable_v2",
 }
 
 var assetPolicyRevMap = map[string]int32{
@@ -2149,6 +2154,7 @@ var assetPolicyRevMap = map[string]int32{
 	"AssetPolicyRequiresKyc":                  32,
 	"AssetPolicyIssuanceManualReviewRequired": 64,
 	"AssetPolicyRequiresVerification":         128,
+	"AssetPolicyWithdrawableV2":               256,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -2308,10 +2314,13 @@ func (e *AssetSystemPolicies) UnmarshalJSON(data []byte) error {
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_ASSET_BALANCE_PRECISION:
+//            uint32 trailingDigitsCount;
 //        }
 //
 type AssetEntryExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V                   LedgerVersion `json:"v,omitempty"`
+	TrailingDigitsCount *Uint32       `json:"trailingDigitsCount,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -2326,6 +2335,8 @@ func (u AssetEntryExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionAddAssetBalancePrecision:
+		return "TrailingDigitsCount", true
 	}
 	return "-", false
 }
@@ -2336,7 +2347,39 @@ func NewAssetEntryExt(v LedgerVersion, value interface{}) (result AssetEntryExt,
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionAddAssetBalancePrecision:
+		tv, ok := value.(Uint32)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be Uint32")
+			return
+		}
+		result.TrailingDigitsCount = &tv
 	}
+	return
+}
+
+// MustTrailingDigitsCount retrieves the TrailingDigitsCount value from the union,
+// panicing if the value is not set.
+func (u AssetEntryExt) MustTrailingDigitsCount() Uint32 {
+	val, ok := u.GetTrailingDigitsCount()
+
+	if !ok {
+		panic("arm TrailingDigitsCount is not set")
+	}
+
+	return val
+}
+
+// GetTrailingDigitsCount retrieves the TrailingDigitsCount value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u AssetEntryExt) GetTrailingDigitsCount() (result Uint32, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "TrailingDigitsCount" {
+		result = *u.TrailingDigitsCount
+		ok = true
+	}
+
 	return
 }
 
@@ -2359,6 +2402,8 @@ func NewAssetEntryExt(v LedgerVersion, value interface{}) (result AssetEntryExt,
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_ASSET_BALANCE_PRECISION:
+//            uint32 trailingDigitsCount;
 //        }
 //        ext;
 //    };
@@ -12678,9 +12723,9 @@ type CreateAmlAlertRequestOp struct {
 //        BALANCE_NOT_EXIST = 1, // balance doesn't exist
 //        INVALID_REASON = 2, //invalid reason for request
 //        UNDERFUNDED = 3, //when couldn't lock balance
-//    	REFERENCE_DUPLICATION = 4, // reference already exists
-//    	INVALID_AMOUNT = 5 // amount must be positive
-//
+//        REFERENCE_DUPLICATION = 4, // reference already exists
+//        INVALID_AMOUNT = 5, // amount must be positive
+//        INCORRECT_PRECISION = 6
 //
 //    };
 //
@@ -12693,6 +12738,7 @@ const (
 	CreateAmlAlertRequestResultCodeUnderfunded          CreateAmlAlertRequestResultCode = 3
 	CreateAmlAlertRequestResultCodeReferenceDuplication CreateAmlAlertRequestResultCode = 4
 	CreateAmlAlertRequestResultCodeInvalidAmount        CreateAmlAlertRequestResultCode = 5
+	CreateAmlAlertRequestResultCodeIncorrectPrecision   CreateAmlAlertRequestResultCode = 6
 )
 
 var CreateAmlAlertRequestResultCodeAll = []CreateAmlAlertRequestResultCode{
@@ -12702,6 +12748,7 @@ var CreateAmlAlertRequestResultCodeAll = []CreateAmlAlertRequestResultCode{
 	CreateAmlAlertRequestResultCodeUnderfunded,
 	CreateAmlAlertRequestResultCodeReferenceDuplication,
 	CreateAmlAlertRequestResultCodeInvalidAmount,
+	CreateAmlAlertRequestResultCodeIncorrectPrecision,
 }
 
 var createAmlAlertRequestResultCodeMap = map[int32]string{
@@ -12711,6 +12758,7 @@ var createAmlAlertRequestResultCodeMap = map[int32]string{
 	3: "CreateAmlAlertRequestResultCodeUnderfunded",
 	4: "CreateAmlAlertRequestResultCodeReferenceDuplication",
 	5: "CreateAmlAlertRequestResultCodeInvalidAmount",
+	6: "CreateAmlAlertRequestResultCodeIncorrectPrecision",
 }
 
 var createAmlAlertRequestResultCodeShortMap = map[int32]string{
@@ -12720,6 +12768,7 @@ var createAmlAlertRequestResultCodeShortMap = map[int32]string{
 	3: "underfunded",
 	4: "reference_duplication",
 	5: "invalid_amount",
+	6: "incorrect_precision",
 }
 
 var createAmlAlertRequestResultCodeRevMap = map[string]int32{
@@ -12729,6 +12778,7 @@ var createAmlAlertRequestResultCodeRevMap = map[string]int32{
 	"CreateAmlAlertRequestResultCodeUnderfunded":          3,
 	"CreateAmlAlertRequestResultCodeReferenceDuplication": 4,
 	"CreateAmlAlertRequestResultCodeInvalidAmount":        5,
+	"CreateAmlAlertRequestResultCodeIncorrectPrecision":   6,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -13922,7 +13972,7 @@ type CreateIssuanceRequestOp struct {
 //
 //        // codes considered as "failure" for the operation
 //        ASSET_NOT_FOUND = -1,
-//    	INVALID_AMOUNT = -2,
+//    	INVALID_AMOUNT = -2,             // amount is 0
 //    	REFERENCE_DUPLICATION = -3,
 //    	NO_COUNTERPARTY = -4,
 //    	NOT_AUTHORIZED = -5,
@@ -13933,7 +13983,8 @@ type CreateIssuanceRequestOp struct {
 //        REQUIRES_KYC = -10, // asset requires receiver to have KYC
 //        REQUIRES_VERIFICATION = -11, //asset requires receiver to be verified
 //        ISSUANCE_TASKS_NOT_FOUND = -12, // issuance tasks have not been provided by the source and don't exist in 'KeyValue' table
-//        SYSTEM_TASKS_NOT_ALLOWED = -13
+//        SYSTEM_TASKS_NOT_ALLOWED = -13,
+//        INVALID_AMOUNT_PRECISION = -14   // amount does not match asset's precision
 //    };
 //
 type CreateIssuanceRequestResultCode int32
@@ -13953,6 +14004,7 @@ const (
 	CreateIssuanceRequestResultCodeRequiresVerification     CreateIssuanceRequestResultCode = -11
 	CreateIssuanceRequestResultCodeIssuanceTasksNotFound    CreateIssuanceRequestResultCode = -12
 	CreateIssuanceRequestResultCodeSystemTasksNotAllowed    CreateIssuanceRequestResultCode = -13
+	CreateIssuanceRequestResultCodeInvalidAmountPrecision   CreateIssuanceRequestResultCode = -14
 )
 
 var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
@@ -13970,6 +14022,7 @@ var CreateIssuanceRequestResultCodeAll = []CreateIssuanceRequestResultCode{
 	CreateIssuanceRequestResultCodeRequiresVerification,
 	CreateIssuanceRequestResultCodeIssuanceTasksNotFound,
 	CreateIssuanceRequestResultCodeSystemTasksNotAllowed,
+	CreateIssuanceRequestResultCodeInvalidAmountPrecision,
 }
 
 var createIssuanceRequestResultCodeMap = map[int32]string{
@@ -13987,6 +14040,7 @@ var createIssuanceRequestResultCodeMap = map[int32]string{
 	-11: "CreateIssuanceRequestResultCodeRequiresVerification",
 	-12: "CreateIssuanceRequestResultCodeIssuanceTasksNotFound",
 	-13: "CreateIssuanceRequestResultCodeSystemTasksNotAllowed",
+	-14: "CreateIssuanceRequestResultCodeInvalidAmountPrecision",
 }
 
 var createIssuanceRequestResultCodeShortMap = map[int32]string{
@@ -14004,6 +14058,7 @@ var createIssuanceRequestResultCodeShortMap = map[int32]string{
 	-11: "requires_verification",
 	-12: "issuance_tasks_not_found",
 	-13: "system_tasks_not_allowed",
+	-14: "invalid_amount_precision",
 }
 
 var createIssuanceRequestResultCodeRevMap = map[string]int32{
@@ -14021,6 +14076,7 @@ var createIssuanceRequestResultCodeRevMap = map[string]int32{
 	"CreateIssuanceRequestResultCodeRequiresVerification":     -11,
 	"CreateIssuanceRequestResultCodeIssuanceTasksNotFound":    -12,
 	"CreateIssuanceRequestResultCodeSystemTasksNotAllowed":    -13,
+	"CreateIssuanceRequestResultCodeInvalidAmountPrecision":   -14,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -14639,25 +14695,27 @@ type CreatePreIssuanceRequestOp struct {
 //
 //        // codes considered as "failure" for the operation
 //        ASSET_NOT_FOUND = -1,
-//        REFERENCE_DUPLICATION = -2,    // reference is already used
-//        NOT_AUTHORIZED_UPLOAD = -3, // tries to pre issue asset for not owned asset
+//        REFERENCE_DUPLICATION = -2,      // reference is already used
+//        NOT_AUTHORIZED_UPLOAD = -3,      // tries to pre issue asset for not owned asset
 //        INVALID_SIGNATURE = -4,
 //        EXCEEDED_MAX_AMOUNT = -5,
-//    	INVALID_AMOUNT = -6,
-//    	INVALID_REFERENCE = -7
+//        INVALID_AMOUNT = -6,             // amount is 0
+//        INVALID_REFERENCE = -7,
+//        INCORRECT_AMOUNT_PRECISION = -8  // amount does not fit to this asset's precision
 //    };
 //
 type CreatePreIssuanceRequestResultCode int32
 
 const (
-	CreatePreIssuanceRequestResultCodeSuccess              CreatePreIssuanceRequestResultCode = 0
-	CreatePreIssuanceRequestResultCodeAssetNotFound        CreatePreIssuanceRequestResultCode = -1
-	CreatePreIssuanceRequestResultCodeReferenceDuplication CreatePreIssuanceRequestResultCode = -2
-	CreatePreIssuanceRequestResultCodeNotAuthorizedUpload  CreatePreIssuanceRequestResultCode = -3
-	CreatePreIssuanceRequestResultCodeInvalidSignature     CreatePreIssuanceRequestResultCode = -4
-	CreatePreIssuanceRequestResultCodeExceededMaxAmount    CreatePreIssuanceRequestResultCode = -5
-	CreatePreIssuanceRequestResultCodeInvalidAmount        CreatePreIssuanceRequestResultCode = -6
-	CreatePreIssuanceRequestResultCodeInvalidReference     CreatePreIssuanceRequestResultCode = -7
+	CreatePreIssuanceRequestResultCodeSuccess                  CreatePreIssuanceRequestResultCode = 0
+	CreatePreIssuanceRequestResultCodeAssetNotFound            CreatePreIssuanceRequestResultCode = -1
+	CreatePreIssuanceRequestResultCodeReferenceDuplication     CreatePreIssuanceRequestResultCode = -2
+	CreatePreIssuanceRequestResultCodeNotAuthorizedUpload      CreatePreIssuanceRequestResultCode = -3
+	CreatePreIssuanceRequestResultCodeInvalidSignature         CreatePreIssuanceRequestResultCode = -4
+	CreatePreIssuanceRequestResultCodeExceededMaxAmount        CreatePreIssuanceRequestResultCode = -5
+	CreatePreIssuanceRequestResultCodeInvalidAmount            CreatePreIssuanceRequestResultCode = -6
+	CreatePreIssuanceRequestResultCodeInvalidReference         CreatePreIssuanceRequestResultCode = -7
+	CreatePreIssuanceRequestResultCodeIncorrectAmountPrecision CreatePreIssuanceRequestResultCode = -8
 )
 
 var CreatePreIssuanceRequestResultCodeAll = []CreatePreIssuanceRequestResultCode{
@@ -14669,6 +14727,7 @@ var CreatePreIssuanceRequestResultCodeAll = []CreatePreIssuanceRequestResultCode
 	CreatePreIssuanceRequestResultCodeExceededMaxAmount,
 	CreatePreIssuanceRequestResultCodeInvalidAmount,
 	CreatePreIssuanceRequestResultCodeInvalidReference,
+	CreatePreIssuanceRequestResultCodeIncorrectAmountPrecision,
 }
 
 var createPreIssuanceRequestResultCodeMap = map[int32]string{
@@ -14680,6 +14739,7 @@ var createPreIssuanceRequestResultCodeMap = map[int32]string{
 	-5: "CreatePreIssuanceRequestResultCodeExceededMaxAmount",
 	-6: "CreatePreIssuanceRequestResultCodeInvalidAmount",
 	-7: "CreatePreIssuanceRequestResultCodeInvalidReference",
+	-8: "CreatePreIssuanceRequestResultCodeIncorrectAmountPrecision",
 }
 
 var createPreIssuanceRequestResultCodeShortMap = map[int32]string{
@@ -14691,17 +14751,19 @@ var createPreIssuanceRequestResultCodeShortMap = map[int32]string{
 	-5: "exceeded_max_amount",
 	-6: "invalid_amount",
 	-7: "invalid_reference",
+	-8: "incorrect_amount_precision",
 }
 
 var createPreIssuanceRequestResultCodeRevMap = map[string]int32{
-	"CreatePreIssuanceRequestResultCodeSuccess":              0,
-	"CreatePreIssuanceRequestResultCodeAssetNotFound":        -1,
-	"CreatePreIssuanceRequestResultCodeReferenceDuplication": -2,
-	"CreatePreIssuanceRequestResultCodeNotAuthorizedUpload":  -3,
-	"CreatePreIssuanceRequestResultCodeInvalidSignature":     -4,
-	"CreatePreIssuanceRequestResultCodeExceededMaxAmount":    -5,
-	"CreatePreIssuanceRequestResultCodeInvalidAmount":        -6,
-	"CreatePreIssuanceRequestResultCodeInvalidReference":     -7,
+	"CreatePreIssuanceRequestResultCodeSuccess":                  0,
+	"CreatePreIssuanceRequestResultCodeAssetNotFound":            -1,
+	"CreatePreIssuanceRequestResultCodeReferenceDuplication":     -2,
+	"CreatePreIssuanceRequestResultCodeNotAuthorizedUpload":      -3,
+	"CreatePreIssuanceRequestResultCodeInvalidSignature":         -4,
+	"CreatePreIssuanceRequestResultCodeExceededMaxAmount":        -5,
+	"CreatePreIssuanceRequestResultCodeInvalidAmount":            -6,
+	"CreatePreIssuanceRequestResultCodeInvalidReference":         -7,
+	"CreatePreIssuanceRequestResultCodeIncorrectAmountPrecision": -8,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -15271,13 +15333,16 @@ func (u CreateSaleCreationRequestResult) GetSuccess() (result CreateSaleCreation
 // CreateWithdrawalRequestOpExt is an XDR NestedUnion defines as:
 //
 //   union switch (LedgerVersion v)
-//    	{
-//    	case EMPTY_VERSION:
-//    		void;
-//    	}
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        case WITHDRAWAL_TASKS:
+//            uint32* allTasks;
+//        }
 //
 type CreateWithdrawalRequestOpExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V        LedgerVersion `json:"v,omitempty"`
+	AllTasks **Uint32      `json:"allTasks,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -15292,6 +15357,8 @@ func (u CreateWithdrawalRequestOpExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionWithdrawalTasks:
+		return "AllTasks", true
 	}
 	return "-", false
 }
@@ -15302,7 +15369,39 @@ func NewCreateWithdrawalRequestOpExt(v LedgerVersion, value interface{}) (result
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionWithdrawalTasks:
+		tv, ok := value.(*Uint32)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be *Uint32")
+			return
+		}
+		result.AllTasks = &tv
 	}
+	return
+}
+
+// MustAllTasks retrieves the AllTasks value from the union,
+// panicing if the value is not set.
+func (u CreateWithdrawalRequestOpExt) MustAllTasks() *Uint32 {
+	val, ok := u.GetAllTasks()
+
+	if !ok {
+		panic("arm AllTasks is not set")
+	}
+
+	return val
+}
+
+// GetAllTasks retrieves the AllTasks value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u CreateWithdrawalRequestOpExt) GetAllTasks() (result *Uint32, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "AllTasks" {
+		result = *u.AllTasks
+		ok = true
+	}
+
 	return
 }
 
@@ -15313,11 +15412,13 @@ func NewCreateWithdrawalRequestOpExt(v LedgerVersion, value interface{}) (result
 //    	WithdrawalRequest request;
 //
 //    	union switch (LedgerVersion v)
-//    	{
-//    	case EMPTY_VERSION:
-//    		void;
-//    	}
-//    	ext;
+//        {
+//        case EMPTY_VERSION:
+//            void;
+//        case WITHDRAWAL_TASKS:
+//            uint32* allTasks;
+//        }
+//        ext;
 //
 //    };
 //
@@ -15348,28 +15449,32 @@ type CreateWithdrawalRequestOp struct {
 //    	STATS_OVERFLOW = -12, // statistics overflowed by the operation
 //    	LIMITS_EXCEEDED = -13, // withdraw exceeds limits for source account
 //    	INVALID_PRE_CONFIRMATION_DETAILS = -14, // it's not allowed to pass pre confirmation details
-//    	LOWER_BOUND_NOT_EXCEEDED = -15
+//    	LOWER_BOUND_NOT_EXCEEDED = -15, //amount to withdraw is too small
+//        WITHDRAWAL_TASKS_NOT_FOUND = -16,
+//    	NOT_ALLOWED_TO_SET_WITHDRAWAL_TASKS = -17 //Can't set withdrawal tasks on request creation
 //    };
 //
 type CreateWithdrawalRequestResultCode int32
 
 const (
-	CreateWithdrawalRequestResultCodeSuccess                       CreateWithdrawalRequestResultCode = 0
-	CreateWithdrawalRequestResultCodeInvalidAmount                 CreateWithdrawalRequestResultCode = -1
-	CreateWithdrawalRequestResultCodeInvalidExternalDetails        CreateWithdrawalRequestResultCode = -2
-	CreateWithdrawalRequestResultCodeBalanceNotFound               CreateWithdrawalRequestResultCode = -3
-	CreateWithdrawalRequestResultCodeAssetIsNotWithdrawable        CreateWithdrawalRequestResultCode = -4
-	CreateWithdrawalRequestResultCodeConversionPriceIsNotAvailable CreateWithdrawalRequestResultCode = -5
-	CreateWithdrawalRequestResultCodeFeeMismatched                 CreateWithdrawalRequestResultCode = -6
-	CreateWithdrawalRequestResultCodeConversionOverflow            CreateWithdrawalRequestResultCode = -7
-	CreateWithdrawalRequestResultCodeConvertedAmountMismatched     CreateWithdrawalRequestResultCode = -8
-	CreateWithdrawalRequestResultCodeBalanceLockOverflow           CreateWithdrawalRequestResultCode = -9
-	CreateWithdrawalRequestResultCodeUnderfunded                   CreateWithdrawalRequestResultCode = -10
-	CreateWithdrawalRequestResultCodeInvalidUniversalAmount        CreateWithdrawalRequestResultCode = -11
-	CreateWithdrawalRequestResultCodeStatsOverflow                 CreateWithdrawalRequestResultCode = -12
-	CreateWithdrawalRequestResultCodeLimitsExceeded                CreateWithdrawalRequestResultCode = -13
-	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails CreateWithdrawalRequestResultCode = -14
-	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded         CreateWithdrawalRequestResultCode = -15
+	CreateWithdrawalRequestResultCodeSuccess                        CreateWithdrawalRequestResultCode = 0
+	CreateWithdrawalRequestResultCodeInvalidAmount                  CreateWithdrawalRequestResultCode = -1
+	CreateWithdrawalRequestResultCodeInvalidExternalDetails         CreateWithdrawalRequestResultCode = -2
+	CreateWithdrawalRequestResultCodeBalanceNotFound                CreateWithdrawalRequestResultCode = -3
+	CreateWithdrawalRequestResultCodeAssetIsNotWithdrawable         CreateWithdrawalRequestResultCode = -4
+	CreateWithdrawalRequestResultCodeConversionPriceIsNotAvailable  CreateWithdrawalRequestResultCode = -5
+	CreateWithdrawalRequestResultCodeFeeMismatched                  CreateWithdrawalRequestResultCode = -6
+	CreateWithdrawalRequestResultCodeConversionOverflow             CreateWithdrawalRequestResultCode = -7
+	CreateWithdrawalRequestResultCodeConvertedAmountMismatched      CreateWithdrawalRequestResultCode = -8
+	CreateWithdrawalRequestResultCodeBalanceLockOverflow            CreateWithdrawalRequestResultCode = -9
+	CreateWithdrawalRequestResultCodeUnderfunded                    CreateWithdrawalRequestResultCode = -10
+	CreateWithdrawalRequestResultCodeInvalidUniversalAmount         CreateWithdrawalRequestResultCode = -11
+	CreateWithdrawalRequestResultCodeStatsOverflow                  CreateWithdrawalRequestResultCode = -12
+	CreateWithdrawalRequestResultCodeLimitsExceeded                 CreateWithdrawalRequestResultCode = -13
+	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails  CreateWithdrawalRequestResultCode = -14
+	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded          CreateWithdrawalRequestResultCode = -15
+	CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound        CreateWithdrawalRequestResultCode = -16
+	CreateWithdrawalRequestResultCodeNotAllowedToSetWithdrawalTasks CreateWithdrawalRequestResultCode = -17
 )
 
 var CreateWithdrawalRequestResultCodeAll = []CreateWithdrawalRequestResultCode{
@@ -15389,6 +15494,8 @@ var CreateWithdrawalRequestResultCodeAll = []CreateWithdrawalRequestResultCode{
 	CreateWithdrawalRequestResultCodeLimitsExceeded,
 	CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails,
 	CreateWithdrawalRequestResultCodeLowerBoundNotExceeded,
+	CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound,
+	CreateWithdrawalRequestResultCodeNotAllowedToSetWithdrawalTasks,
 }
 
 var createWithdrawalRequestResultCodeMap = map[int32]string{
@@ -15408,6 +15515,8 @@ var createWithdrawalRequestResultCodeMap = map[int32]string{
 	-13: "CreateWithdrawalRequestResultCodeLimitsExceeded",
 	-14: "CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails",
 	-15: "CreateWithdrawalRequestResultCodeLowerBoundNotExceeded",
+	-16: "CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound",
+	-17: "CreateWithdrawalRequestResultCodeNotAllowedToSetWithdrawalTasks",
 }
 
 var createWithdrawalRequestResultCodeShortMap = map[int32]string{
@@ -15427,25 +15536,29 @@ var createWithdrawalRequestResultCodeShortMap = map[int32]string{
 	-13: "limits_exceeded",
 	-14: "invalid_pre_confirmation_details",
 	-15: "lower_bound_not_exceeded",
+	-16: "withdrawal_tasks_not_found",
+	-17: "not_allowed_to_set_withdrawal_tasks",
 }
 
 var createWithdrawalRequestResultCodeRevMap = map[string]int32{
-	"CreateWithdrawalRequestResultCodeSuccess":                       0,
-	"CreateWithdrawalRequestResultCodeInvalidAmount":                 -1,
-	"CreateWithdrawalRequestResultCodeInvalidExternalDetails":        -2,
-	"CreateWithdrawalRequestResultCodeBalanceNotFound":               -3,
-	"CreateWithdrawalRequestResultCodeAssetIsNotWithdrawable":        -4,
-	"CreateWithdrawalRequestResultCodeConversionPriceIsNotAvailable": -5,
-	"CreateWithdrawalRequestResultCodeFeeMismatched":                 -6,
-	"CreateWithdrawalRequestResultCodeConversionOverflow":            -7,
-	"CreateWithdrawalRequestResultCodeConvertedAmountMismatched":     -8,
-	"CreateWithdrawalRequestResultCodeBalanceLockOverflow":           -9,
-	"CreateWithdrawalRequestResultCodeUnderfunded":                   -10,
-	"CreateWithdrawalRequestResultCodeInvalidUniversalAmount":        -11,
-	"CreateWithdrawalRequestResultCodeStatsOverflow":                 -12,
-	"CreateWithdrawalRequestResultCodeLimitsExceeded":                -13,
-	"CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails": -14,
-	"CreateWithdrawalRequestResultCodeLowerBoundNotExceeded":         -15,
+	"CreateWithdrawalRequestResultCodeSuccess":                        0,
+	"CreateWithdrawalRequestResultCodeInvalidAmount":                  -1,
+	"CreateWithdrawalRequestResultCodeInvalidExternalDetails":         -2,
+	"CreateWithdrawalRequestResultCodeBalanceNotFound":                -3,
+	"CreateWithdrawalRequestResultCodeAssetIsNotWithdrawable":         -4,
+	"CreateWithdrawalRequestResultCodeConversionPriceIsNotAvailable":  -5,
+	"CreateWithdrawalRequestResultCodeFeeMismatched":                  -6,
+	"CreateWithdrawalRequestResultCodeConversionOverflow":             -7,
+	"CreateWithdrawalRequestResultCodeConvertedAmountMismatched":      -8,
+	"CreateWithdrawalRequestResultCodeBalanceLockOverflow":            -9,
+	"CreateWithdrawalRequestResultCodeUnderfunded":                    -10,
+	"CreateWithdrawalRequestResultCodeInvalidUniversalAmount":         -11,
+	"CreateWithdrawalRequestResultCodeStatsOverflow":                  -12,
+	"CreateWithdrawalRequestResultCodeLimitsExceeded":                 -13,
+	"CreateWithdrawalRequestResultCodeInvalidPreConfirmationDetails":  -14,
+	"CreateWithdrawalRequestResultCodeLowerBoundNotExceeded":          -15,
+	"CreateWithdrawalRequestResultCodeWithdrawalTasksNotFound":        -16,
+	"CreateWithdrawalRequestResultCodeNotAllowedToSetWithdrawalTasks": -17,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -18638,7 +18751,11 @@ type ManageAssetOp struct {
 //    	REQUEST_ALREADY_EXISTS = -9,      // request for creation of unique entry already exists
 //    	STATS_ASSET_ALREADY_EXISTS = -10, // statistics quote asset already exists
 //    	INITIAL_PREISSUED_EXCEEDS_MAX_ISSUANCE = -11, // initial pre issued amount exceeds max issuance amount
-//    	INVALID_DETAILS = -12 // details must be a valid json
+//        INVALID_DETAILS = -12,                        // details must be a valid json
+//        INVALID_TRAILING_DIGITS_COUNT = -13,          // invalid number of trailing digits
+//        INVALID_PREISSUED_AMOUNT_PRECISION = -14,     // initial pre issued amount does not match precision set by trailing digits count
+//        INVALID_MAX_ISSUANCE_AMOUNT_PRECISION = -15,   // maximum issuance amount does not match precision set by trailing digits count
+//        INCOMPATIBLE_POLICIES = -16 // policies set in request are incompatible(i.e. WITHDRAWABLE and WITHDRAWA
 //    };
 //
 type ManageAssetResultCode int32
@@ -18655,6 +18772,10 @@ const (
 	ManageAssetResultCodeStatsAssetAlreadyExists            ManageAssetResultCode = -10
 	ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance ManageAssetResultCode = -11
 	ManageAssetResultCodeInvalidDetails                     ManageAssetResultCode = -12
+	ManageAssetResultCodeInvalidTrailingDigitsCount         ManageAssetResultCode = -13
+	ManageAssetResultCodeInvalidPreissuedAmountPrecision    ManageAssetResultCode = -14
+	ManageAssetResultCodeInvalidMaxIssuanceAmountPrecision  ManageAssetResultCode = -15
+	ManageAssetResultCodeIncompatiblePolicies               ManageAssetResultCode = -16
 )
 
 var ManageAssetResultCodeAll = []ManageAssetResultCode{
@@ -18669,6 +18790,10 @@ var ManageAssetResultCodeAll = []ManageAssetResultCode{
 	ManageAssetResultCodeStatsAssetAlreadyExists,
 	ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance,
 	ManageAssetResultCodeInvalidDetails,
+	ManageAssetResultCodeInvalidTrailingDigitsCount,
+	ManageAssetResultCodeInvalidPreissuedAmountPrecision,
+	ManageAssetResultCodeInvalidMaxIssuanceAmountPrecision,
+	ManageAssetResultCodeIncompatiblePolicies,
 }
 
 var manageAssetResultCodeMap = map[int32]string{
@@ -18683,6 +18808,10 @@ var manageAssetResultCodeMap = map[int32]string{
 	-10: "ManageAssetResultCodeStatsAssetAlreadyExists",
 	-11: "ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance",
 	-12: "ManageAssetResultCodeInvalidDetails",
+	-13: "ManageAssetResultCodeInvalidTrailingDigitsCount",
+	-14: "ManageAssetResultCodeInvalidPreissuedAmountPrecision",
+	-15: "ManageAssetResultCodeInvalidMaxIssuanceAmountPrecision",
+	-16: "ManageAssetResultCodeIncompatiblePolicies",
 }
 
 var manageAssetResultCodeShortMap = map[int32]string{
@@ -18697,6 +18826,10 @@ var manageAssetResultCodeShortMap = map[int32]string{
 	-10: "stats_asset_already_exists",
 	-11: "initial_preissued_exceeds_max_issuance",
 	-12: "invalid_details",
+	-13: "invalid_trailing_digits_count",
+	-14: "invalid_preissued_amount_precision",
+	-15: "invalid_max_issuance_amount_precision",
+	-16: "incompatible_policies",
 }
 
 var manageAssetResultCodeRevMap = map[string]int32{
@@ -18711,6 +18844,10 @@ var manageAssetResultCodeRevMap = map[string]int32{
 	"ManageAssetResultCodeStatsAssetAlreadyExists":            -10,
 	"ManageAssetResultCodeInitialPreissuedExceedsMaxIssuance": -11,
 	"ManageAssetResultCodeInvalidDetails":                     -12,
+	"ManageAssetResultCodeInvalidTrailingDigitsCount":         -13,
+	"ManageAssetResultCodeInvalidPreissuedAmountPrecision":    -14,
+	"ManageAssetResultCodeInvalidMaxIssuanceAmountPrecision":  -15,
+	"ManageAssetResultCodeIncompatiblePolicies":               -16,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -20351,7 +20488,8 @@ type ManageContractOp struct {
 //        ALREADY_CONFIRMED = -6,
 //        INVOICE_NOT_APPROVED = -7, // all contract invoices must be approved
 //        DISPUTE_ALREADY_STARTED = -8,
-//        CUSTOMER_BALANCE_OVERFLOW = -9
+//        CUSTOMER_BALANCE_OVERFLOW = -9,
+//        INCORRECT_PRECISION = -10
 //    };
 //
 type ManageContractResultCode int32
@@ -20367,6 +20505,7 @@ const (
 	ManageContractResultCodeInvoiceNotApproved      ManageContractResultCode = -7
 	ManageContractResultCodeDisputeAlreadyStarted   ManageContractResultCode = -8
 	ManageContractResultCodeCustomerBalanceOverflow ManageContractResultCode = -9
+	ManageContractResultCodeIncorrectPrecision      ManageContractResultCode = -10
 )
 
 var ManageContractResultCodeAll = []ManageContractResultCode{
@@ -20380,32 +20519,35 @@ var ManageContractResultCodeAll = []ManageContractResultCode{
 	ManageContractResultCodeInvoiceNotApproved,
 	ManageContractResultCodeDisputeAlreadyStarted,
 	ManageContractResultCodeCustomerBalanceOverflow,
+	ManageContractResultCodeIncorrectPrecision,
 }
 
 var manageContractResultCodeMap = map[int32]string{
-	0:  "ManageContractResultCodeSuccess",
-	-1: "ManageContractResultCodeMalformed",
-	-2: "ManageContractResultCodeNotFound",
-	-3: "ManageContractResultCodeNotAllowed",
-	-4: "ManageContractResultCodeDetailsTooLong",
-	-5: "ManageContractResultCodeDisputeReasonTooLong",
-	-6: "ManageContractResultCodeAlreadyConfirmed",
-	-7: "ManageContractResultCodeInvoiceNotApproved",
-	-8: "ManageContractResultCodeDisputeAlreadyStarted",
-	-9: "ManageContractResultCodeCustomerBalanceOverflow",
+	0:   "ManageContractResultCodeSuccess",
+	-1:  "ManageContractResultCodeMalformed",
+	-2:  "ManageContractResultCodeNotFound",
+	-3:  "ManageContractResultCodeNotAllowed",
+	-4:  "ManageContractResultCodeDetailsTooLong",
+	-5:  "ManageContractResultCodeDisputeReasonTooLong",
+	-6:  "ManageContractResultCodeAlreadyConfirmed",
+	-7:  "ManageContractResultCodeInvoiceNotApproved",
+	-8:  "ManageContractResultCodeDisputeAlreadyStarted",
+	-9:  "ManageContractResultCodeCustomerBalanceOverflow",
+	-10: "ManageContractResultCodeIncorrectPrecision",
 }
 
 var manageContractResultCodeShortMap = map[int32]string{
-	0:  "success",
-	-1: "malformed",
-	-2: "not_found",
-	-3: "not_allowed",
-	-4: "details_too_long",
-	-5: "dispute_reason_too_long",
-	-6: "already_confirmed",
-	-7: "invoice_not_approved",
-	-8: "dispute_already_started",
-	-9: "customer_balance_overflow",
+	0:   "success",
+	-1:  "malformed",
+	-2:  "not_found",
+	-3:  "not_allowed",
+	-4:  "details_too_long",
+	-5:  "dispute_reason_too_long",
+	-6:  "already_confirmed",
+	-7:  "invoice_not_approved",
+	-8:  "dispute_already_started",
+	-9:  "customer_balance_overflow",
+	-10: "incorrect_precision",
 }
 
 var manageContractResultCodeRevMap = map[string]int32{
@@ -20419,6 +20561,7 @@ var manageContractResultCodeRevMap = map[string]int32{
 	"ManageContractResultCodeInvoiceNotApproved":      -7,
 	"ManageContractResultCodeDisputeAlreadyStarted":   -8,
 	"ManageContractResultCodeCustomerBalanceOverflow": -9,
+	"ManageContractResultCodeIncorrectPrecision":      -10,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -23321,7 +23464,8 @@ type ManageOfferOp struct {
 //    	REQUIRES_KYC = -24, // source must have KYC in order to participate
 //    	SOURCE_UNDERFUNDED = -25,
 //    	SOURCE_BALANCE_LOCK_OVERFLOW = -26,
-//    	REQUIRES_VERIFICATION = -27 // source must be verified in order to participate
+//    	REQUIRES_VERIFICATION = -27, // source must be verified in order to participate
+//    	INCORRECT_AMOUNT_PRECISION = -28
 //    };
 //
 type ManageOfferResultCode int32
@@ -23355,6 +23499,7 @@ const (
 	ManageOfferResultCodeSourceUnderfunded         ManageOfferResultCode = -25
 	ManageOfferResultCodeSourceBalanceLockOverflow ManageOfferResultCode = -26
 	ManageOfferResultCodeRequiresVerification      ManageOfferResultCode = -27
+	ManageOfferResultCodeIncorrectAmountPrecision  ManageOfferResultCode = -28
 )
 
 var ManageOfferResultCodeAll = []ManageOfferResultCode{
@@ -23386,6 +23531,7 @@ var ManageOfferResultCodeAll = []ManageOfferResultCode{
 	ManageOfferResultCodeSourceUnderfunded,
 	ManageOfferResultCodeSourceBalanceLockOverflow,
 	ManageOfferResultCodeRequiresVerification,
+	ManageOfferResultCodeIncorrectAmountPrecision,
 }
 
 var manageOfferResultCodeMap = map[int32]string{
@@ -23417,6 +23563,7 @@ var manageOfferResultCodeMap = map[int32]string{
 	-25: "ManageOfferResultCodeSourceUnderfunded",
 	-26: "ManageOfferResultCodeSourceBalanceLockOverflow",
 	-27: "ManageOfferResultCodeRequiresVerification",
+	-28: "ManageOfferResultCodeIncorrectAmountPrecision",
 }
 
 var manageOfferResultCodeShortMap = map[int32]string{
@@ -23448,6 +23595,7 @@ var manageOfferResultCodeShortMap = map[int32]string{
 	-25: "source_underfunded",
 	-26: "source_balance_lock_overflow",
 	-27: "requires_verification",
+	-28: "incorrect_amount_precision",
 }
 
 var manageOfferResultCodeRevMap = map[string]int32{
@@ -23479,6 +23627,7 @@ var manageOfferResultCodeRevMap = map[string]int32{
 	"ManageOfferResultCodeSourceUnderfunded":         -25,
 	"ManageOfferResultCodeSourceBalanceLockOverflow": -26,
 	"ManageOfferResultCodeRequiresVerification":      -27,
+	"ManageOfferResultCodeIncorrectAmountPrecision":  -28,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -25650,7 +25799,8 @@ type PaymentOpV2 struct {
 //        INSUFFICIENT_FEE_AMOUNT = -14,
 //        BALANCE_TO_CHARGE_FEE_FROM_NOT_FOUND = -15,
 //        PAYMENT_AMOUNT_IS_LESS_THAN_DEST_FEE = -16,
-//        DESTINATION_ACCOUNT_NOT_FOUND = -17
+//        DESTINATION_ACCOUNT_NOT_FOUND = -17,
+//        INCORRECT_AMOUNT_PRECISION = -18
 //
 //         // !!! Add new result code to review invoice op too !!!
 //    };
@@ -25676,6 +25826,7 @@ const (
 	PaymentV2ResultCodeBalanceToChargeFeeFromNotFound PaymentV2ResultCode = -15
 	PaymentV2ResultCodePaymentAmountIsLessThanDestFee PaymentV2ResultCode = -16
 	PaymentV2ResultCodeDestinationAccountNotFound     PaymentV2ResultCode = -17
+	PaymentV2ResultCodeIncorrectAmountPrecision       PaymentV2ResultCode = -18
 )
 
 var PaymentV2ResultCodeAll = []PaymentV2ResultCode{
@@ -25697,6 +25848,7 @@ var PaymentV2ResultCodeAll = []PaymentV2ResultCode{
 	PaymentV2ResultCodeBalanceToChargeFeeFromNotFound,
 	PaymentV2ResultCodePaymentAmountIsLessThanDestFee,
 	PaymentV2ResultCodeDestinationAccountNotFound,
+	PaymentV2ResultCodeIncorrectAmountPrecision,
 }
 
 var paymentV2ResultCodeMap = map[int32]string{
@@ -25718,6 +25870,7 @@ var paymentV2ResultCodeMap = map[int32]string{
 	-15: "PaymentV2ResultCodeBalanceToChargeFeeFromNotFound",
 	-16: "PaymentV2ResultCodePaymentAmountIsLessThanDestFee",
 	-17: "PaymentV2ResultCodeDestinationAccountNotFound",
+	-18: "PaymentV2ResultCodeIncorrectAmountPrecision",
 }
 
 var paymentV2ResultCodeShortMap = map[int32]string{
@@ -25739,6 +25892,7 @@ var paymentV2ResultCodeShortMap = map[int32]string{
 	-15: "balance_to_charge_fee_from_not_found",
 	-16: "payment_amount_is_less_than_dest_fee",
 	-17: "destination_account_not_found",
+	-18: "incorrect_amount_precision",
 }
 
 var paymentV2ResultCodeRevMap = map[string]int32{
@@ -25760,6 +25914,7 @@ var paymentV2ResultCodeRevMap = map[string]int32{
 	"PaymentV2ResultCodeBalanceToChargeFeeFromNotFound": -15,
 	"PaymentV2ResultCodePaymentAmountIsLessThanDestFee": -16,
 	"PaymentV2ResultCodeDestinationAccountNotFound":     -17,
+	"PaymentV2ResultCodeIncorrectAmountPrecision":       -18,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -26643,7 +26798,8 @@ type PayoutOp struct {
 //        MIN_AMOUNT_TOO_BIG = -11, // there is no appropriate holders balances
 //        LINE_FULL = -12, // destination balance amount overflows
 //        STATS_OVERFLOW = -13, // source statistics overflow
-//        LIMITS_EXCEEDED = -14 // source account limit exceeded
+//        LIMITS_EXCEEDED = -14, // source account limit exceeded
+//        INCORRECT_PRECISION = -15 // asset does not allow amounts with such precision
 //    };
 //
 type PayoutResultCode int32
@@ -26664,6 +26820,7 @@ const (
 	PayoutResultCodeLineFull               PayoutResultCode = -12
 	PayoutResultCodeStatsOverflow          PayoutResultCode = -13
 	PayoutResultCodeLimitsExceeded         PayoutResultCode = -14
+	PayoutResultCodeIncorrectPrecision     PayoutResultCode = -15
 )
 
 var PayoutResultCodeAll = []PayoutResultCode{
@@ -26682,6 +26839,7 @@ var PayoutResultCodeAll = []PayoutResultCode{
 	PayoutResultCodeLineFull,
 	PayoutResultCodeStatsOverflow,
 	PayoutResultCodeLimitsExceeded,
+	PayoutResultCodeIncorrectPrecision,
 }
 
 var payoutResultCodeMap = map[int32]string{
@@ -26700,6 +26858,7 @@ var payoutResultCodeMap = map[int32]string{
 	-12: "PayoutResultCodeLineFull",
 	-13: "PayoutResultCodeStatsOverflow",
 	-14: "PayoutResultCodeLimitsExceeded",
+	-15: "PayoutResultCodeIncorrectPrecision",
 }
 
 var payoutResultCodeShortMap = map[int32]string{
@@ -26718,6 +26877,7 @@ var payoutResultCodeShortMap = map[int32]string{
 	-12: "line_full",
 	-13: "stats_overflow",
 	-14: "limits_exceeded",
+	-15: "incorrect_precision",
 }
 
 var payoutResultCodeRevMap = map[string]int32{
@@ -26736,6 +26896,7 @@ var payoutResultCodeRevMap = map[string]int32{
 	"PayoutResultCodeLineFull":               -12,
 	"PayoutResultCodeStatsOverflow":          -13,
 	"PayoutResultCodeLimitsExceeded":         -14,
+	"PayoutResultCodeIncorrectPrecision":     -15,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -28138,6 +28299,7 @@ type ReviewRequestOp struct {
 //    	INSUFFICIENT_AVAILABLE_FOR_ISSUANCE_AMOUNT = -41,
 //    	FULL_LINE = -42, // can't fund balance - total funds exceed UINT64_MAX
 //    	SYSTEM_TASKS_NOT_ALLOWED = -43,
+//        INCORRECT_PRECISION = -44,
 //
 //    	// Sale creation requests
 //    	BASE_ASSET_DOES_NOT_EXISTS = -50,
@@ -28190,7 +28352,10 @@ type ReviewRequestOp struct {
 //        INVALID_LIMITS = 131,
 //
 //        // Contract requests
-//        CONTRACT_DETAILS_TOO_LONG = -140 // customer details reached length limit
+//        CONTRACT_DETAILS_TOO_LONG = -140, // customer details reached length limit
+//
+//    	//Withdrawal request
+//    	REMOVING_NOT_SET_TASKS = -150 // cannot remove tasks which are not set
 //    };
 //
 type ReviewRequestResultCode int32
@@ -28212,6 +28377,7 @@ const (
 	ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount   ReviewRequestResultCode = -41
 	ReviewRequestResultCodeFullLine                                 ReviewRequestResultCode = -42
 	ReviewRequestResultCodeSystemTasksNotAllowed                    ReviewRequestResultCode = -43
+	ReviewRequestResultCodeIncorrectPrecision                       ReviewRequestResultCode = -44
 	ReviewRequestResultCodeBaseAssetDoesNotExists                   ReviewRequestResultCode = -50
 	ReviewRequestResultCodeHardCapWillExceedMaxIssuance             ReviewRequestResultCode = -51
 	ReviewRequestResultCodeInsufficientPreissuedForHardCap          ReviewRequestResultCode = -52
@@ -28247,6 +28413,7 @@ const (
 	ReviewRequestResultCodeCannotCreateForAccIdAndAccType           ReviewRequestResultCode = 130
 	ReviewRequestResultCodeInvalidLimits                            ReviewRequestResultCode = 131
 	ReviewRequestResultCodeContractDetailsTooLong                   ReviewRequestResultCode = -140
+	ReviewRequestResultCodeRemovingNotSetTasks                      ReviewRequestResultCode = -150
 )
 
 var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
@@ -28266,6 +28433,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount,
 	ReviewRequestResultCodeFullLine,
 	ReviewRequestResultCodeSystemTasksNotAllowed,
+	ReviewRequestResultCodeIncorrectPrecision,
 	ReviewRequestResultCodeBaseAssetDoesNotExists,
 	ReviewRequestResultCodeHardCapWillExceedMaxIssuance,
 	ReviewRequestResultCodeInsufficientPreissuedForHardCap,
@@ -28301,6 +28469,7 @@ var ReviewRequestResultCodeAll = []ReviewRequestResultCode{
 	ReviewRequestResultCodeCannotCreateForAccIdAndAccType,
 	ReviewRequestResultCodeInvalidLimits,
 	ReviewRequestResultCodeContractDetailsTooLong,
+	ReviewRequestResultCodeRemovingNotSetTasks,
 }
 
 var reviewRequestResultCodeMap = map[int32]string{
@@ -28320,6 +28489,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	-41:  "ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount",
 	-42:  "ReviewRequestResultCodeFullLine",
 	-43:  "ReviewRequestResultCodeSystemTasksNotAllowed",
+	-44:  "ReviewRequestResultCodeIncorrectPrecision",
 	-50:  "ReviewRequestResultCodeBaseAssetDoesNotExists",
 	-51:  "ReviewRequestResultCodeHardCapWillExceedMaxIssuance",
 	-52:  "ReviewRequestResultCodeInsufficientPreissuedForHardCap",
@@ -28355,6 +28525,7 @@ var reviewRequestResultCodeMap = map[int32]string{
 	130:  "ReviewRequestResultCodeCannotCreateForAccIdAndAccType",
 	131:  "ReviewRequestResultCodeInvalidLimits",
 	-140: "ReviewRequestResultCodeContractDetailsTooLong",
+	-150: "ReviewRequestResultCodeRemovingNotSetTasks",
 }
 
 var reviewRequestResultCodeShortMap = map[int32]string{
@@ -28374,6 +28545,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	-41:  "insufficient_available_for_issuance_amount",
 	-42:  "full_line",
 	-43:  "system_tasks_not_allowed",
+	-44:  "incorrect_precision",
 	-50:  "base_asset_does_not_exists",
 	-51:  "hard_cap_will_exceed_max_issuance",
 	-52:  "insufficient_preissued_for_hard_cap",
@@ -28409,6 +28581,7 @@ var reviewRequestResultCodeShortMap = map[int32]string{
 	130:  "cannot_create_for_acc_id_and_acc_type",
 	131:  "invalid_limits",
 	-140: "contract_details_too_long",
+	-150: "removing_not_set_tasks",
 }
 
 var reviewRequestResultCodeRevMap = map[string]int32{
@@ -28428,6 +28601,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeInsufficientAvailableForIssuanceAmount":   -41,
 	"ReviewRequestResultCodeFullLine":                                 -42,
 	"ReviewRequestResultCodeSystemTasksNotAllowed":                    -43,
+	"ReviewRequestResultCodeIncorrectPrecision":                       -44,
 	"ReviewRequestResultCodeBaseAssetDoesNotExists":                   -50,
 	"ReviewRequestResultCodeHardCapWillExceedMaxIssuance":             -51,
 	"ReviewRequestResultCodeInsufficientPreissuedForHardCap":          -52,
@@ -28463,6 +28637,7 @@ var reviewRequestResultCodeRevMap = map[string]int32{
 	"ReviewRequestResultCodeCannotCreateForAccIdAndAccType":           130,
 	"ReviewRequestResultCodeInvalidLimits":                            131,
 	"ReviewRequestResultCodeContractDetailsTooLong":                   -140,
+	"ReviewRequestResultCodeRemovingNotSetTasks":                      -150,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -31004,10 +31179,13 @@ type AmlAlertRequest struct {
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_ASSET_BALANCE_PRECISION:
+//            uint32 trailingDigitsCount;
 //        }
 //
 type AssetCreationRequestExt struct {
-	V LedgerVersion `json:"v,omitempty"`
+	V                   LedgerVersion `json:"v,omitempty"`
+	TrailingDigitsCount *Uint32       `json:"trailingDigitsCount,omitempty"`
 }
 
 // SwitchFieldName returns the field name in which this union's
@@ -31022,6 +31200,8 @@ func (u AssetCreationRequestExt) ArmForSwitch(sw int32) (string, bool) {
 	switch LedgerVersion(sw) {
 	case LedgerVersionEmptyVersion:
 		return "", true
+	case LedgerVersionAddAssetBalancePrecision:
+		return "TrailingDigitsCount", true
 	}
 	return "-", false
 }
@@ -31032,7 +31212,39 @@ func NewAssetCreationRequestExt(v LedgerVersion, value interface{}) (result Asse
 	switch LedgerVersion(v) {
 	case LedgerVersionEmptyVersion:
 		// void
+	case LedgerVersionAddAssetBalancePrecision:
+		tv, ok := value.(Uint32)
+		if !ok {
+			err = fmt.Errorf("invalid value, must be Uint32")
+			return
+		}
+		result.TrailingDigitsCount = &tv
 	}
+	return
+}
+
+// MustTrailingDigitsCount retrieves the TrailingDigitsCount value from the union,
+// panicing if the value is not set.
+func (u AssetCreationRequestExt) MustTrailingDigitsCount() Uint32 {
+	val, ok := u.GetTrailingDigitsCount()
+
+	if !ok {
+		panic("arm TrailingDigitsCount is not set")
+	}
+
+	return val
+}
+
+// GetTrailingDigitsCount retrieves the TrailingDigitsCount value from the union,
+// returning ok if the union's switch indicated the value is valid.
+func (u AssetCreationRequestExt) GetTrailingDigitsCount() (result Uint32, ok bool) {
+	armName, _ := u.ArmForSwitch(int32(u.V))
+
+	if armName == "TrailingDigitsCount" {
+		result = *u.TrailingDigitsCount
+		ok = true
+	}
+
 	return
 }
 
@@ -31052,6 +31264,8 @@ func NewAssetCreationRequestExt(v LedgerVersion, value interface{}) (result Asse
 //        {
 //        case EMPTY_VERSION:
 //            void;
+//        case ADD_ASSET_BALANCE_PRECISION:
+//            uint32 trailingDigitsCount;
 //        }
 //        ext;
 //    };
@@ -35621,34 +35835,36 @@ func (u OperationResult) GetTr() (result OperationResultTr, ok bool) {
 //        txTOO_LATE = -3,          // ledger closeTime after maxTime
 //        txMISSING_OPERATION = -4, // no operation was specified
 //
-//        txBAD_AUTH = -5,             // too few valid signatures / wrong network
-//        txNO_ACCOUNT = -6,           // source account not found
-//        txBAD_AUTH_EXTRA = -7,       // unused signatures attached to transaction
-//        txINTERNAL_ERROR = -8,       // an unknown error occured
-//    	txACCOUNT_BLOCKED = -9,      // account is blocked and cannot be source of tx
-//        txDUPLICATION = -10,         // if timing is stored
-//        txINSUFFICIENT_FEE = -11,    // the actual total fee amount is greater than the max total fee amount, provided by the source
-//        txSOURCE_UNDERFUNDED = -12,  // not enough tx fee asset on source balance
-//        txCOMMISSION_LINE_FULL = -13 // commission tx fee asset balance amount overflow
+//        txBAD_AUTH = -5,                   // too few valid signatures / wrong network
+//        txNO_ACCOUNT = -6,                 // source account not found
+//        txBAD_AUTH_EXTRA = -7,             // unused signatures attached to transaction
+//        txINTERNAL_ERROR = -8,             // an unknown error occured
+//        txACCOUNT_BLOCKED = -9,            // account is blocked and cannot be source of tx
+//        txDUPLICATION = -10,               // if timing is stored
+//        txINSUFFICIENT_FEE = -11,          // the actual total fee amount is greater than the max total fee amount, provided by the source
+//        txSOURCE_UNDERFUNDED = -12,        // not enough tx fee asset on source balance
+//        txCOMMISSION_LINE_FULL = -13,      // commission tx fee asset balance amount overflow
+//        txFEE_INCORRECT_PRECISION = -14    // fee amount is incompatible with asset precision
 //    };
 //
 type TransactionResultCode int32
 
 const (
-	TransactionResultCodeTxSuccess            TransactionResultCode = 0
-	TransactionResultCodeTxFailed             TransactionResultCode = -1
-	TransactionResultCodeTxTooEarly           TransactionResultCode = -2
-	TransactionResultCodeTxTooLate            TransactionResultCode = -3
-	TransactionResultCodeTxMissingOperation   TransactionResultCode = -4
-	TransactionResultCodeTxBadAuth            TransactionResultCode = -5
-	TransactionResultCodeTxNoAccount          TransactionResultCode = -6
-	TransactionResultCodeTxBadAuthExtra       TransactionResultCode = -7
-	TransactionResultCodeTxInternalError      TransactionResultCode = -8
-	TransactionResultCodeTxAccountBlocked     TransactionResultCode = -9
-	TransactionResultCodeTxDuplication        TransactionResultCode = -10
-	TransactionResultCodeTxInsufficientFee    TransactionResultCode = -11
-	TransactionResultCodeTxSourceUnderfunded  TransactionResultCode = -12
-	TransactionResultCodeTxCommissionLineFull TransactionResultCode = -13
+	TransactionResultCodeTxSuccess               TransactionResultCode = 0
+	TransactionResultCodeTxFailed                TransactionResultCode = -1
+	TransactionResultCodeTxTooEarly              TransactionResultCode = -2
+	TransactionResultCodeTxTooLate               TransactionResultCode = -3
+	TransactionResultCodeTxMissingOperation      TransactionResultCode = -4
+	TransactionResultCodeTxBadAuth               TransactionResultCode = -5
+	TransactionResultCodeTxNoAccount             TransactionResultCode = -6
+	TransactionResultCodeTxBadAuthExtra          TransactionResultCode = -7
+	TransactionResultCodeTxInternalError         TransactionResultCode = -8
+	TransactionResultCodeTxAccountBlocked        TransactionResultCode = -9
+	TransactionResultCodeTxDuplication           TransactionResultCode = -10
+	TransactionResultCodeTxInsufficientFee       TransactionResultCode = -11
+	TransactionResultCodeTxSourceUnderfunded     TransactionResultCode = -12
+	TransactionResultCodeTxCommissionLineFull    TransactionResultCode = -13
+	TransactionResultCodeTxFeeIncorrectPrecision TransactionResultCode = -14
 )
 
 var TransactionResultCodeAll = []TransactionResultCode{
@@ -35666,6 +35882,7 @@ var TransactionResultCodeAll = []TransactionResultCode{
 	TransactionResultCodeTxInsufficientFee,
 	TransactionResultCodeTxSourceUnderfunded,
 	TransactionResultCodeTxCommissionLineFull,
+	TransactionResultCodeTxFeeIncorrectPrecision,
 }
 
 var transactionResultCodeMap = map[int32]string{
@@ -35683,6 +35900,7 @@ var transactionResultCodeMap = map[int32]string{
 	-11: "TransactionResultCodeTxInsufficientFee",
 	-12: "TransactionResultCodeTxSourceUnderfunded",
 	-13: "TransactionResultCodeTxCommissionLineFull",
+	-14: "TransactionResultCodeTxFeeIncorrectPrecision",
 }
 
 var transactionResultCodeShortMap = map[int32]string{
@@ -35700,23 +35918,25 @@ var transactionResultCodeShortMap = map[int32]string{
 	-11: "tx_insufficient_fee",
 	-12: "tx_source_underfunded",
 	-13: "tx_commission_line_full",
+	-14: "tx_fee_incorrect_precision",
 }
 
 var transactionResultCodeRevMap = map[string]int32{
-	"TransactionResultCodeTxSuccess":            0,
-	"TransactionResultCodeTxFailed":             -1,
-	"TransactionResultCodeTxTooEarly":           -2,
-	"TransactionResultCodeTxTooLate":            -3,
-	"TransactionResultCodeTxMissingOperation":   -4,
-	"TransactionResultCodeTxBadAuth":            -5,
-	"TransactionResultCodeTxNoAccount":          -6,
-	"TransactionResultCodeTxBadAuthExtra":       -7,
-	"TransactionResultCodeTxInternalError":      -8,
-	"TransactionResultCodeTxAccountBlocked":     -9,
-	"TransactionResultCodeTxDuplication":        -10,
-	"TransactionResultCodeTxInsufficientFee":    -11,
-	"TransactionResultCodeTxSourceUnderfunded":  -12,
-	"TransactionResultCodeTxCommissionLineFull": -13,
+	"TransactionResultCodeTxSuccess":               0,
+	"TransactionResultCodeTxFailed":                -1,
+	"TransactionResultCodeTxTooEarly":              -2,
+	"TransactionResultCodeTxTooLate":               -3,
+	"TransactionResultCodeTxMissingOperation":      -4,
+	"TransactionResultCodeTxBadAuth":               -5,
+	"TransactionResultCodeTxNoAccount":             -6,
+	"TransactionResultCodeTxBadAuthExtra":          -7,
+	"TransactionResultCodeTxInternalError":         -8,
+	"TransactionResultCodeTxAccountBlocked":        -9,
+	"TransactionResultCodeTxDuplication":           -10,
+	"TransactionResultCodeTxInsufficientFee":       -11,
+	"TransactionResultCodeTxSourceUnderfunded":     -12,
+	"TransactionResultCodeTxCommissionLineFull":    -13,
+	"TransactionResultCodeTxFeeIncorrectPrecision": -14,
 }
 
 // ValidEnum validates a proposed value for this enum.  Implements
@@ -36431,6 +36651,8 @@ func (u PublicKey) GetEd25519() (result Uint256, ok bool) {
 //        ADD_CAPITAL_DEPLOYMENT_FEE_TYPE = 48,
 //        ADD_TRANSACTION_FEE = 49,
 //        ADD_DEFAULT_ISSUANCE_TASKS = 50,
+//    	ADD_ASSET_BALANCE_PRECISION = 51,
+//    	WITHDRAWAL_TASKS = 52,
 //        REPLACE_ACCOUNT_TYPES_WITH_POLICIES = 999999 // do not use it yet, there are features to be improved
 //    };
 //
@@ -36488,6 +36710,8 @@ const (
 	LedgerVersionAddCapitalDeploymentFeeType                      LedgerVersion = 48
 	LedgerVersionAddTransactionFee                                LedgerVersion = 49
 	LedgerVersionAddDefaultIssuanceTasks                          LedgerVersion = 50
+	LedgerVersionAddAssetBalancePrecision                         LedgerVersion = 51
+	LedgerVersionWithdrawalTasks                                  LedgerVersion = 52
 	LedgerVersionReplaceAccountTypesWithPolicies                  LedgerVersion = 999999
 )
 
@@ -36543,6 +36767,8 @@ var LedgerVersionAll = []LedgerVersion{
 	LedgerVersionAddCapitalDeploymentFeeType,
 	LedgerVersionAddTransactionFee,
 	LedgerVersionAddDefaultIssuanceTasks,
+	LedgerVersionAddAssetBalancePrecision,
+	LedgerVersionWithdrawalTasks,
 	LedgerVersionReplaceAccountTypesWithPolicies,
 }
 
@@ -36598,6 +36824,8 @@ var ledgerVersionMap = map[int32]string{
 	48:     "LedgerVersionAddCapitalDeploymentFeeType",
 	49:     "LedgerVersionAddTransactionFee",
 	50:     "LedgerVersionAddDefaultIssuanceTasks",
+	51:     "LedgerVersionAddAssetBalancePrecision",
+	52:     "LedgerVersionWithdrawalTasks",
 	999999: "LedgerVersionReplaceAccountTypesWithPolicies",
 }
 
@@ -36653,6 +36881,8 @@ var ledgerVersionShortMap = map[int32]string{
 	48:     "add_capital_deployment_fee_type",
 	49:     "add_transaction_fee",
 	50:     "add_default_issuance_tasks",
+	51:     "add_asset_balance_precision",
+	52:     "withdrawal_tasks",
 	999999: "replace_account_types_with_policies",
 }
 
@@ -36708,6 +36938,8 @@ var ledgerVersionRevMap = map[string]int32{
 	"LedgerVersionAddCapitalDeploymentFeeType":                      48,
 	"LedgerVersionAddTransactionFee":                                49,
 	"LedgerVersionAddDefaultIssuanceTasks":                          50,
+	"LedgerVersionAddAssetBalancePrecision":                         51,
+	"LedgerVersionWithdrawalTasks":                                  52,
 	"LedgerVersionReplaceAccountTypesWithPolicies":                  999999,
 }
 
@@ -37356,3 +37588,4 @@ type DecoratedSignature struct {
 }
 
 var fmtTest = fmt.Sprint("this is a dummy usage of fmt")
+var Revision = "0b366c3fff83de5ee79cb1b7d191d1aa709f15b0"
